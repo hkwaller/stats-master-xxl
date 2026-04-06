@@ -1,0 +1,184 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { nanoid } from "nanoid";
+import { GameLogo, Button, GameDivider } from "@/components/design-system";
+import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
+
+export default function LandingPage() {
+  const router = useRouter();
+  const [joinCode, setJoinCode] = useState("");
+  const [error, setError] = useState("");
+
+  function handleCreate() {
+    const roomId = nanoid(6).toUpperCase();
+    router.push(`/nhl-stats-master/${roomId}/setup`);
+  }
+
+  function handleJoin() {
+    const code = joinCode.trim().toUpperCase();
+    if (code.length < 4) {
+      setError("Enter a valid room code");
+      return;
+    }
+    router.push(`/nhl-stats-master/${code}/lobby`);
+  }
+
+  return (
+    <main className="game-bg-pattern min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      {/* Animated maximalist chaotic background particles */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {[
+          "var(--color-magenta)",
+          "var(--color-cyan)",
+          "var(--color-yellow)",
+          "var(--color-lime)",
+          "var(--color-magenta)",
+          "var(--color-cyan)",
+          "var(--color-yellow)",
+          "var(--color-lime)",
+        ].map((color, i) => (
+          <motion.div
+            key={i}
+            className={`absolute border-4 border-black shadow-[4px_4px_0_#000] ${i % 2 === 0 ? "rounded-full" : "rounded-none"}`}
+            style={{
+              backgroundColor: color,
+              width: ((i % 3) + 1) * 30,
+              height: ((i % 3) + 1) * 30,
+            }}
+            initial={{
+              x: `${Math.random() * 100}vw`,
+              y: `${Math.random() * 100}vh`,
+              rotate: 0,
+            }}
+            animate={{
+              x: [`${Math.random() * 100}vw`, `${Math.random() * 100}vw`],
+              y: [`${Math.random() * 100}vh`, `${Math.random() * 100}vh`],
+              rotate: [0, 360],
+            }}
+            transition={{
+              duration: 8 + Math.random() * 8,
+              repeat: Infinity,
+              repeatType: "mirror",
+              ease: "linear",
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center">
+        {/* Left Column: Game Setup */}
+        <div className="space-y-8">
+          {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className="text-center"
+          >
+            <div className="flex justify-center mb-3">
+              <span className="text-7xl drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                💥
+              </span>
+            </div>
+            <GameLogo className="justify-center text-4xl mb-2" />
+            <div className="flex justify-center mt-4">
+              <p className="text-black font-bold bg-cyan border-2 border-black px-3 py-1 rotate-2 inline-block text-sm tracking-widest uppercase shadow-[4px_4px_0_#000]">
+                Multiplayer NHL Trivia
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+            className="bg-white border-8 border-black rounded-sm p-6 space-y-6 shadow-[16px_16px_0px_#000] rotate-[-1deg]"
+          >
+            <div>
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={handleCreate}
+              >
+                🎮 Create New Game
+              </Button>
+              <p className="text-center text-sm font-bold text-black mt-4 border-2 border-black bg-yellow inline-block px-2 transform -rotate-1 shadow-[2px_2px_0_#000]">
+                Host a game — share the code with friends
+              </p>
+            </div>
+
+            <GameDivider />
+
+            <div className="space-y-3">
+              <p className="text-center text-sm font-bold uppercase tracking-widest text-black bg-magenta text-white border-2 border-black px-2 py-1 transform rotate-1 shadow-[2px_2px_0_#000] inline-block">
+                Join with a code
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={joinCode}
+                  onChange={(e) => {
+                    setJoinCode(e.target.value.toUpperCase());
+                    setError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+                  placeholder="ROOM CODE"
+                  maxLength={8}
+                  className="
+                    flex-1 bg-white border-4 border-black rounded-sm
+                    px-4 py-3 text-center text-xl font-display font-bold tracking-widest
+                    text-black placeholder-game-text-muted shadow-[4px_4px_0_#000]
+                    focus:outline-none focus:bg-yellow transition-colors uppercase
+                  "
+                />
+                <Button variant="secondary" size="md" onClick={handleJoin}>
+                  Join
+                </Button>
+              </div>
+              {error && (
+                <p className="text-game-red text-sm text-center">{error}</p>
+              )}
+            </div>
+          </motion.div>
+
+          <AdsterraBanner slot="landing" />
+        </div>
+
+        {/* Right Column: Game Explanation */}
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+          className="bg-white border-8 border-black rounded-sm p-8 shadow-[16px_16px_0px_#000] rotate-[1deg]"
+        >
+          <h2 className="text-4xl font-display font-bold uppercase mb-4 text-black">
+            What is NHL Stats Master?
+          </h2>
+          <p className="text-black font-mono font-bold mb-4">
+            A chaotic, multiplayer trivia game where you guess NHL players based
+            entirely on their seasonal stats.
+          </p>
+          <ul className="list-disc pl-5 font-mono font-bold text-black space-y-3 mb-6">
+            <li>Create a room and share the code.</li>
+            <li>
+              Use your phone as the controller while the main screen hosts the
+              game.
+            </li>
+            <li>
+              Outsmart your friends and answer before the countdown finishes!
+            </li>
+          </ul>
+          <div className="bg-lime  p-4 rotate-[-1deg] shadow-[4px_4px_0_#000]">
+            <p className="text-black font-bold uppercase tracking-widest text-sm text-center">
+              Do you know your hockey history?
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    </main>
+  );
+}

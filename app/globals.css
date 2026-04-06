@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@theme {
+  /* Game color tokens */
+  --color-game-bg: #fdf5e6;
+  --color-game-card: #ffffff;
+  --color-game-card-border: #000000;
+  --color-game-text: #000000;
+  --color-game-text-muted: #333333;
+
+  /* Accent colors */
+  --color-magenta: #454040;
+  --color-cyan: #e6f082;
+  --color-yellow: #d8d365;
+  --color-lime: #e6f082;
+  --color-game-gold: #d8d365;
+  --color-game-red: #605b51;
+  --color-ice-blue: #e6f082;
+  
+  --color-tier-easy: #e6f082;
+  --color-tier-medium: #d8d365;
+  --color-tier-hard: #605b51;
+  --color-tier-expert: #454040;
+
+  /* Fonts */
+  --font-display: var(--font-bebas), "Bebas Neue", impact, sans-serif;
+  --font-mono: var(--font-space-mono), "Space Mono", monospace;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-game-bg);
+  color: var(--color-game-text);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Brutalist point grid pattern */
+.game-bg-pattern {
+  background-color: var(--color-game-bg);
+  background-image: radial-gradient(circle, #000 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+}
+
+/* 3D button press effect */
+.game-btn-press {
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+.game-btn-press:active {
+  transform: translate(6px, 6px) !important;
+  box-shadow: 0px 0px 0px #000 !important;
+}
+
+/* Stat column shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.stat-shimmer {
+  background: linear-gradient(
+    90deg,
+    #ffffff 25%,
+    #e6f082 50%,
+    #ffffff 75%
+  );
+  border: 3px solid #000;
+  background-size: 200% 100%;
+  animation: shimmer 1s infinite linear;
+}
+
+/* Score delta float */
+@keyframes scoreFloat {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
+
+.score-delta {
+  animation: scoreFloat 1.5s ease-out forwards;
+}
+
+/* Tabular nums on monospace font */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+.ice-gradient {
+  background: white;
+}
