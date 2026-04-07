@@ -114,3 +114,4 @@ DerivedData/
 timeline.xctimeline
 playground.xcworkspace
 node_modules
+.vercel

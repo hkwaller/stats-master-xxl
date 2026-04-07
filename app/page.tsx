@@ -93,7 +93,7 @@ export default function LandingPage() {
 
           {isLoaded &&
             (isSignedIn ? (
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             ) : (
               <SignInButton mode="modal">
                 <button className="font-mono font-bold border-4 border-black px-4 py-2 bg-white shadow-[4px_4px_0_#000] hover:bg-yellow transition-colors uppercase tracking-wider cursor-pointer text-sm">
