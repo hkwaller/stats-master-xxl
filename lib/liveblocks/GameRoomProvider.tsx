@@ -1,33 +1,34 @@
-'use client'
+"use client";
 
-import { ReactNode } from 'react'
-import { RoomProvider } from './client'
-import { ClientSideSuspense } from '@liveblocks/react'
-import { LiveList, LiveObject } from '@liveblocks/client'
-import type { GameState } from '@/types/game'
+import { ReactNode } from "react";
+import { RoomProvider } from "./client";
+import { ClientSideSuspense } from "@liveblocks/react";
+import { LiveList, LiveObject } from "@liveblocks/client";
+import type { GameState } from "@/types/game";
 
 function createInitialGameState(roomId: string, hostId: string): GameState {
   return {
     roomId,
     hostId,
-    bossId: '',
-    bossToken: '',
+    bossId: "",
+    bossToken: "",
     players: [],
-    command: 'idle',
+    command: "idle",
     countdownTime: 3,
     reveal: false,
     questionCount: 10,
-    answerMode: 'multiplechoice',
-    difficultyTiers: ['easy', 'medium'],
-    revealMode: 'timed',
+    answerMode: "multiplechoice",
+    difficultyTiers: ["easy", "medium"],
+    revealMode: "timed",
     hintsEnabled: true,
     powerupsEnabled: true,
     questionSequence: [],
     currentQuestion: null,
     currentQuestionIndex: -1,
     revealedColumns: 0,
-    questionStartsAt: '',
+    questionStartsAt: "",
     choices: [],
+    eras: [],
     answers: {},
     answeredAt: {},
     hintsUsed: [],
@@ -37,17 +38,21 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     freezeActive: false,
     playedQuestions: [],
     questionHistory: [],
-  }
+  };
 }
 
 interface GameRoomProviderProps {
-  roomId: string
-  hostId: string
-  children: ReactNode
+  roomId: string;
+  hostId: string;
+  children: ReactNode;
 }
 
-export function GameRoomProvider({ roomId, hostId, children }: GameRoomProviderProps) {
-  const liveblocksRoomId = `nhl-stats-master-${roomId}`
+export function GameRoomProvider({
+  roomId,
+  hostId,
+  children,
+}: GameRoomProviderProps) {
+  const liveblocksRoomId = `nhl-stats-master-${roomId}`;
 
   return (
     <RoomProvider
@@ -69,7 +74,9 @@ export function GameRoomProvider({ roomId, hostId, children }: GameRoomProviderP
           <div className="flex items-center justify-center min-h-screen bg-game-bg">
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-ice-blue border-t-transparent rounded-full animate-spin" />
-              <p className="text-game-text-muted text-lg tracking-widest uppercase">Loading…</p>
+              <p className="text-game-text-muted text-lg tracking-widest uppercase">
+                Loading…
+              </p>
             </div>
           </div>
         }
@@ -77,5 +84,5 @@ export function GameRoomProvider({ roomId, hostId, children }: GameRoomProviderP
         {() => children}
       </ClientSideSuspense>
     </RoomProvider>
-  )
+  );
 }

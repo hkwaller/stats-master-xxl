@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useUser } from "@clerk/nextjs";
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { StatsCard } from "./StatsCard";
 import { Button, TierBadge } from "@/components/design-system";
-import { getDailyChallenge, getTodayDateString } from "@/app/actions/game-actions";
+import {
+  getDailyChallenge,
+  getTodayDateString,
+} from "@/app/actions/game-actions";
 import {
   getMyDailyChallengeScore,
   saveDailyChallengeScore,
@@ -20,7 +23,11 @@ type Phase =
   | { name: "loading" }
   | { name: "playing"; question: Question }
   | { name: "answered"; result: "correct" | "incorrect"; question: Question }
-  | { name: "already_answered"; result: "correct" | "incorrect"; question: Question };
+  | {
+      name: "already_answered";
+      result: "correct" | "incorrect";
+      question: Question;
+    };
 
 function getLocalAnswer(today: string): StoredAnswer | null {
   try {
@@ -50,14 +57,18 @@ export function DailyChallenge() {
     if (!isLoaded) return;
 
     async function load() {
-      const today = getTodayDateString();
+      const today = await getTodayDateString();
 
       // 1. Check localStorage first (instant)
       const local = getLocalAnswer(today);
       if (local) {
         const q = await getDailyChallenge();
         if (q) {
-          setPhase({ name: "already_answered", result: local.result, question: q });
+          setPhase({
+            name: "already_answered",
+            result: local.result,
+            question: q,
+          });
           loadLeaderboard();
         }
         return;
@@ -98,12 +109,16 @@ export function DailyChallenge() {
     if (phase.name !== "playing") return;
 
     async function checkAfterSignIn() {
-      const today = getTodayDateString();
+      const today = await getTodayDateString();
       const record = await getMyDailyChallengeScore();
       if (record && phase.name === "playing") {
         const result = record.is_correct ? "correct" : "incorrect";
         setLocalAnswer(today, { result, questionId: record.question_id });
-        setPhase({ name: "already_answered", result, question: (phase as { name: "playing"; question: Question }).question });
+        setPhase({
+          name: "already_answered",
+          result,
+          question: (phase as { name: "playing"; question: Question }).question,
+        });
         loadLeaderboard();
       }
     }
@@ -124,7 +139,7 @@ export function DailyChallenge() {
   async function handleGuess(choice: string) {
     if (phase.name !== "playing") return;
     const { question } = phase;
-    const today = getTodayDateString();
+    const today = await getTodayDateString();
 
     const isCorrect =
       choice.toLowerCase() ===
@@ -136,9 +151,10 @@ export function DailyChallenge() {
 
     // Persist to Supabase if signed in (fire & forget)
     if (isSignedIn) {
-      saveDailyChallengeScore({ questionId: String(question.id), isCorrect }).catch(
-        console.error
-      );
+      saveDailyChallengeScore({
+        questionId: String(question.id),
+        isCorrect,
+      }).catch(console.error);
     }
 
     setPhase({ name: "answered", result, question });
@@ -199,7 +215,11 @@ export function DailyChallenge() {
   }
 
   // answered
-  const { result, question } = phase as { name: "answered"; result: "correct" | "incorrect"; question: Question };
+  const { result, question } = phase as {
+    name: "answered";
+    result: "correct" | "incorrect";
+    question: Question;
+  };
   return (
     <div className="bg-white border-8 border-black rounded-sm p-6 shadow-[12px_12px_0_#000] rotate-[1deg] space-y-4">
       <ChallengeHeader question={question} />
@@ -271,8 +291,14 @@ function ResultBanner({
       {isLoaded && !isSignedIn && (
         <div className="mb-3 border-2 border-black bg-yellow text-black p-2 text-xs font-mono font-bold shadow-[2px_2px_0_#000] rotate-[1deg]">
           <SignInButton mode="modal">
-            <button className="underline cursor-pointer">Sign in to save your score</button>
-          </SignInButton>{" "}
+            <Button
+              variant="secondary"
+              size="sm"
+              className="underline cursor-pointer"
+            >
+              Sign in to save your score
+            </Button>
+          </SignInButton>
           and appear on the leaderboard.
         </div>
       )}
@@ -330,7 +356,10 @@ function AlreadyAnswered({
         </p>
 
         {leaderboard.length > 0 && (
-          <LeaderboardPanel entries={leaderboard} loading={loadingLeaderboard} />
+          <LeaderboardPanel
+            entries={leaderboard}
+            loading={loadingLeaderboard}
+          />
         )}
       </motion.div>
     </div>
@@ -347,7 +376,9 @@ function LeaderboardPanel({
   if (loading) {
     return (
       <div className="mt-4 border-t-2 border-black/30 pt-3">
-        <p className="text-xs font-mono opacity-60 animate-pulse">Loading leaderboard...</p>
+        <p className="text-xs font-mono opacity-60 animate-pulse">
+          Loading leaderboard...
+        </p>
       </div>
     );
   }
@@ -361,8 +392,13 @@ function LeaderboardPanel({
       </p>
       <ol className="space-y-1">
         {entries.map((entry, i) => (
-          <li key={entry.userId} className="flex items-center gap-2 text-xs font-mono">
-            <span className="font-bold opacity-60 w-4 text-right">{i + 1}.</span>
+          <li
+            key={entry.userId}
+            className="flex items-center gap-2 text-xs font-mono"
+          >
+            <span className="font-bold opacity-60 w-4 text-right">
+              {i + 1}.
+            </span>
             <span className="font-bold">{entry.displayName}</span>
             <span className="opacity-50 ml-auto">
               {new Date(entry.answeredAt).toLocaleTimeString([], {
