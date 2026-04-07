@@ -261,63 +261,110 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 />
 
                 {/* Reveal: answer result */}
-                {game.command === "revealing" && (() => {
-                  const history = (game.questionHistory as unknown as QuestionResult[]) ?? [];
-                  const latestResult = history.length > 0 ? history[history.length - 1] : null;
-                  const myResult = latestResult?.playerAnswers?.[myId];
-                  const isCorrect = myResult?.correct ?? false;
-                  const pointsEarned = myResult?.points ?? 0;
-                  const color = hasAnswered ? (isCorrect ? 'bg-lime text-black' : 'bg-game-red text-white') : 'bg-yellow text-black';
+                {game.command === "revealing" &&
+                  (() => {
+                    const history =
+                      (game.questionHistory as unknown as QuestionResult[]) ??
+                      [];
+                    const latestResult =
+                      history.length > 0 ? history[history.length - 1] : null;
+                    const myResult = latestResult?.playerAnswers?.[myId];
+                    const isCorrect = myResult?.correct ?? false;
+                    const pointsEarned = myResult?.points ?? 0;
+                    const color = hasAnswered
+                      ? isCorrect
+                        ? "bg-lime text-black"
+                        : "bg-game-red text-white"
+                      : "bg-yellow text-black";
 
-                  return (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      className={`${color} border-8 border-black p-6 text-center shadow-[12px_12px_0_#000] rotate-[1deg] my-4`}
-                    >
-                      {hasAnswered ? (
-                        <>
-                          <h2 className="text-5xl font-display font-bold uppercase mb-2 mt-2">
-                            {isCorrect ? 'Nailed It! 🔥' : 'Oof, Incorrect! 🧊'}
+                    // Calculate rank change
+                    const prevScores = players.map((p) => {
+                      const pts =
+                        latestResult?.playerAnswers?.[p.id]?.points ?? 0;
+                      return { id: p.id, prevScore: p.score - pts };
+                    });
+                    prevScores.sort((a, b) => b.prevScore - a.prevScore);
+                    const prevRank =
+                      prevScores.findIndex((p) => p.id === myId) + 1;
+                    const currentRank = myRank;
+
+                    let rankMessage = null;
+                    if (currentRank < prevRank && prevRank > 0) {
+                      if (currentRank === 1)
+                        rankMessage = "You took top spot! 🥇";
+                      else rankMessage = `Moved up to #${currentRank}! 📈`;
+                    } else if (currentRank > prevRank && prevRank > 0) {
+                      rankMessage = `Dropped to #${currentRank} 📉`;
+                    } else if (
+                      currentRank === 1 &&
+                      prevRank === 1 &&
+                      history.length > 1
+                    ) {
+                      rankMessage = "Holding onto #1! 🛡️";
+                    }
+
+                    return (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className={`${color} border-8 border-black p-6 text-center shadow-[12px_12px_0_#000] rotate-[1deg] my-4`}
+                      >
+                        {hasAnswered ? (
+                          <>
+                            <h2 className="text-5xl font-display font-bold uppercase mb-2 mt-2">
+                              {isCorrect
+                                ? "Nailed It! 🔥"
+                                : "Oof, Incorrect! 🧊"}
+                            </h2>
+                            <p className="font-mono font-bold mb-2">
+                              {isCorrect
+                                ? `Amazing! You earned +${pointsEarned} Pts.`
+                                : "Tough luck, better try again next round."}
+                            </p>
+                            {rankMessage && (
+                              <p className="inline-block bg-black text-white font-bold uppercase tracking-widest text-sm px-3 py-1 mb-2 transform -rotate-1 shadow-[2px_2px_0_rgba(0,0,0,0.5)] border border-white/20">
+                                {rankMessage}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <h2 className="text-4xl font-display font-bold uppercase mb-2 mt-2">
+                            Time's Up! ⏱️
                           </h2>
-                          <p className="font-mono font-bold mb-4">
-                            {isCorrect ? `Amazing! You earned +${pointsEarned} Pts.` : 'Tough luck, better try again next round.'}
+                        )}
+
+                        <div className="bg-white border-4 border-black p-4 rotate-[-1deg] shadow-[4px_4px_0_#000] my-6">
+                          <p className="text-black/80 font-bold text-xs uppercase tracking-widest mb-1">
+                            The Correct Answer Was
                           </p>
-                        </>
-                      ) : (
-                        <h2 className="text-4xl font-display font-bold uppercase mb-2 mt-2">
-                          Time's Up! ⏱️
-                        </h2>
-                      )}
+                          <h3 className="text-4xl font-display font-bold text-black uppercase">
+                            {currentQuestion.firstName}{" "}
+                            {currentQuestion.lastName}
+                          </h3>
+                        </div>
 
-                      <div className="bg-white border-4 border-black p-4 rotate-[-1deg] shadow-[4px_4px_0_#000] my-6">
-                        <p className="text-black/80 font-bold text-xs uppercase tracking-widest mb-1">
-                          The Correct Answer Was
-                        </p>
-                        <h3 className="text-4xl font-display font-bold text-black uppercase">
-                          {currentQuestion.firstName} {currentQuestion.lastName}
-                        </h3>
-                      </div>
+                        {hasAnswered && (
+                          <p className="text-sm mt-4 font-bold">
+                            Your answer:{" "}
+                            <span className="bg-black text-white px-3 py-1 font-mono mx-2">
+                              {myResult?.answer || "—"}
+                            </span>
+                          </p>
+                        )}
 
-                      {hasAnswered && (
-                        <p className="text-sm mt-4 font-bold">
-                          Your answer: <span className="bg-black text-white px-3 py-1 font-mono mx-2">{myResult?.answer || '—'}</span>
-                        </p>
-                      )}
-
-                      {isController && (
-                        <Button
-                          variant={isCorrect ? 'secondary' : 'primary'}
-                          size="lg"
-                          className="mt-6 w-full shadow-[4px_4px_0_#000] border-4"
-                          onClick={() => advanceToNext(myId)}
-                        >
-                          Next Question →
-                        </Button>
-                      )}
-                    </motion.div>
-                  );
-                })()}
+                        {isController && (
+                          <Button
+                            variant={isCorrect ? "secondary" : "primary"}
+                            size="lg"
+                            className="mt-6 w-full shadow-[4px_4px_0_#000] border-4"
+                            onClick={() => advanceToNext(myId)}
+                          >
+                            Next Question →
+                          </Button>
+                        )}
+                      </motion.div>
+                    );
+                  })()}
 
                 {/* Answer input */}
                 {game.command === "answering" && (
@@ -388,7 +435,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              className="space-y-6 bg-white p-8 border-4 border-black"
             >
               <div className="text-center py-4">
                 <div className="text-6xl mb-3">🏆</div>
@@ -469,7 +516,7 @@ function QuestionHistory({
                 <span className="text-xs text-game-text-muted mr-2">
                   Q{i + 1}
                 </span>
-                <span className="font-bold text-ice-blue">
+                <span className="font-bold text-black">
                   {q.firstName} {q.lastName}
                 </span>
                 <span className="text-xs text-game-text-muted ml-2">

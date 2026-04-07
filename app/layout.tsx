@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Space_Mono } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Providers } from "./providers";
 
 const bebasNeue = Bebas_Neue({
@@ -34,11 +35,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${bebasNeue.variable} ${spaceMono.variable}`}>
-      <body>
-        {/* <Providers>{children}</Providers> */}
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${bebasNeue.variable} ${spaceMono.variable}`}>
+        <body>
+          <Providers>{children}</Providers>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
