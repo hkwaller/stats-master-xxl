@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       count: number
     }
 
-    const pairs = getHLPairs({
+    const pairs = await getHLPairs({
       tiers: body.tiers,
       eras: body.eras,
       field: body.field ?? 'points',

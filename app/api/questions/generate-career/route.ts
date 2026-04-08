@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       excludePlayerIds?: number[]
     }
 
-    const careerData = getCareerQuestions({
+    const careerData = await getCareerQuestions({
       eras: body.eras,
       count: body.count,
       minSeasons: body.minSeasons ?? 5,

@@ -256,7 +256,7 @@ export const POWERUP_INITIAL_CHARGES: Record<PowerupType, number> = {
   extrahint: 1,
 }
 
-// ─── Raw stats record shape (from scores.js) ─────────────────────────────────
+// ─── Raw stats record shape (from nhl_player_seasons Supabase table) ─────────
 
 export type RawStatsRecord = {
   id: number

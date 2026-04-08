@@ -15,12 +15,12 @@ export async function POST(req: NextRequest) {
       rookiesOnly?: boolean
     }
 
-    const selector = new QuestionSelector(body.tiers, body.eras, body.excludeIds ?? [], body.rookiesOnly)
+    const selector = await QuestionSelector.create(body.tiers, body.eras, body.excludeIds ?? [], body.rookiesOnly)
     const questions = selector.generateSequence(body.count)
 
     // Pre-embed choices in each question for multiple choice mode
     if (body.answerMode === 'multiplechoice') {
-      const pool = getQuestionsByTiers(body.tiers, body.eras)
+      const pool = await getQuestionsByTiers(body.tiers, body.eras)
       const questionsWithChoices = questions.map((q) => ({
         ...q,
         choices: generateChoices(q, pool),

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       count: number
     }
 
-    const pairs = getH2HPairs({
+    const pairs = await getH2HPairs({
       tiers: body.tiers,
       eras: body.eras,
       count: body.count,

@@ -4,10 +4,11 @@ Multiplayer trivia game where players guess NHL players from revealed statistics
 
 ## Data Source
 
-`scores.js` in the project root exports `export const stats = [...]` — 46,704 player-season records covering the complete NHL history (1917-18 → 2024-25, all scoring levels).
-- Classic mode uses only 70+ pt seasons (2,182 records) via `getTierForPoints` filtering
-- Career mode uses the full dataset (every skater-season)
-**Key**: the export name is `stats`, NOT `scores`.
+Player-season data lives in the **Supabase `nhl_player_seasons` table** — 46,704 records covering the complete NHL history (1917-18 → 2024-25, all scoring levels).
+- All data access goes through `lib/data/database.ts` (server-only, async functions)
+- Classic mode queries rows with `points >= 70` (2,182 records)
+- Career mode queries all seasons per player (full careers)
+- To refresh data: `node scripts/scrape-nhl.mjs` then `node scripts/load-to-supabase.mjs`
 
 `lib/data/database.ts` is marked `server-only` — never import it in client components.
 Client-side player search uses the API route `/api/players/search`.

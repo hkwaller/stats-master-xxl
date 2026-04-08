@@ -1,6 +1,6 @@
 import "server-only";
 
-import { stats } from "@/scores";
+import { createSupabaseClient } from "@/lib/supabase/server";
 import type {
   CareerQuestion,
   CareerRevealOrder,
@@ -12,7 +12,28 @@ import type {
   RawStatsRecord,
 } from "@/types/game";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── DB row type (snake_case from Supabase) ───────────────────────────────────
+
+type DbRow = {
+  id: number;
+  player_id: number;
+  first_name: string;
+  last_name: string;
+  season_id: number;
+  position_code: string;
+  team_abbrevs: string;
+  team_names: string;
+  games_played: number;
+  goals: number;
+  assists: number;
+  points: number;
+  penalty_minutes: number;
+  active_player: boolean;
+  rookie_flag: boolean;
+  era: string;
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatSeason(seasonId: number): string {
   const s = String(seasonId);
@@ -30,6 +51,33 @@ export function getTierForPoints(points: number): DifficultyTier | null {
   if (points >= 100) return "hard";
   if (points >= 70) return "expert";
   return null;
+}
+
+const TIER_RANGES: Record<DifficultyTier, [number, number]> = {
+  easy: [140, 9999],
+  medium: [120, 139],
+  hard: [100, 119],
+  expert: [70, 99],
+};
+
+function dbToRaw(r: DbRow): RawStatsRecord {
+  return {
+    id: r.id,
+    playerId: r.player_id,
+    firstName: r.first_name,
+    lastName: r.last_name,
+    seasonId: r.season_id,
+    positionCode: r.position_code,
+    teamAbbrevs: r.team_abbrevs,
+    teamNames: r.team_names,
+    gamesPlayed: r.games_played,
+    goals: r.goals,
+    assists: r.assists,
+    points: r.points,
+    penaltyMinutes: r.penalty_minutes,
+    activePlayer: r.active_player,
+    rookieFlag: r.rookie_flag,
+  };
 }
 
 function mapRecord(r: RawStatsRecord): Question {
@@ -55,78 +103,137 @@ function mapRecord(r: RawStatsRecord): Question {
 
 // ─── Public API — Classic ─────────────────────────────────────────────────────
 
-export function getQuestionsByTiers(
+export async function getQuestionsByTiers(
   tiers: DifficultyTier[],
   eras?: string[],
   rookiesOnly?: boolean,
-): Question[] {
+): Promise<Question[]> {
+  if (tiers.length === 0) return [];
+
   const tierSet = new Set(tiers);
-  const eraSet = eras ? new Set(eras) : null;
-  return (stats as RawStatsRecord[])
+  const ranges = tiers.map((t) => TIER_RANGES[t]);
+  const minPts = Math.min(...ranges.map((r) => r[0]));
+  const maxPts = Math.max(...ranges.map((r) => r[1]));
+
+  const db = createSupabaseClient();
+  let query = db
+    .from("nhl_player_seasons")
+    .select("*")
+    .gte("points", minPts);
+
+  if (maxPts < 9999) query = query.lte("points", maxPts);
+  if (eras?.length) query = query.in("era", eras);
+  if (rookiesOnly) query = query.eq("rookie_flag", true);
+
+  const { data, error } = await query;
+  if (error) throw new Error(`getQuestionsByTiers: ${error.message}`);
+
+  // Final filter for non-contiguous tier selections, then map
+  return (data as DbRow[])
     .filter((r) => {
       const tier = getTierForPoints(r.points);
-      if (tier === null || !tierSet.has(tier)) return false;
-      if (eraSet) {
-        const era = getEra(r.seasonId);
-        if (!eraSet.has(era)) return false;
-      }
-      if (rookiesOnly && !r.rookieFlag) return false;
-      return true;
+      return tier !== null && tierSet.has(tier);
     })
-    .map(mapRecord);
+    .map((r) => mapRecord(dbToRaw(r)));
 }
 
-export function getQuestionById(id: string): Question | undefined {
-  const r = (stats as RawStatsRecord[]).find((r) => String(r.id) === id);
-  return r ? mapRecord(r) : undefined;
+export async function getQuestionById(id: string): Promise<Question | undefined> {
+  const db = createSupabaseClient();
+  const { data, error } = await db
+    .from("nhl_player_seasons")
+    .select("*")
+    .eq("id", Number(id))
+    .single();
+
+  if (error || !data) return undefined;
+  return mapRecord(dbToRaw(data as DbRow));
 }
 
-/** Returns unique player names for a given set of tiers (for typeahead search) */
-export function getPlayerNamesByTiers(tiers: DifficultyTier[]): string[] {
+/** Unique player names for typeahead search */
+export async function getPlayerNamesByTiers(
+  tiers: DifficultyTier[],
+): Promise<string[]> {
+  if (tiers.length === 0) return [];
+
+  const ranges = tiers.map((t) => TIER_RANGES[t]);
+  const minPts = Math.min(...ranges.map((r) => r[0]));
+  const maxPts = Math.max(...ranges.map((r) => r[1]));
+
+  const db = createSupabaseClient();
+  let query = db
+    .from("nhl_player_seasons")
+    .select("player_id, first_name, last_name")
+    .gte("points", minPts);
+  if (maxPts < 9999) query = query.lte("points", maxPts);
+
+  const { data, error } = await query;
+  if (error) throw new Error(`getPlayerNamesByTiers: ${error.message}`);
+
+  const tierSet = new Set(tiers);
   const seen = new Set<number>();
   const names: string[] = [];
-  for (const r of stats as RawStatsRecord[]) {
+
+  for (const r of data as Pick<DbRow, "player_id" | "first_name" | "last_name" | "points">[] & DbRow[]) {
     const tier = getTierForPoints(r.points);
-    if (!tier || !tiers.includes(tier)) continue;
-    if (seen.has(r.playerId)) continue;
-    seen.add(r.playerId);
-    names.push(`${r.firstName} ${r.lastName}`);
+    if (!tier || !tierSet.has(tier)) continue;
+    if (seen.has(r.player_id)) continue;
+    seen.add(r.player_id);
+    names.push(`${r.first_name} ${r.last_name}`);
   }
+
   return names.sort();
 }
 
 /** Count of available questions per tier */
-export function getQuestionCounts(): Record<DifficultyTier, number> {
+export async function getQuestionCounts(): Promise<Record<DifficultyTier, number>> {
+  const db = createSupabaseClient();
+  const { data, error } = await db
+    .from("nhl_player_seasons")
+    .select("points")
+    .gte("points", 70);
+
+  if (error) throw new Error(`getQuestionCounts: ${error.message}`);
+
   const counts: Record<DifficultyTier, number> = {
-    easy: 0,
-    medium: 0,
-    hard: 0,
-    expert: 0,
+    easy: 0, medium: 0, hard: 0, expert: 0,
   };
-  for (const r of stats as RawStatsRecord[]) {
+  for (const r of data as Pick<DbRow, "points">[]) {
     const tier = getTierForPoints(r.points);
     if (tier) counts[tier]++;
   }
   return counts;
 }
 
-export function getAvailableQuestionCount(
+export async function getAvailableQuestionCount(
   tiers: DifficultyTier[],
   eras: string[],
   rookiesOnly?: boolean,
-): number {
+): Promise<number> {
+  if (tiers.length === 0 || eras.length === 0) return 0;
+
+  const ranges = tiers.map((t) => TIER_RANGES[t]);
+  const minPts = Math.min(...ranges.map((r) => r[0]));
+  const maxPts = Math.max(...ranges.map((r) => r[1]));
   const tierSet = new Set(tiers);
-  const eraSet = new Set(eras);
-  let count = 0;
-  for (const r of stats as RawStatsRecord[]) {
+
+  const db = createSupabaseClient();
+  let query = db
+    .from("nhl_player_seasons")
+    .select("points", { count: "exact", head: false })
+    .gte("points", minPts)
+    .in("era", eras);
+
+  if (maxPts < 9999) query = query.lte("points", maxPts);
+  if (rookiesOnly) query = query.eq("rookie_flag", true);
+
+  const { data, error } = await query;
+  if (error) throw new Error(`getAvailableQuestionCount: ${error.message}`);
+
+  // Count only exact tier matches (for non-contiguous selections)
+  return (data as Pick<DbRow, "points">[]).filter((r) => {
     const tier = getTierForPoints(r.points);
-    if (tier === null || !tierSet.has(tier)) continue;
-    const era = getEra(r.seasonId);
-    if (!eraSet.has(era)) continue;
-    if (rookiesOnly && !r.rookieFlag) continue;
-    count++;
-  }
-  return count;
+    return tier !== null && tierSet.has(tier);
+  }).length;
 }
 
 // ─── Career Mode ──────────────────────────────────────────────────────────────
@@ -137,14 +244,15 @@ function selectCareerSeasons(
 ): RawStatsRecord[] {
   if (seasons.length <= maxReveals) return [...seasons];
 
-  // Build a priority set: best season, worst season, rookie season, team-change seasons
   const byPoints = [...seasons].sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
-  const mustInclude = new Set<number>([byPoints[0].id, byPoints[byPoints.length - 1].id]);
+  const mustInclude = new Set<number>([
+    byPoints[0].id,
+    byPoints[byPoints.length - 1].id,
+  ]);
 
   const rookie = seasons.find((s) => s.rookieFlag);
   if (rookie) mustInclude.add(rookie.id);
 
-  // Detect team changes (chronological order)
   const chrono = [...seasons].sort((a, b) => a.seasonId - b.seasonId);
   let prevTeam = "";
   for (const s of chrono) {
@@ -155,14 +263,11 @@ function selectCareerSeasons(
   }
 
   const selected = seasons.filter((s) => mustInclude.has(s.id));
-
-  // Fill remaining slots with highest-point seasons not yet selected
   const remaining = byPoints.filter((s) => !mustInclude.has(s.id));
   for (const s of remaining) {
     if (selected.length >= maxReveals) break;
     selected.push(s);
   }
-
   return selected;
 }
 
@@ -185,22 +290,34 @@ function orderSeasons(
   }
 }
 
-export function getCareerQuestions(options: {
+export async function getCareerQuestions(options: {
   minSeasons: number;
   maxReveals: number;
   revealOrder: CareerRevealOrder;
   eras?: string[];
   count: number;
   excludePlayerIds?: number[];
-}): CareerQuestion[] {
-  const eraSet = options.eras ? new Set(options.eras) : null;
-  const excludeSet = new Set(options.excludePlayerIds ?? []);
+}): Promise<CareerQuestion[]> {
+  const db = createSupabaseClient();
 
-  // Group stats by playerId, filtered by era
+  // Fetch all seasons matching the era filter in one query
+  let query = db.from("nhl_player_seasons").select("*");
+  if (options.eras?.length) query = query.in("era", options.eras);
+  if (options.excludePlayerIds?.length) {
+    query = query.not(
+      "player_id",
+      "in",
+      `(${options.excludePlayerIds.join(",")})`,
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(`getCareerQuestions: ${error.message}`);
+
+  // Group by player in JS
   const byPlayer = new Map<number, RawStatsRecord[]>();
-  for (const r of stats as RawStatsRecord[]) {
-    if (excludeSet.has(r.playerId)) continue;
-    if (eraSet && !eraSet.has(getEra(r.seasonId))) continue;
+  for (const row of data as DbRow[]) {
+    const r = dbToRaw(row);
     const existing = byPlayer.get(r.playerId) ?? [];
     existing.push(r);
     byPlayer.set(r.playerId, existing);
@@ -212,8 +329,10 @@ export function getCareerQuestions(options: {
 
     const selected = selectCareerSeasons(seasons, options.maxReveals);
     const ordered = orderSeasons(selected, options.revealOrder);
-
-    const totalCareerPoints = seasons.reduce((sum, s) => sum + (s.points ?? 0), 0);
+    const totalCareerPoints = seasons.reduce(
+      (sum, s) => sum + (s.points ?? 0),
+      0,
+    );
     const first = seasons[0];
 
     candidates.push({
@@ -225,26 +344,31 @@ export function getCareerQuestions(options: {
     });
   }
 
-  // Shuffle and return requested count
   candidates.sort(() => Math.random() - 0.5);
   return candidates.slice(0, options.count);
 }
 
-/** Count of players eligible for career mode with the given settings */
-export function getCareerPlayerCount(options: {
+/** Count of players eligible for career mode */
+export async function getCareerPlayerCount(options: {
   minSeasons: number;
   eras?: string[];
-}): number {
-  const eraSet = options.eras ? new Set(options.eras) : null;
-  const byPlayer = new Map<number, number>();
+}): Promise<number> {
+  const db = createSupabaseClient();
+  let query = db
+    .from("nhl_player_seasons")
+    .select("player_id");
+  if (options.eras?.length) query = query.in("era", options.eras);
 
-  for (const r of stats as RawStatsRecord[]) {
-    if (eraSet && !eraSet.has(getEra(r.seasonId))) continue;
-    byPlayer.set(r.playerId, (byPlayer.get(r.playerId) ?? 0) + 1);
+  const { data, error } = await query;
+  if (error) throw new Error(`getCareerPlayerCount: ${error.message}`);
+
+  // Count players per player_id and return those with >= minSeasons
+  const counts = new Map<number, number>();
+  for (const r of data as Pick<DbRow, "player_id">[]) {
+    counts.set(r.player_id, (counts.get(r.player_id) ?? 0) + 1);
   }
-
   let count = 0;
-  for (const [, n] of byPlayer) {
+  for (const n of counts.values()) {
     if (n >= options.minSeasons) count++;
   }
   return count;
@@ -252,14 +376,13 @@ export function getCareerPlayerCount(options: {
 
 // ─── Head-to-Head Mode ────────────────────────────────────────────────────────
 
-export function getH2HPairs(options: {
+export async function getH2HPairs(options: {
   tiers: DifficultyTier[];
   eras?: string[];
   count: number;
-}): H2HPair[] {
-  const pool = getQuestionsByTiers(options.tiers, options.eras);
+}): Promise<H2HPair[]> {
+  const pool = await getQuestionsByTiers(options.tiers, options.eras);
 
-  // Group by era + 20-point bucket for matched pairs
   const buckets = new Map<string, Question[]>();
   for (const q of pool) {
     const key = `${q.era}-${Math.floor(q.points / 20)}`;
@@ -268,7 +391,6 @@ export function getH2HPairs(options: {
     buckets.set(key, bucket);
   }
 
-  // Only buckets with 2+ distinct players
   const validBuckets = [...buckets.values()].filter((questions) => {
     const unique = new Set(questions.map((q) => q.playerId));
     return unique.size >= 2;
@@ -276,8 +398,8 @@ export function getH2HPairs(options: {
 
   const pairs: H2HPair[] = [];
   const usedIds = new Set<string>();
-
   let attempts = 0;
+
   while (pairs.length < options.count && attempts < options.count * 10) {
     attempts++;
     const bucket = validBuckets[Math.floor(Math.random() * validBuckets.length)];
@@ -311,13 +433,13 @@ export function getH2HPairs(options: {
 
 // ─── Higher/Lower Mode ────────────────────────────────────────────────────────
 
-export function getHLPairs(options: {
+export async function getHLPairs(options: {
   tiers: DifficultyTier[];
   eras?: string[];
   field: HLComparisonField;
   count: number;
-}): HLPair[] {
-  const pool = getQuestionsByTiers(options.tiers, options.eras);
+}): Promise<HLPair[]> {
+  const pool = await getQuestionsByTiers(options.tiers, options.eras);
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
 
   const pairs: HLPair[] = [];
@@ -329,16 +451,13 @@ export function getHLPairs(options: {
 
     const challenge = shuffled.find(
       (q, j) =>
-        j !== i &&
-        !usedIds.has(q.id) &&
-        q.playerId !== reference.playerId,
+        j !== i && !usedIds.has(q.id) && q.playerId !== reference.playerId,
     );
     if (!challenge) continue;
 
     const refValue = reference[options.field as keyof Question] as number;
     const chalValue = challenge[options.field as keyof Question] as number;
 
-    // Skip ties — they make for bad questions
     if (refValue === chalValue) continue;
 
     usedIds.add(reference.id);

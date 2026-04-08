@@ -14,7 +14,7 @@ export async function checkAvailableCount(
   rookiesOnly?: boolean,
 ) {
   if (tiers.length === 0 || eras.length === 0) return 0;
-  return getAvailableQuestionCount(tiers, eras, rookiesOnly);
+  return await getAvailableQuestionCount(tiers, eras, rookiesOnly);
 }
 
 export async function checkCareerPlayerCount(
@@ -22,7 +22,7 @@ export async function checkCareerPlayerCount(
   eras: string[],
 ) {
   if (eras.length === 0) return 0;
-  return getCareerPlayerCount({ minSeasons, eras });
+  return await getCareerPlayerCount({ minSeasons, eras });
 }
 
 /** Returns today's date as a UTC string, e.g. "2026-04-06". Used as the localStorage and DB key. */
@@ -32,7 +32,7 @@ export async function getTodayDateString(): Promise<string> {
 
 /** Returns the same question for every user on the same UTC day. No repeats for 16+ years. */
 export async function getDailyChallenge(): Promise<Question | null> {
-  const pool = getQuestionsByTiers(["easy", "medium", "hard", "expert"]);
+  const pool = await getQuestionsByTiers(["easy", "medium", "hard", "expert"]);
   if (pool.length === 0) return null;
 
   // Sort by numeric ID for a stable, deterministic ordering

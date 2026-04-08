@@ -115,3 +115,8 @@ timeline.xctimeline
 playground.xcworkspace
 node_modules
 .vercel
+
+# NHL stats data — stored in Supabase, not committed
+scores.js
+scores.js.tmp
+scripts/.scrape-checkpoint.json
