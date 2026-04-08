@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { nanoid } from "nanoid";
 import { RoomProvider } from "./client";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveObject } from "@liveblocks/client";
@@ -11,7 +12,8 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     roomId,
     hostId,
     bossId: "",
-    bossToken: "",
+    bossToken: nanoid(12),
+    hostPlays: true,
     players: [],
     command: "idle",
     countdownTime: 3,

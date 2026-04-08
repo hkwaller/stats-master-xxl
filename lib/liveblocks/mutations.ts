@@ -118,7 +118,7 @@ export function useJoinGame() {
   )
 }
 
-// ─── Claim Boss ───────────────────────────────────────────────────────────────
+// ─── Claim Boss (via shareable token) ────────────────────────────────────────
 
 export function useClaimBoss() {
   return useMutation(
@@ -135,6 +135,33 @@ export function useClaimBoss() {
       players.forEach((p, i) => {
         if (p.id === playerId) {
           players.set(i, { ...p, isBoss: true })
+        } else if (p.isBoss) {
+          players.set(i, { ...p, isBoss: false })
+        }
+      })
+    },
+    [],
+  )
+}
+
+// ─── Assign Boss (host directly assigns any player as boss) ──────────────────
+
+export function useAssignBoss() {
+  return useMutation(
+    ({ storage }, { requesterId, playerId }: { requesterId: string; playerId: string | null }) => {
+      const game = getGame(storage)
+      if (!game) return
+
+      const hostId = game.get('hostId') as string
+      if (requesterId !== hostId) return
+
+      game.set('bossId', playerId ?? '')
+
+      const players = getPlayers(game)
+      players.forEach((p, i) => {
+        const shouldBeBoss = playerId !== null && p.id === playerId
+        if (p.isBoss !== shouldBeBoss) {
+          players.set(i, { ...p, isBoss: shouldBeBoss })
         }
       })
     },
@@ -170,6 +197,7 @@ export function useSaveSettings() {
       game.set('careerMinSeasons', config.careerMinSeasons)
       game.set('careerMaxReveals', config.careerMaxReveals)
       game.set('hlComparisonField', config.hlComparisonField as unknown as import('@/types/game').HLComparisonField)
+      game.set('hostPlays', config.hostPlays)
     },
     [],
   )
@@ -437,6 +465,32 @@ export function useAdvanceToNext() {
     const questionCount = (game.get('questionCount') as number) ?? sequence.length
 
     game.set('reveal', false)
+
+    if (currentIndex + 1 >= Math.min(questionCount, sequence.length)) {
+      game.set('command', 'finished')
+    } else {
+      game.set('command', 'next')
+    }
+  }, [])
+}
+
+// ─── Skip Question ────────────────────────────────────────────────────────────
+
+export function useSkipQuestion() {
+  return useMutation(({ storage }, requesterId: string) => {
+    const game = getGame(storage)
+    if (!game) return
+
+    const hostId = game.get('hostId') as string
+    const bossId = game.get('bossId') as string
+    if (requesterId !== hostId && requesterId !== bossId) return
+
+    const command = game.get('command') as string
+    if (command !== 'answering') return
+
+    const currentIndex = (game.get('currentQuestionIndex') as number) ?? 0
+    const sequence = (game.get('questionSequence') as unknown as Question[]) || []
+    const questionCount = (game.get('questionCount') as number) ?? sequence.length
 
     if (currentIndex + 1 >= Math.min(questionCount, sequence.length)) {
       game.set('command', 'finished')

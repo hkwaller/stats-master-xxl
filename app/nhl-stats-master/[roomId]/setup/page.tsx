@@ -193,6 +193,48 @@ export default function SetupPage({ params }: SetupPageProps) {
 
             <GameDivider />
 
+            {/* ── Host plays ── */}
+            <div className="space-y-3">
+              <p className="text-sm font-bold uppercase tracking-widest text-black">
+                Host
+              </p>
+              <button
+                disabled={!isHost}
+                onClick={() => setConfig((c) => ({ ...c, hostPlays: !c.hostPlays }))}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3 border-2 border-black
+                  text-left transition-all shadow-[2px_2px_0_#000]
+                  ${config.hostPlays
+                    ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                    : 'bg-white text-black hover:bg-cyan/20'
+                  }
+                  disabled:cursor-not-allowed
+                `}
+              >
+                <span className="text-xl">🎮</span>
+                <div className="flex-1">
+                  <div className="font-bold text-sm text-black">
+                    {config.hostPlays ? 'This Device Plays' : 'Spectator / TV Mode'}
+                  </div>
+                  <div className="text-xs text-black/70 font-bold">
+                    {config.hostPlays
+                      ? 'This device joins as a scoring player'
+                      : 'This device only shows the game — assign a player as Boss to control it'}
+                  </div>
+                </div>
+                <div
+                  className={`
+                    w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000]
+                    ${config.hostPlays ? 'bg-magenta border-black' : 'bg-white'}
+                  `}
+                >
+                  {config.hostPlays && <span className="text-white text-md font-bold">✓</span>}
+                </div>
+              </button>
+            </div>
+
+            <GameDivider />
+
             {/* ── Question / Round count ── */}
             <div className="space-y-3">
               <p className="text-sm font-bold uppercase tracking-widest text-black">

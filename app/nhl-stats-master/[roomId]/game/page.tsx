@@ -3,12 +3,31 @@
 /**
  * Shared "TV screen" view — display-only, no input.
  * Open this on a projector/laptop while players use /player/[id] on their phones.
- * The host's player page drives the game state machine.
+ * When host is not playing (hostPlays=false), this page also drives the state machine.
  */
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStorage } from '@/lib/liveblocks/client'
+import {
+  useAdvanceToNext,
+  useNextCareerRound,
+  useNextH2HRound,
+  useNextHLRound,
+  useNextQuestion,
+  useRematch,
+  useRevealAnswers,
+  useRevealCareerAnswer,
+  useRevealH2HAnswers,
+  useRevealHLAnswers,
+  useRevealNextCareerSeason,
+  useSkipQuestion,
+  useTickCountdown,
+} from '@/lib/liveblocks/mutations'
+import { getOrCreateGuest } from '@/lib/guest'
+import { useHostStateMachine } from '@/hooks/useHostStateMachine'
+import Dock from '@/components/ui/Dock'
 import { StatsCard } from '@/components/game/StatsCard'
 import { Scoreboard } from '@/components/game/Scoreboard'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
@@ -29,12 +48,55 @@ const MODE_LABELS: Record<string, string> = {
 }
 
 export default function GamePage({ params: paramsPromise }: GamePageProps) {
+  const router = useRouter()
   const [roomId, setRoomId] = useState('')
+  const [myId, setMyId] = useState('')
   const game = useStorage((root) => root.game)
+
+  // Mutations (needed when host is not playing and drives the machine from here)
+  const tickCountdown = useTickCountdown()
+  const nextQuestion = useNextQuestion()
+  const nextCareerRound = useNextCareerRound()
+  const revealNextCareerSeason = useRevealNextCareerSeason()
+  const revealCareerAnswer = useRevealCareerAnswer()
+  const nextH2HRound = useNextH2HRound()
+  const nextHLRound = useNextHLRound()
+  const revealAnswers = useRevealAnswers()
+  const revealH2HAnswers = useRevealH2HAnswers()
+  const revealHLAnswers = useRevealHLAnswers()
+  const advanceToNext = useAdvanceToNext()
+  const skipQuestion = useSkipQuestion()
+  const rematch = useRematch()
 
   useEffect(() => {
     paramsPromise.then(({ roomId }) => setRoomId(roomId))
+    const guest = getOrCreateGuest()
+    setMyId(guest.id)
   }, [paramsPromise])
+
+  const isHost = game?.hostId === myId
+  const isBoss = game?.bossId === myId
+  const isController = isHost || isBoss
+
+  // Drive the state machine from the game page when host is not playing
+  useHostStateMachine(isHost, myId, game as unknown as import('@/types/game').GameState | null, {
+    tickCountdown,
+    nextQuestion,
+    nextCareerRound,
+    revealNextCareerSeason,
+    revealCareerAnswer,
+    nextH2HRound,
+    nextHLRound,
+    revealAnswers,
+    revealH2HAnswers,
+    revealHLAnswers,
+  })
+
+  // Redirect everyone to lobby on rematch
+  useEffect(() => {
+    if (!game || game.command !== 'rematch') return
+    router.push(`/nhl-stats-master/${roomId}/lobby`)
+  }, [game?.command])
 
   if (!game) return null
 
@@ -240,6 +302,114 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           />
         </aside>
       </div>
+
+      {/* ── Controller Dock (only visible when viewing as host/boss) ── */}
+      {isController && (
+        <GamePageDock
+          game={game as unknown as import('@/types/game').GameState}
+          gameMode={gameMode}
+          isBoss={isBoss}
+          onReveal={() => {
+            if (gameMode === 'career') revealCareerAnswer(myId)
+            else if (gameMode === 'h2h') revealH2HAnswers(myId)
+            else if (gameMode === 'higher-lower') revealHLAnswers(myId)
+            else revealAnswers(myId)
+          }}
+          onSkip={() => skipQuestion(myId)}
+          onNext={() => advanceToNext(myId)}
+          onRematch={() => rematch(myId)}
+          onSettings={() => router.push(`/nhl-stats-master/${roomId}/setup`)}
+        />
+      )}
     </main>
+  )
+}
+
+// ─── Game Page Dock ───────────────────────────────────────────────────────────
+
+function GamePageDock({
+  game,
+  gameMode,
+  isBoss,
+  onReveal,
+  onSkip,
+  onNext,
+  onRematch,
+  onSettings,
+}: {
+  game: import('@/types/game').GameState | null
+  gameMode: string
+  isBoss: boolean
+  onReveal: () => void
+  onSkip: () => void
+  onNext: () => void
+  onRematch: () => void
+  onSettings: () => void
+}) {
+  if (!game) return null
+
+  const command = game.command as string
+  const label = isBoss ? 'Boss Controls' : 'Host Controls'
+  const nextLabel = gameMode === 'classic' ? 'Next Question' : 'Next Round'
+
+  type Item = { icon: React.ReactNode; label: React.ReactNode; onClick: () => void; className?: string }
+  const items: Item[] = []
+
+  if (command === 'answering') {
+    items.push({
+      icon: <span className="text-2xl">⏭</span>,
+      label: 'Reveal',
+      onClick: onReveal,
+      className: 'bg-game-red border-2 border-black text-white',
+    })
+    items.push({
+      icon: <span className="text-2xl">⏩</span>,
+      label: 'Skip',
+      onClick: onSkip,
+      className: 'bg-yellow border-2 border-black text-black',
+    })
+  }
+
+  if (command === 'revealing') {
+    items.push({
+      icon: <span className="text-2xl">▶️</span>,
+      label: nextLabel,
+      onClick: onNext,
+      className: 'bg-cyan border-2 border-black text-black',
+    })
+  }
+
+  if (command === 'finished') {
+    items.push({
+      icon: <span className="text-2xl">🔁</span>,
+      label: 'Play Again',
+      onClick: onRematch,
+      className: 'bg-magenta border-2 border-black text-white',
+    })
+    items.push({
+      icon: <span className="text-2xl">⚙️</span>,
+      label: 'Settings',
+      onClick: onSettings,
+      className: 'bg-white border-2 border-black text-black',
+    })
+  }
+
+  if (items.length === 0) return null
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 flex flex-col items-center pb-4 pointer-events-none z-50">
+      <p className="text-xs font-bold uppercase tracking-widest text-game-text-muted mb-1 bg-game-bg/80 px-2 py-0.5 border border-game-card-border backdrop-blur-sm">
+        {label}
+      </p>
+      <div className="pointer-events-auto">
+        <Dock
+          items={items}
+          baseItemSize={52}
+          magnification={68}
+          panelHeight={68}
+          distance={130}
+        />
+      </div>
+    </div>
   )
 }

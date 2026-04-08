@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useStorage } from '@/lib/liveblocks/client'
-import { useJoinGame } from '@/lib/liveblocks/mutations'
+import { useClaimBoss, useJoinGame } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest, updateGuestName } from '@/lib/guest'
 import { getAvatarUrl } from '@/lib/avatar'
 import { Button, GameLogo } from '@/components/design-system'
@@ -15,6 +15,7 @@ interface ConnectPageProps {
 
 export default function ConnectPage({ params }: ConnectPageProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [roomId, setRoomId] = useState('')
   const [name, setName] = useState('')
   const [guestId, setGuestId] = useState('')
@@ -22,6 +23,9 @@ export default function ConnectPage({ params }: ConnectPageProps) {
 
   const game = useStorage((root) => root.game)
   const joinGame = useJoinGame()
+  const claimBoss = useClaimBoss()
+
+  const bossToken = searchParams.get('boss')
 
   useEffect(() => {
     params.then(({ roomId }) => setRoomId(roomId))
@@ -35,6 +39,9 @@ export default function ConnectPage({ params }: ConnectPageProps) {
     setJoining(true)
     updateGuestName(name.trim())
     joinGame({ id: guestId, name: name.trim() })
+    if (bossToken) {
+      claimBoss({ playerId: guestId, token: bossToken })
+    }
     router.push(`/nhl-stats-master/${roomId}/player/${guestId}`)
   }
 
@@ -51,6 +58,17 @@ export default function ConnectPage({ params }: ConnectPageProps) {
             </p>
           )}
         </div>
+
+        {bossToken && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-yellow border-2 border-black px-4 py-3 text-center shadow-[4px_4px_0_#000]"
+          >
+            <p className="font-bold text-black text-sm">👑 Boss Invite</p>
+            <p className="text-xs text-black/70">You will have host controls after joining</p>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}

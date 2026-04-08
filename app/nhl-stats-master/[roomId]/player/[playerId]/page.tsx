@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStorage } from "@/lib/liveblocks/client";
@@ -19,11 +19,14 @@ import {
   useRevealH2HAnswers,
   useRevealHLAnswers,
   useRevealNextCareerSeason,
+  useSkipQuestion,
   useSubmitAnswer,
   useSubmitCareerAnswer,
   useTickCountdown,
 } from "@/lib/liveblocks/mutations";
 import { getOrCreateGuest } from "@/lib/guest";
+import { useHostStateMachine } from "@/hooks/useHostStateMachine";
+import Dock from "@/components/ui/Dock";
 import { StatsCard } from "@/components/game/StatsCard";
 import { CareerRevealCard } from "@/components/game/CareerRevealCard";
 import { BuzzInButton } from "@/components/game/BuzzInButton";
@@ -49,7 +52,7 @@ import type {
   Question,
   QuestionResult,
 } from "@/types/game";
-import { CAREER_REVEAL_INTERVAL_MS, POWERUP_INITIAL_CHARGES } from "@/types/game";
+import { POWERUP_INITIAL_CHARGES } from "@/types/game";
 
 interface PlayerPageProps {
   params: Promise<{ roomId: string; playerId: string }>;
@@ -68,6 +71,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const requestHint = useRequestHint();
   const activatePowerup = useActivatePowerup();
   const advanceToNext = useAdvanceToNext();
+  const skipQuestion = useSkipQuestion();
   const revealAnswers = useRevealAnswers();
   const rematch = useRematch();
   const tickCountdown = useTickCountdown();
@@ -138,85 +142,18 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   };
 
   // ── Host-driven state machine ─────────────────────────────────────────────────
-
-  // Countdown ticker
-  useEffect(() => {
-    if (!isHost || !game) return;
-    if (game.command !== "starting" || game.countdownTime <= 0) return;
-    const timer = setTimeout(() => tickCountdown(myId), 1000);
-    return () => clearTimeout(timer);
-  }, [isHost, game?.command, game?.countdownTime, myId, tickCountdown]);
-
-  // Classic: launch first/next question
-  useEffect(() => {
-    if (!isHost || !game || gameMode !== "classic") return;
-    if (game.command !== "question" && game.command !== "next") return;
-    const sequence = (game.questionSequence as unknown as Question[]) ?? [];
-    const nextIndex = (game.currentQuestionIndex ?? -1) + 1;
-    if (nextIndex >= sequence.length) return;
-    const nextQ = sequence[nextIndex];
-    nextQuestion({ requesterId: myId, choices: nextQ.choices ?? [] });
-  }, [isHost, game?.command, gameMode]);
-
-  // Career: launch next career round
-  useEffect(() => {
-    if (!isHost || !game || gameMode !== "career") return;
-    if (game.command !== "question" && game.command !== "next") return;
-    nextCareerRound({ requesterId: myId });
-  }, [isHost, game?.command, gameMode]);
-
-  // Career: reveal timer — reveals one season every CAREER_REVEAL_INTERVAL_MS
-  useEffect(() => {
-    if (!isHost || !game || gameMode !== "career") return;
-    if (game.command !== "answering") return;
-
-    if (careerSeasons.length === 0) return;
-
-    if (revealedSeasonCount >= careerSeasons.length) {
-      // All seasons shown and nobody got it — reveal the answer
-      revealCareerAnswer(myId);
-      return;
-    }
-
-    // Schedule the next reveal
-    const timer = setTimeout(() => {
-      revealNextCareerSeason(myId);
-    }, CAREER_REVEAL_INTERVAL_MS);
-
-    return () => clearTimeout(timer);
-  }, [isHost, game?.command, gameMode, revealedSeasonCount, careerSeasons.length]);
-
-  // H2H: launch next round
-  useEffect(() => {
-    if (!isHost || !game || gameMode !== "h2h") return;
-    if (game.command !== "question" && game.command !== "next") return;
-    nextH2HRound({ requesterId: myId });
-  }, [isHost, game?.command, gameMode]);
-
-  // HL: launch next round
-  useEffect(() => {
-    if (!isHost || !game || gameMode !== "higher-lower") return;
-    if (game.command !== "question" && game.command !== "next") return;
-    nextHLRound({ requesterId: myId });
-  }, [isHost, game?.command, gameMode]);
-
-  // Classic: auto-reveal when all connected players have answered
-  useEffect(() => {
-    if (!isHost || !game) return;
-    if (gameMode === "career") return; // career has its own reveal logic
-    if (game.command !== "answering") return;
-    const allPlayers = (game.players as unknown as Player[]) ?? [];
-    const connectedCount = allPlayers.filter((p) => p.isConnected).length;
-    if (connectedCount > 0 && answeredCount >= connectedCount) {
-      if (gameMode === "h2h") {
-        revealH2HAnswers(myId);
-      } else if (gameMode === "higher-lower") {
-        revealHLAnswers(myId);
-      } else {
-        revealAnswers(myId);
-      }
-    }
-  }, [isHost, game?.command, answeredCount, gameMode, myId]);
+  useHostStateMachine(isHost, myId, game as unknown as import("@/types/game").GameState | null, {
+    tickCountdown,
+    nextQuestion,
+    nextCareerRound,
+    revealNextCareerSeason,
+    revealCareerAnswer,
+    nextH2HRound,
+    nextHLRound,
+    revealAnswers,
+    revealH2HAnswers,
+    revealHLAnswers,
+  });
 
   // Redirect everyone to lobby on rematch
   useEffect(() => {
@@ -290,7 +227,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-5 max-w-lg mx-auto w-full">
+      <div className={`flex-1 overflow-y-auto px-4 py-6 space-y-5 max-w-lg mx-auto w-full ${isController ? "pb-28" : ""}`}>
         {/* Idle */}
         {game.command === "idle" && (
           <div className="text-center py-16">
@@ -405,11 +342,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                             </span>
                           </p>
                         )}
-                        {isController && (
-                          <Button variant={isCorrect ? "secondary" : "primary"} size="lg" className="mt-6 w-full shadow-[4px_4px_0_#000] border-4" onClick={() => advanceToNext(myId)}>
-                            Next Question →
-                          </Button>
-                        )}
                       </motion.div>
                     );
                   })()}
@@ -512,11 +444,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                             {currentQuestion.firstName} {currentQuestion.lastName}
                           </h3>
                         </div>
-                        {isController && (
-                          <Button variant="primary" size="lg" className="mt-5 w-full" onClick={() => advanceToNext(myId)}>
-                            Next Round →
-                          </Button>
-                        )}
                       </motion.div>
                     );
                   })()}
@@ -529,18 +456,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                     onBuzzIn={handleBuzzIn}
                     onSubmitAnswer={handleCareerAnswer}
                   />
-                )}
-
-                {/* Host override for career */}
-                {isController && game.command === "answering" && (
-                  <div className="border-t border-game-card-border pt-4 space-y-2">
-                    <p className="text-xs text-game-red uppercase tracking-widest text-center font-bold">
-                      {isBoss ? "Boss Controls" : "Host Controls"}
-                    </p>
-                    <Button variant="danger" size="sm" className="w-full" onClick={() => revealCareerAnswer(myId)}>
-                      ⏭ Reveal Answer Now
-                    </Button>
-                  </div>
                 )}
               </motion.div>
             )}
@@ -595,11 +510,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                         {isCorrect && pts > 0 && (
                           <p className="font-mono font-bold mt-1">+{pts} pts</p>
                         )}
-                        {isController && (
-                          <Button variant="secondary" size="lg" className="mt-4 w-full" onClick={() => advanceToNext(myId)}>
-                            Next Round →
-                          </Button>
-                        )}
                       </motion.div>
                     );
                   })()}
@@ -607,14 +517,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 {game.command === "answering" && (
                   <div className="flex items-center gap-2 text-xs text-game-text-muted justify-center pt-1">
                     <span>{answeredCount}/{connectedPlayers.length} answered</span>
-                  </div>
-                )}
-
-                {isController && game.command === "answering" && (
-                  <div className="border-t border-game-card-border pt-4">
-                    <Button variant="danger" size="sm" className="w-full" onClick={() => revealH2HAnswers(myId)}>
-                      ⏭ Reveal Now
-                    </Button>
                   </div>
                 )}
               </motion.div>
@@ -670,11 +572,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                         {isCorrect && pts > 0 && (
                           <p className="font-mono font-bold mt-1">+{pts} pts</p>
                         )}
-                        {isController && (
-                          <Button variant="secondary" size="lg" className="mt-4 w-full" onClick={() => advanceToNext(myId)}>
-                            Next Round →
-                          </Button>
-                        )}
                       </motion.div>
                     );
                   })()}
@@ -684,29 +581,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                     <span>{answeredCount}/{connectedPlayers.length} answered</span>
                   </div>
                 )}
-
-                {isController && game.command === "answering" && (
-                  <div className="border-t border-game-card-border pt-4">
-                    <Button variant="danger" size="sm" className="w-full" onClick={() => revealHLAnswers(myId)}>
-                      ⏭ Reveal Now
-                    </Button>
-                  </div>
-                )}
               </motion.div>
             )}
         </AnimatePresence>
-
-        {/* Classic host controls */}
-        {isController && game.command === "answering" && gameMode === "classic" && (
-          <div className="border-t border-game-card-border pt-4 space-y-2">
-            <p className="text-xs text-game-red uppercase tracking-widest text-center font-bold">
-              {isBoss ? "Boss Controls" : "Host Controls"}
-            </p>
-            <Button variant="danger" size="sm" className="w-full" onClick={() => revealAnswers(myId)}>
-              ⏭ Reveal Answers Now
-            </Button>
-          </div>
-        )}
 
         {/* Game finished */}
         <AnimatePresence>
@@ -730,20 +607,32 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 gameMode={gameMode}
               />
 
-              {isController && (
-                <div className="space-y-3 pt-2">
-                  <Button variant="primary" size="lg" className="w-full" onClick={() => rematch(myId)}>
-                    🔁 Play Again
-                  </Button>
-                  <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(`/nhl-stats-master/${roomId}/setup`)}>
-                    Change Settings
-                  </Button>
-                </div>
+              {!isController && (
+                <p className="text-center text-game-text-muted text-sm pt-2">Waiting for host to restart…</p>
               )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── Controller Dock (host / boss) ── */}
+      {isController && (
+        <ControllerDock
+          game={game as unknown as import("@/types/game").GameState}
+          gameMode={gameMode}
+          isBoss={isBoss}
+          onReveal={() => {
+            if (gameMode === "career") revealCareerAnswer(myId);
+            else if (gameMode === "h2h") revealH2HAnswers(myId);
+            else if (gameMode === "higher-lower") revealHLAnswers(myId);
+            else revealAnswers(myId);
+          }}
+          onSkip={() => skipQuestion(myId)}
+          onNext={() => advanceToNext(myId)}
+          onRematch={() => rematch(myId)}
+          onSettings={() => router.push(`/nhl-stats-master/${roomId}/setup`)}
+        />
+      )}
     </main>
   );
 }
@@ -810,4 +699,94 @@ function QuestionHistory({
       })}
     </div>
   );
+}
+
+// ─── Controller Dock ──────────────────────────────────────────────────────────
+
+function ControllerDock({
+  game,
+  gameMode,
+  isBoss,
+  onReveal,
+  onSkip,
+  onNext,
+  onRematch,
+  onSettings,
+}: {
+  game: import("@/types/game").GameState | null
+  gameMode: string
+  isBoss: boolean
+  onReveal: () => void
+  onSkip: () => void
+  onNext: () => void
+  onRematch: () => void
+  onSettings: () => void
+}) {
+  if (!game) return null
+
+  const command = game.command as string
+  const label = isBoss ? "Boss" : "Host"
+
+  const nextLabel = gameMode === "classic" ? "Next Question" : "Next Round"
+
+  type Item = { icon: React.ReactNode; label: React.ReactNode; onClick: () => void; className?: string }
+  const items: Item[] = []
+
+  if (command === "answering") {
+    items.push({
+      icon: <span className="text-2xl">⏭</span>,
+      label: "Reveal",
+      onClick: onReveal,
+      className: "bg-game-red border-2 border-black text-white",
+    })
+    items.push({
+      icon: <span className="text-2xl">⏩</span>,
+      label: "Skip",
+      onClick: onSkip,
+      className: "bg-yellow border-2 border-black text-black",
+    })
+  }
+
+  if (command === "revealing") {
+    items.push({
+      icon: <span className="text-2xl">▶️</span>,
+      label: nextLabel,
+      onClick: onNext,
+      className: "bg-cyan border-2 border-black text-black",
+    })
+  }
+
+  if (command === "finished") {
+    items.push({
+      icon: <span className="text-2xl">🔁</span>,
+      label: "Play Again",
+      onClick: onRematch,
+      className: "bg-magenta border-2 border-black text-white",
+    })
+    items.push({
+      icon: <span className="text-2xl">⚙️</span>,
+      label: "Settings",
+      onClick: onSettings,
+      className: "bg-white border-2 border-black text-black",
+    })
+  }
+
+  if (items.length === 0) return null
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 flex flex-col items-center pb-4 pointer-events-none z-50">
+      <p className="text-xs font-bold uppercase tracking-widest text-game-text-muted mb-1 bg-game-bg/80 px-2 py-0.5 border border-game-card-border backdrop-blur-sm">
+        {label} Controls
+      </p>
+      <div className="pointer-events-auto">
+        <Dock
+          items={items}
+          baseItemSize={52}
+          magnification={68}
+          panelHeight={68}
+          distance={130}
+        />
+      </div>
+    </div>
+  )
 }

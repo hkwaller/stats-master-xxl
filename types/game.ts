@@ -91,6 +91,7 @@ export type GameState = {
   hostId: string
   bossId: string        // '' if no boss set
   bossToken: string     // random token for boss claim URL
+  hostPlays: boolean    // whether the host also joins as a scoring player
 
   // Players — stored as LiveList<Player> in Liveblocks
   players: Player[]
@@ -199,6 +200,7 @@ export type GameSetupConfig = Pick<
   | 'careerMinSeasons'
   | 'careerMaxReveals'
   | 'hlComparisonField'
+  | 'hostPlays'
 >
 
 export const DEFAULT_SETUP: GameSetupConfig = {
@@ -215,6 +217,7 @@ export const DEFAULT_SETUP: GameSetupConfig = {
   careerMinSeasons: 5,
   careerMaxReveals: 8,
   hlComparisonField: 'points',
+  hostPlays: true,
 }
 
 // ─── Scoring ─────────────────────────────────────────────────────────────────
