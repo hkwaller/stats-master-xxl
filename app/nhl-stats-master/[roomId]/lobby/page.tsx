@@ -207,7 +207,9 @@ export default function LobbyPage({ params }: LobbyPageProps) {
 
   return (
     <main className="game-bg-pattern min-h-screen px-4 py-8">
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="max-w-lg md:max-w-4xl mx-auto space-y-6">
+
+        {/* Header */}
         <div className="flex items-center justify-between">
           <GameLogo />
           <div className="text-right">
@@ -217,97 +219,148 @@ export default function LobbyPage({ params }: LobbyPageProps) {
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Panel className="p-6 space-y-5">
-            <div className="flex items-center justify-between">
+          <Panel className="p-6">
+
+            {/* Panel header */}
+            <div className="flex items-center justify-between mb-5">
               <GameHeading>Lobby</GameHeading>
               <span className="text-xs font-bold uppercase tracking-widest bg-magenta text-white px-2 py-1 border-2 border-black shadow-[2px_2px_0_#000]">
                 {modeName}
               </span>
             </div>
 
-            {/* Join link + QR */}
-            <div className="flex gap-4 items-start">
-              <div className="bg-white p-2 rounded-xl flex-shrink-0">
-                {connectUrl && (
-                  <QRCodeSVG value={connectUrl} size={100} bgColor="#ffffff" fgColor="#0a0e1a" />
-                )}
-              </div>
-              <div className="flex-1 space-y-2">
+            {/* Two-column on desktop: QR left, players right */}
+            <div className="md:grid md:grid-cols-[280px,1fr] md:gap-8 space-y-5 md:space-y-0">
+
+              {/* ── LEFT: Invite / QR ── */}
+              <div className="space-y-4">
                 <p className="text-sm font-bold uppercase tracking-widest text-game-text-muted">
                   Invite Players
                 </p>
-                <p className="text-xs text-game-text-muted break-all">{connectUrl}</p>
-                <Button variant="ghost" size="sm" onClick={handleCopy}>
-                  {copied ? '✓ Copied!' : '📋 Copy Link'}
-                </Button>
-              </div>
-            </div>
 
-            <GameDivider />
-
-            {/* Players list */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold uppercase tracking-widest text-game-text-muted">
-                  Players ({players.length})
-                </p>
-                {isHost && players.length > 0 && (
-                  <p className="text-xs text-game-text-muted">👑 = Boss</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                {players.map((player) => (
-                  <motion.div
-                    key={player.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="flex-1">
-                      <PlayerChip
-                        name={player.name}
-                        avatarUrl={player.avatarUrl}
-                        score={0}
-                        isHost={player.isHost}
-                        isBoss={player.isBoss}
-                        isMe={player.id === myId}
+                {/* QR code — larger on desktop */}
+                <div className="flex md:block gap-4 items-start">
+                  <div className="bg-white p-3 border-4 border-black shadow-[4px_4px_0_#000] inline-block shrink-0">
+                    {connectUrl && (
+                      <QRCodeSVG
+                        value={connectUrl}
+                        size={120}
+                        className="md:hidden"
+                        bgColor="#ffffff"
+                        fgColor="#0a0e1a"
                       />
-                    </div>
-                    {isHost && (
-                      <button
-                        onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
-                        title={player.isBoss ? 'Remove boss' : 'Make boss'}
-                        className={`
-                          w-9 h-9 shrink-0 border-2 border-black flex items-center justify-center
-                          shadow-[2px_2px_0_#000] transition-all text-base
-                          ${player.isBoss
-                            ? 'bg-yellow shadow-[3px_3px_0_#000] -translate-x-px -translate-y-px'
-                            : 'bg-white hover:bg-yellow/40'
-                          }
-                        `}
-                      >
-                        👑
-                      </button>
                     )}
-                  </motion.div>
-                ))}
-                {players.length === 0 && (
-                  <p className="text-game-text-muted text-sm text-center py-4">
-                    Waiting for players to join…
+                    {connectUrl && (
+                      <QRCodeSVG
+                        value={connectUrl}
+                        size={200}
+                        className="hidden md:block"
+                        bgColor="#ffffff"
+                        fgColor="#0a0e1a"
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex-1 md:mt-3 space-y-2">
+                    <p className="text-xs text-game-text-muted break-all leading-relaxed">{connectUrl}</p>
+                    <Button variant="ghost" size="sm" onClick={handleCopy}>
+                      {copied ? '✓ Copied!' : '📋 Copy Link'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Game summary (desktop) */}
+                <div className="hidden md:block bg-game-card-dark border border-game-card-border p-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-game-text-muted">Mode</span>
+                    <span className="font-bold text-black">{modeName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-game-text-muted">Questions</span>
+                    <span className="font-bold text-black">{game?.questionCount ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-game-text-muted">Difficulty</span>
+                    <span className="font-bold text-black capitalize">
+                      {(game?.difficultyTiers as string[] | undefined)?.join(', ') ?? '—'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── RIGHT: Players list ── */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold uppercase tracking-widest text-game-text-muted">
+                    Players ({players.length})
+                  </p>
+                  {isHost && players.length > 0 && (
+                    <p className="text-xs text-game-text-muted">👑 to assign Boss</p>
+                  )}
+                </div>
+
+                <div className="space-y-2 md:min-h-[160px]">
+                  {players.map((player) => (
+                    <motion.div
+                      key={player.id}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="flex-1">
+                        <PlayerChip
+                          name={player.name}
+                          avatarUrl={player.avatarUrl}
+                          score={0}
+                          isHost={player.isHost}
+                          isBoss={player.isBoss}
+                          isMe={player.id === myId}
+                        />
+                      </div>
+                      {isHost && (
+                        <button
+                          onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
+                          title={player.isBoss ? 'Remove boss' : 'Make boss'}
+                          className={`
+                            w-9 h-9 shrink-0 border-2 border-black flex items-center justify-center
+                            shadow-[2px_2px_0_#000] transition-all text-base
+                            ${player.isBoss
+                              ? 'bg-yellow shadow-[3px_3px_0_#000] -translate-x-px -translate-y-px'
+                              : 'bg-white hover:bg-yellow/40'
+                            }
+                          `}
+                        >
+                          👑
+                        </button>
+                      )}
+                    </motion.div>
+                  ))}
+                  {players.length === 0 && (
+                    <p className="text-game-text-muted text-sm text-center py-8">
+                      Waiting for players to join…
+                    </p>
+                  )}
+                </div>
+
+                {!isHost && (
+                  <p className="text-center text-game-text-muted text-sm pt-2">
+                    Waiting for host to start the game…
                   </p>
                 )}
               </div>
-            </div>
 
-            {/* Host actions */}
+            </div>
+            {/* end two-column */}
+
+            {/* Host actions — full width below both columns */}
             {isHost && (
               <>
-                <GameDivider />
-                <div className="space-y-3">
+                <GameDivider className="mt-5" />
+                <div className="flex flex-col sm:flex-row gap-3 mt-5">
                   <Button
                     variant="primary"
                     size="lg"
-                    className="w-full"
+                    className="flex-1"
                     disabled={!canStart || starting}
                     onClick={handleStartGame}
                   >
@@ -316,7 +369,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full"
+                    className="sm:w-auto"
                     onClick={() => router.push(`/nhl-stats-master/${roomId}/setup`)}
                   >
                     ← Back to Setup
@@ -325,11 +378,6 @@ export default function LobbyPage({ params }: LobbyPageProps) {
               </>
             )}
 
-            {!isHost && (
-              <p className="text-center text-game-text-muted text-sm">
-                Waiting for host to start the game…
-              </p>
-            )}
           </Panel>
         </motion.div>
 

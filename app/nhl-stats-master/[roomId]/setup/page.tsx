@@ -136,7 +136,9 @@ export default function SetupPage({ params }: SetupPageProps) {
 
   return (
     <main className="game-bg-pattern min-h-screen px-4 py-8">
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="max-w-lg md:max-w-5xl mx-auto space-y-6">
+
+        {/* Header */}
         <div className="flex items-center justify-between">
           <GameLogo />
           <div className="text-right">
@@ -145,483 +147,451 @@ export default function SetupPage({ params }: SetupPageProps) {
           </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Panel className="p-6 space-y-6">
-            <GameHeading>Game Setup</GameHeading>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Panel className="p-6">
 
-            {!isHost && (
-              <p className="text-game-text-muted text-sm text-center italic">
-                Waiting for the host to configure…
-              </p>
-            )}
+            <div className="flex items-center justify-between mb-6">
+              <GameHeading>Game Setup</GameHeading>
+              {!isHost && (
+                <p className="text-game-text-muted text-sm italic">
+                  Waiting for host to configure…
+                </p>
+              )}
+            </div>
 
-            {/* ── Game Mode ── */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold uppercase tracking-widest text-black">
-                Game Mode
-              </p>
-              <div className="space-y-2">
-                {GAME_MODES.map(({ mode, label, desc }) => (
+            {/* Two-column grid on desktop */}
+            <div className="md:grid md:grid-cols-2 md:gap-8 md:items-start space-y-6 md:space-y-0">
+
+              {/* ── LEFT COLUMN: Game format ── */}
+              <div className="space-y-5">
+
+                {/* Game Mode */}
+                <div className="space-y-3">
+                  <p className="text-sm font-bold uppercase tracking-widest text-black">Game Mode</p>
+                  <div className="space-y-2">
+                    {GAME_MODES.map(({ mode, label, desc }) => (
+                      <button
+                        key={mode}
+                        disabled={!isHost}
+                        onClick={() => setConfig((c) => ({ ...c, gameMode: mode }))}
+                        className={`
+                          w-full flex items-center gap-3 px-4 py-3 border-2 border-black
+                          text-left transition-all shadow-[2px_2px_0_#000]
+                          ${config.gameMode === mode
+                            ? 'bg-magenta text-white shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                            : 'bg-white text-black hover:bg-magenta/10'
+                          }
+                          disabled:cursor-not-allowed
+                        `}
+                      >
+                        <div className="flex-1">
+                          <div className="font-bold text-sm">{label}</div>
+                          <div className={`text-xs mt-0.5 ${config.gameMode === mode ? 'text-white/80' : 'text-black/60'}`}>{desc}</div>
+                        </div>
+                        <div className={`w-5 h-5 border-2 flex items-center justify-center rounded-full ${config.gameMode === mode ? 'bg-white border-white' : 'border-black bg-white'}`}>
+                          {config.gameMode === mode && <div className="w-2.5 h-2.5 rounded-full bg-magenta" />}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <GameDivider />
+
+                {/* Host device */}
+                <div className="space-y-3">
+                  <p className="text-sm font-bold uppercase tracking-widest text-black">This Device</p>
                   <button
-                    key={mode}
                     disabled={!isHost}
-                    onClick={() => setConfig((c) => ({ ...c, gameMode: mode }))}
+                    onClick={() => setConfig((c) => ({ ...c, hostPlays: !c.hostPlays }))}
                     className={`
                       w-full flex items-center gap-3 px-4 py-3 border-2 border-black
                       text-left transition-all shadow-[2px_2px_0_#000]
-                      ${config.gameMode === mode
-                        ? 'bg-magenta text-white shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                        : 'bg-white text-black hover:bg-magenta/10'
-                      }
-                      disabled:cursor-not-allowed
-                    `}
-                  >
-                    <div className="flex-1">
-                      <div className="font-bold text-sm">{label}</div>
-                      <div className={`text-xs mt-0.5 ${config.gameMode === mode ? 'text-white/80' : 'text-black/60'}`}>{desc}</div>
-                    </div>
-                    <div className={`w-5 h-5 border-2 flex items-center justify-center rounded-full ${config.gameMode === mode ? 'bg-white border-white' : 'border-black bg-white'}`}>
-                      {config.gameMode === mode && <div className="w-2.5 h-2.5 rounded-full bg-magenta" />}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <GameDivider />
-
-            {/* ── Host plays ── */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold uppercase tracking-widest text-black">
-                Host
-              </p>
-              <button
-                disabled={!isHost}
-                onClick={() => setConfig((c) => ({ ...c, hostPlays: !c.hostPlays }))}
-                className={`
-                  w-full flex items-center gap-3 px-4 py-3 border-2 border-black
-                  text-left transition-all shadow-[2px_2px_0_#000]
-                  ${config.hostPlays
-                    ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                    : 'bg-white text-black hover:bg-cyan/20'
-                  }
-                  disabled:cursor-not-allowed
-                `}
-              >
-                <span className="text-xl">🎮</span>
-                <div className="flex-1">
-                  <div className="font-bold text-sm text-black">
-                    {config.hostPlays ? 'This Device Plays' : 'Spectator / TV Mode'}
-                  </div>
-                  <div className="text-xs text-black/70 font-bold">
-                    {config.hostPlays
-                      ? 'This device joins as a scoring player'
-                      : 'This device only shows the game — assign a player as Boss to control it'}
-                  </div>
-                </div>
-                <div
-                  className={`
-                    w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000]
-                    ${config.hostPlays ? 'bg-magenta border-black' : 'bg-white'}
-                  `}
-                >
-                  {config.hostPlays && <span className="text-white text-md font-bold">✓</span>}
-                </div>
-              </button>
-            </div>
-
-            <GameDivider />
-
-            {/* ── Question / Round count ── */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold uppercase tracking-widest text-black">
-                {isCareer ? 'Players (rounds)' : 'Questions'}
-              </p>
-              <div className="flex gap-2">
-                {[5, 10, 15, 20].map((n) => (
-                  <button
-                    key={n}
-                    disabled={!isHost}
-                    onClick={() => setConfig((c) => ({ ...c, questionCount: n }))}
-                    className={`
-                      flex-1 py-2.5 border-2 border-black font-bold text-sm transition-all shadow-[2px_2px_0_#000]
-                      ${config.questionCount === n
+                      ${config.hostPlays
                         ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                        : 'bg-white text-black hover:bg-cyan/50'
+                        : 'bg-white text-black hover:bg-cyan/20'
                       }
                       disabled:cursor-not-allowed
                     `}
                   >
-                    {n}
+                    <span className="text-xl">🎮</span>
+                    <div className="flex-1">
+                      <div className="font-bold text-sm text-black">
+                        {config.hostPlays ? 'This Device Plays' : 'Spectator / TV Mode'}
+                      </div>
+                      <div className="text-xs text-black/70 font-bold">
+                        {config.hostPlays
+                          ? 'This device joins as a scoring player'
+                          : 'Display only — assign a player as Boss to control it'}
+                      </div>
+                    </div>
+                    <div className={`w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000] ${config.hostPlays ? 'bg-magenta' : 'bg-white'}`}>
+                      {config.hostPlays && <span className="text-white text-md font-bold">✓</span>}
+                    </div>
                   </button>
-                ))}
-              </div>
-            </div>
-
-            <GameDivider />
-
-            {/* ── Classic-specific: Reveal mode & Answer mode ── */}
-            {isClassic && (
-              <>
-                <div className="space-y-3">
-                  <p className="text-sm font-bold uppercase tracking-widest text-black">
-                    Stats Reveal
-                  </p>
-                  <div className="flex gap-2">
-                    {([
-                      { value: 'instant', label: '⚡ All at Once',   desc: 'See all stats immediately' },
-                      { value: 'timed',   label: '⏱ Timed Reveal', desc: 'Columns reveal every 8s' },
-                    ] as { value: RevealMode; label: string; desc: string }[]).map(({ value, label, desc }) => (
-                      <button
-                        key={value}
-                        disabled={!isHost}
-                        onClick={() => setConfig((c) => ({ ...c, revealMode: value }))}
-                        className={`
-                          flex-1 py-3 border-2 border-black text-sm transition-all text-left px-3 shadow-[2px_2px_0_#000]
-                          ${config.revealMode === value
-                            ? 'bg-magenta text-white shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                            : 'bg-white text-black hover:bg-magenta/20'
-                          }
-                          disabled:cursor-not-allowed
-                        `}
-                      >
-                        <div className="font-bold">{label}</div>
-                        <div className="text-xs mt-0.5">{desc}</div>
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
-                <GameDivider />
+              </div>
 
+              {/* ── RIGHT COLUMN: Game content & difficulty ── */}
+              <div className="space-y-5">
+
+                {/* Questions / Rounds */}
                 <div className="space-y-3">
                   <p className="text-sm font-bold uppercase tracking-widest text-black">
-                    Answer Mode
+                    {isCareer ? 'Players (rounds)' : 'Questions'}
                   </p>
                   <div className="flex gap-2">
-                    {([
-                      { value: 'multiplechoice', label: '🔘 Multiple Choice' },
-                      { value: 'freetext',       label: '✏️ Free Text' },
-                    ] as { value: AnswerMode; label: string }[]).map(({ value, label }) => (
+                    {[5, 10, 15, 20].map((n) => (
                       <button
-                        key={value}
+                        key={n}
                         disabled={!isHost}
-                        onClick={() => setConfig((c) => ({ ...c, answerMode: value }))}
+                        onClick={() => setConfig((c) => ({ ...c, questionCount: n }))}
                         className={`
                           flex-1 py-2.5 border-2 border-black font-bold text-sm transition-all shadow-[2px_2px_0_#000]
-                          ${config.answerMode === value
-                            ? 'bg-yellow text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                            : 'bg-white text-black hover:bg-yellow/50'
-                          }
-                          disabled:cursor-not-allowed
-                        `}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <GameDivider />
-              </>
-            )}
-
-            {/* ── Career-specific options ── */}
-            {isCareer && (
-              <>
-                <div className="space-y-3">
-                  <p className="text-sm font-bold uppercase tracking-widest text-black">
-                    Reveal Order
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {CAREER_REVEAL_ORDERS.map(({ value, label }) => (
-                      <button
-                        key={value}
-                        disabled={!isHost}
-                        onClick={() => setConfig((c) => ({ ...c, careerRevealOrder: value }))}
-                        className={`
-                          py-2.5 border-2 border-black font-bold text-sm transition-all shadow-[2px_2px_0_#000]
-                          ${config.careerRevealOrder === value
+                          ${config.questionCount === n
                             ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                            : 'bg-white text-black hover:bg-cyan/40'
+                            : 'bg-white text-black hover:bg-cyan/50'
                           }
                           disabled:cursor-not-allowed
                         `}
                       >
-                        {label}
+                        {n}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold uppercase tracking-widest text-black">
-                      Min Seasons
-                    </p>
-                    <div className="flex gap-1">
-                      {[3, 5, 7, 10].map((n) => (
-                        <button
-                          key={n}
-                          disabled={!isHost}
-                          onClick={() => setConfig((c) => ({ ...c, careerMinSeasons: n }))}
-                          className={`
-                            flex-1 py-2 border-2 border-black font-bold text-xs transition-all                           shadow-[1px_1px_0_#000]
-                            ${config.careerMinSeasons === n
-                              ? 'bg-lime text-black shadow-[2px_2px_0_#000] -translate-x-px -translate-y-px'
-                              : 'bg-white text-black hover:bg-lime/30'
-                            }
-                            disabled:cursor-not-allowed
-                          `}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold uppercase tracking-widest text-black">
-                      Max Reveals
-                    </p>
-                    <div className="flex gap-1">
-                      {[5, 6, 8, 10].map((n) => (
-                        <button
-                          key={n}
-                          disabled={!isHost}
-                          onClick={() => setConfig((c) => ({ ...c, careerMaxReveals: n }))}
-                          className={`
-                            flex-1 py-2 border-2 border-black font-bold text-xs transition-all                           shadow-[1px_1px_0_#000]
-                            ${config.careerMaxReveals === n
-                              ? 'bg-lime text-black shadow-[2px_2px_0_#000] -translate-x-px -translate-y-px'
-                              : 'bg-white text-black hover:bg-lime/30'
-                            }
-                            disabled:cursor-not-allowed
-                          `}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <GameDivider />
-              </>
-            )}
-
-            {/* ── Higher/Lower: stat field ── */}
-            {isHL && (
-              <>
-                <div className="space-y-3">
-                  <p className="text-sm font-bold uppercase tracking-widest text-black">
-                    Compare Stat
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {HL_FIELDS.map(({ value, label }) => (
-                      <button
-                        key={value}
-                        disabled={!isHost}
-                        onClick={() => setConfig((c) => ({ ...c, hlComparisonField: value }))}
-                        className={`
-                          py-2 border-2 border-black font-bold text-xs transition-all shadow-[2px_2px_0_#000]
-                          ${config.hlComparisonField === value
-                            ? 'bg-yellow text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                            : 'bg-white text-black hover:bg-yellow/40'
-                          }
-                          disabled:cursor-not-allowed
-                        `}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <GameDivider />
-              </>
-            )}
-
-            {/* ── Difficulty tiers (classic / h2h / hl) ── */}
-            {needsTiers && (
-              <>
-                <div className="space-y-3">
-                  <p className="text-sm font-bold uppercase tracking-widest text-black">
-                    Difficulty
-                  </p>
-                  <div className="space-y-2">
-                    {TIER_OPTIONS.map(({ tier, label, desc, emoji }) => {
-                      const selected = config.difficultyTiers.includes(tier)
-                      return (
-                        <button
-                          key={tier}
-                          disabled={!isHost}
-                          onClick={() =>
-                            setConfig((c) => ({
-                              ...c,
-                              difficultyTiers: toggle(c.difficultyTiers, tier),
-                            }))
-                          }
-                          className={`
-                            w-full flex items-center gap-3 px-4 py-3 border-2 border-black
-                            text-left transition-all shadow-[2px_2px_0_#000]
-                            ${selected
-                              ? 'bg-lime text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                              : 'bg-white text-black hover:bg-lime/20'
-                            }
-                            disabled:cursor-not-allowed
-                          `}
-                        >
-                          <span className="text-xl">{emoji}</span>
-                          <div className="flex-1">
-                            <div className="font-bold text-sm text-black">{label}</div>
-                            <div className="text-xs text-black/80 font-bold">{desc}</div>
-                          </div>
-                          <div
+                {/* Classic-specific: Reveal mode & Answer mode */}
+                {isClassic && (
+                  <>
+                    <GameDivider />
+                    <div className="space-y-3">
+                      <p className="text-sm font-bold uppercase tracking-widest text-black">Stats Reveal</p>
+                      <div className="flex gap-2">
+                        {([
+                          { value: 'instant', label: '⚡ All at Once',   desc: 'See all stats immediately' },
+                          { value: 'timed',   label: '⏱ Timed Reveal', desc: 'Columns reveal every 8s' },
+                        ] as { value: RevealMode; label: string; desc: string }[]).map(({ value, label, desc }) => (
+                          <button
+                            key={value}
+                            disabled={!isHost}
+                            onClick={() => setConfig((c) => ({ ...c, revealMode: value }))}
                             className={`
-                              w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000]
-                              ${selected ? 'bg-magenta border-black' : 'bg-white'}
+                              flex-1 py-3 border-2 border-black text-sm transition-all text-left px-3 shadow-[2px_2px_0_#000]
+                              ${config.revealMode === value
+                                ? 'bg-magenta text-white shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                                : 'bg-white text-black hover:bg-magenta/20'
+                              }
+                              disabled:cursor-not-allowed
                             `}
                           >
-                            {selected && <span className="text-white text-md font-bold">✓</span>}
-                          </div>
+                            <div className="font-bold">{label}</div>
+                            <div className="text-xs mt-0.5">{desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-sm font-bold uppercase tracking-widest text-black">Answer Mode</p>
+                      <div className="flex gap-2">
+                        {([
+                          { value: 'multiplechoice', label: '🔘 Multiple Choice' },
+                          { value: 'freetext',       label: '✏️ Free Text' },
+                        ] as { value: AnswerMode; label: string }[]).map(({ value, label }) => (
+                          <button
+                            key={value}
+                            disabled={!isHost}
+                            onClick={() => setConfig((c) => ({ ...c, answerMode: value }))}
+                            className={`
+                              flex-1 py-2.5 border-2 border-black font-bold text-sm transition-all shadow-[2px_2px_0_#000]
+                              ${config.answerMode === value
+                                ? 'bg-yellow text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                                : 'bg-white text-black hover:bg-yellow/50'
+                              }
+                              disabled:cursor-not-allowed
+                            `}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Career-specific options */}
+                {isCareer && (
+                  <>
+                    <GameDivider />
+                    <div className="space-y-3">
+                      <p className="text-sm font-bold uppercase tracking-widest text-black">Reveal Order</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {CAREER_REVEAL_ORDERS.map(({ value, label }) => (
+                          <button
+                            key={value}
+                            disabled={!isHost}
+                            onClick={() => setConfig((c) => ({ ...c, careerRevealOrder: value }))}
+                            className={`
+                              py-2.5 border-2 border-black font-bold text-sm transition-all shadow-[2px_2px_0_#000]
+                              ${config.careerRevealOrder === value
+                                ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                                : 'bg-white text-black hover:bg-cyan/40'
+                              }
+                              disabled:cursor-not-allowed
+                            `}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-widest text-black">Min Seasons</p>
+                        <div className="flex gap-1">
+                          {[3, 5, 7, 10].map((n) => (
+                            <button
+                              key={n}
+                              disabled={!isHost}
+                              onClick={() => setConfig((c) => ({ ...c, careerMinSeasons: n }))}
+                              className={`
+                                flex-1 py-2 border-2 border-black font-bold text-xs transition-all shadow-[1px_1px_0_#000]
+                                ${config.careerMinSeasons === n
+                                  ? 'bg-lime text-black shadow-[2px_2px_0_#000] -translate-x-px -translate-y-px'
+                                  : 'bg-white text-black hover:bg-lime/30'
+                                }
+                                disabled:cursor-not-allowed
+                              `}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-widest text-black">Max Reveals</p>
+                        <div className="flex gap-1">
+                          {[5, 6, 8, 10].map((n) => (
+                            <button
+                              key={n}
+                              disabled={!isHost}
+                              onClick={() => setConfig((c) => ({ ...c, careerMaxReveals: n }))}
+                              className={`
+                                flex-1 py-2 border-2 border-black font-bold text-xs transition-all shadow-[1px_1px_0_#000]
+                                ${config.careerMaxReveals === n
+                                  ? 'bg-lime text-black shadow-[2px_2px_0_#000] -translate-x-px -translate-y-px'
+                                  : 'bg-white text-black hover:bg-lime/30'
+                                }
+                                disabled:cursor-not-allowed
+                              `}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Higher/Lower: stat field */}
+                {isHL && (
+                  <>
+                    <GameDivider />
+                    <div className="space-y-3">
+                      <p className="text-sm font-bold uppercase tracking-widest text-black">Compare Stat</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {HL_FIELDS.map(({ value, label }) => (
+                          <button
+                            key={value}
+                            disabled={!isHost}
+                            onClick={() => setConfig((c) => ({ ...c, hlComparisonField: value }))}
+                            className={`
+                              py-2 border-2 border-black font-bold text-xs transition-all shadow-[2px_2px_0_#000]
+                              ${config.hlComparisonField === value
+                                ? 'bg-yellow text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                                : 'bg-white text-black hover:bg-yellow/40'
+                              }
+                              disabled:cursor-not-allowed
+                            `}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Difficulty tiers */}
+                {needsTiers && (
+                  <>
+                    <GameDivider />
+                    <div className="space-y-3">
+                      <p className="text-sm font-bold uppercase tracking-widest text-black">Difficulty</p>
+                      <div className="space-y-2">
+                        {TIER_OPTIONS.map(({ tier, label, desc, emoji }) => {
+                          const selected = config.difficultyTiers.includes(tier)
+                          return (
+                            <button
+                              key={tier}
+                              disabled={!isHost}
+                              onClick={() =>
+                                setConfig((c) => ({
+                                  ...c,
+                                  difficultyTiers: toggle(c.difficultyTiers, tier),
+                                }))
+                              }
+                              className={`
+                                w-full flex items-center gap-3 px-4 py-3 border-2 border-black
+                                text-left transition-all shadow-[2px_2px_0_#000]
+                                ${selected
+                                  ? 'bg-lime text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                                  : 'bg-white text-black hover:bg-lime/20'
+                                }
+                                disabled:cursor-not-allowed
+                              `}
+                            >
+                              <span className="text-xl">{emoji}</span>
+                              <div className="flex-1">
+                                <div className="font-bold text-sm text-black">{label}</div>
+                                <div className="text-xs text-black/80 font-bold">{desc}</div>
+                              </div>
+                              <div className={`w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000] ${selected ? 'bg-magenta' : 'bg-white'}`}>
+                                {selected && <span className="text-white text-md font-bold">✓</span>}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {config.difficultyTiers.length === 0 && (
+                        <p className="text-game-red text-xs">Select at least one difficulty tier</p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Eras */}
+                <GameDivider />
+                <div className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <p className="text-sm font-bold uppercase tracking-widest text-black">Eras</p>
+                    {availableCount !== null && (
+                      <p className="text-xs font-bold font-mono bg-yellow border-2 border-black px-2 shadow-[2px_2px_0_#000]">
+                        Pool: {availableCount} {isCareer ? 'players' : 'seasons'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['1970s', '1980s', '1990s', '2000s', '2010s', '2020s'].map((era) => {
+                      const selected = config.eras.includes(era)
+                      return (
+                        <button
+                          key={era}
+                          disabled={!isHost}
+                          onClick={() =>
+                            setConfig((c) => ({ ...c, eras: toggle(c.eras, era) }))
+                          }
+                          className={`
+                            py-2 text-center font-bold text-sm border-2 border-black shadow-[2px_2px_0_#000]
+                            transition-all
+                            ${selected
+                              ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                              : 'bg-white text-black hover:bg-cyan/30'
+                            }
+                            disabled:cursor-not-allowed
+                          `}
+                        >
+                          {era}
                         </button>
                       )
                     })}
                   </div>
-                  {config.difficultyTiers.length === 0 && (
-                    <p className="text-game-red text-xs">Select at least one difficulty tier</p>
+                  {config.eras.length === 0 && (
+                    <p className="text-game-red text-xs">Select at least one era</p>
                   )}
                 </div>
 
-                <GameDivider />
-              </>
-            )}
+                {/* Classic extras: Hints, Powerups, Rookies */}
+                {isClassic && (
+                  <>
+                    <GameDivider />
+                    <div className="flex gap-4">
+                      {([
+                        { key: 'hintsEnabled',    label: '💡 Hints',    desc: '-10 pts each' },
+                        { key: 'powerupsEnabled', label: '⚡ Powerups', desc: '1 charge each' },
+                      ] as { key: keyof GameSetupConfig; label: string; desc: string }[]).map(({ key, label, desc }) => (
+                        <button
+                          key={key}
+                          disabled={!isHost}
+                          onClick={() => setConfig((c) => ({ ...c, [key]: !c[key] }))}
+                          className={`
+                            flex-1 flex flex-col items-center gap-1 py-3 px-2 border-2 border-black shadow-[2px_2px_0_#000]
+                            transition-all text-sm
+                            ${config[key]
+                              ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                              : 'bg-white text-black hover:bg-cyan/30'
+                            }
+                            disabled:cursor-not-allowed
+                          `}
+                        >
+                          <span className="font-bold text-black">{label}</span>
+                          <span className="text-xs text-black/80 font-bold">{desc}</span>
+                        </button>
+                      ))}
+                    </div>
 
-            {/* ── Eras ── */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-end">
-                <p className="text-sm font-bold uppercase tracking-widest text-black">
-                  Eras
-                </p>
-                {availableCount !== null && (
-                  <p className="text-xs font-bold font-mono bg-yellow border-2 border-black px-2 shadow-[2px_2px_0_#000]">
-                    Pool: {availableCount} {isCareer ? 'players' : 'seasons'}
-                  </p>
+                    <button
+                      disabled={!isHost}
+                      onClick={() => setConfig((c) => ({ ...c, rookiesOnly: !c.rookiesOnly }))}
+                      className={`
+                        w-full flex items-center gap-3 px-4 py-3 border-2 border-black
+                        text-left transition-all shadow-[2px_2px_0_#000]
+                        ${config.rookiesOnly
+                          ? 'bg-lime text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
+                          : 'bg-white text-black hover:bg-lime/20'
+                        }
+                        disabled:cursor-not-allowed
+                      `}
+                    >
+                      <span className="text-xl">🌱</span>
+                      <div className="flex-1">
+                        <div className="font-bold text-sm text-black">Rookies Only</div>
+                        <div className="text-xs text-black/80 font-bold">Only show debut seasons</div>
+                      </div>
+                      <div className={`w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000] ${config.rookiesOnly ? 'bg-magenta' : 'bg-white'}`}>
+                        {config.rookiesOnly && <span className="text-white text-md font-bold">✓</span>}
+                      </div>
+                    </button>
+                  </>
                 )}
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {['1970s', '1980s', '1990s', '2000s', '2010s', '2020s'].map((era) => {
-                  const selected = config.eras.includes(era)
-                  return (
-                    <button
-                      key={era}
-                      disabled={!isHost}
-                      onClick={() =>
-                        setConfig((c) => ({
-                          ...c,
-                          eras: toggle(c.eras, era),
-                        }))
-                      }
-                      className={`
-                        py-2 text-center font-bold text-sm border-2 border-black shadow-[2px_2px_0_#000]
-                        transition-all
-                        ${selected
-                          ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                          : 'bg-white text-black hover:bg-cyan/30'
-                        }
-                        disabled:cursor-not-allowed
-                      `}
-                    >
-                      {era}
-                    </button>
-                  )
-                })}
-              </div>
-              {config.eras.length === 0 && (
-                <p className="text-game-red text-xs">Select at least one era</p>
-              )}
-            </div>
 
-            {/* ── Classic extras: Hints, Powerups, Rookies Only ── */}
-            {isClassic && (
-              <>
-                <GameDivider />
-
-                <div className="flex gap-4">
-                  {([
-                    { key: 'hintsEnabled',    label: '💡 Hints',    desc: '-10 pts each' },
-                    { key: 'powerupsEnabled', label: '⚡ Powerups', desc: '1 charge each' },
-                  ] as { key: keyof GameSetupConfig; label: string; desc: string }[]).map(({ key, label, desc }) => (
-                    <button
-                      key={key}
-                      disabled={!isHost}
-                      onClick={() => setConfig((c) => ({ ...c, [key]: !c[key] }))}
-                      className={`
-                        flex-1 flex flex-col items-center gap-1 py-3 px-2 border-2 border-black shadow-[2px_2px_0_#000]
-                        transition-all text-sm
-                        ${config[key]
-                          ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                          : 'bg-white text-black hover:bg-cyan/30'
-                        }
-                        disabled:cursor-not-allowed
-                      `}
-                    >
-                      <span className="font-bold text-black">{label}</span>
-                      <span className="text-xs text-black/80 font-bold">{desc}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  disabled={!isHost}
-                  onClick={() => setConfig((c) => ({ ...c, rookiesOnly: !c.rookiesOnly }))}
-                  className={`
-                    w-full flex items-center gap-3 px-4 py-3 border-2 border-black
-                    text-left transition-all shadow-[2px_2px_0_#000]
-                    ${config.rookiesOnly
-                      ? 'bg-lime text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                      : 'bg-white text-black hover:bg-lime/20'
-                    }
-                    disabled:cursor-not-allowed
-                  `}
-                >
-                  <span className="text-xl">🌱</span>
-                  <div className="flex-1">
-                    <div className="font-bold text-sm text-black">Rookies Only</div>
-                    <div className="text-xs text-black/80 font-bold">Only show debut seasons</div>
-                  </div>
-                  <div
-                    className={`
-                      w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000]
-                      ${config.rookiesOnly ? 'bg-magenta border-black' : 'bg-white'}
-                    `}
+                {/* CTA */}
+                {isHost && (
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full mt-2"
+                    onClick={handleStart}
+                    disabled={!canStart || starting}
                   >
-                    {config.rookiesOnly && <span className="text-white text-md font-bold">✓</span>}
-                  </div>
-                </button>
-              </>
-            )}
+                    {starting
+                      ? 'Starting…'
+                      : !canStart && availableCount !== null && availableCount < config.questionCount
+                        ? 'Not enough players'
+                        : '🏒 Continue to Lobby'}
+                  </Button>
+                )}
 
-            {/* ── Start button ── */}
-            {isHost && (
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full mt-2"
-                onClick={handleStart}
-                disabled={!canStart || starting}
-              >
-                {starting
-                  ? 'Starting…'
-                  : !canStart && availableCount !== null && availableCount < config.questionCount
-                    ? 'Not enough players'
-                    : '🏒 Continue to Lobby'}
-              </Button>
-            )}
+              </div>
+              {/* end right column */}
+
+            </div>
+            {/* end two-column grid */}
+
           </Panel>
         </motion.div>
 
