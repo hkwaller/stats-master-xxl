@@ -12,9 +12,10 @@ export async function POST(req: NextRequest) {
       count: number
       answerMode: AnswerMode
       excludeIds?: string[]
+      rookiesOnly?: boolean
     }
 
-    const selector = new QuestionSelector(body.tiers, body.eras, body.excludeIds ?? [])
+    const selector = new QuestionSelector(body.tiers, body.eras, body.excludeIds ?? [], body.rookiesOnly)
     const questions = selector.generateSequence(body.count)
 
     // Pre-embed choices in each question for multiple choice mode

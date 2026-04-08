@@ -4,7 +4,9 @@ Multiplayer trivia game where players guess NHL players from revealed statistics
 
 ## Data Source
 
-`scores.js` in the project root exports `export const stats = [...]` — 5,910 player-season records.
+`scores.js` in the project root exports `export const stats = [...]` — 46,704 player-season records covering the complete NHL history (1917-18 → 2024-25, all scoring levels).
+- Classic mode uses only 70+ pt seasons (2,182 records) via `getTierForPoints` filtering
+- Career mode uses the full dataset (every skater-season)
 **Key**: the export name is `stats`, NOT `scores`.
 
 `lib/data/database.ts` is marked `server-only` — never import it in client components.

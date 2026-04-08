@@ -2,6 +2,7 @@
 
 import {
   getAvailableQuestionCount,
+  getCareerPlayerCount,
   getQuestionsByTiers,
 } from "@/lib/data/database";
 import { generateChoices } from "@/lib/data/choices";
@@ -10,9 +11,18 @@ import type { DifficultyTier, Question } from "@/types/game";
 export async function checkAvailableCount(
   tiers: DifficultyTier[],
   eras: string[],
+  rookiesOnly?: boolean,
 ) {
   if (tiers.length === 0 || eras.length === 0) return 0;
-  return getAvailableQuestionCount(tiers, eras);
+  return getAvailableQuestionCount(tiers, eras, rookiesOnly);
+}
+
+export async function checkCareerPlayerCount(
+  minSeasons: number,
+  eras: string[],
+) {
+  if (eras.length === 0) return 0;
+  return getCareerPlayerCount({ minSeasons, eras });
 }
 
 /** Returns today's date as a UTC string, e.g. "2026-04-06". Used as the localStorage and DB key. */

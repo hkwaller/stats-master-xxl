@@ -11,11 +11,21 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStorage } from '@/lib/liveblocks/client'
 import { StatsCard } from '@/components/game/StatsCard'
 import { Scoreboard } from '@/components/game/Scoreboard'
+import { CareerRevealCard } from '@/components/game/CareerRevealCard'
+import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
+import { HigherLowerCard } from '@/components/game/HigherLowerCard'
 import { GameLogo, TierBadge } from '@/components/design-system'
-import type { Player, Question } from '@/types/game'
+import type { H2HPair, HLPair, Player, Question } from '@/types/game'
 
 interface GamePageProps {
   params: Promise<{ roomId: string }>
+}
+
+const MODE_LABELS: Record<string, string> = {
+  classic: 'Classic',
+  career: 'Career',
+  h2h: 'Head-to-Head',
+  'higher-lower': 'Higher or Lower',
 }
 
 export default function GamePage({ params: paramsPromise }: GamePageProps) {
@@ -32,6 +42,21 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const answeredCount = Object.keys(game.answers ?? {}).length
   const connectedCount = players.filter((p) => p.isConnected).length
   const currentQuestion = game.currentQuestion as unknown as Question | null
+  const gameMode = game.gameMode ?? 'classic'
+  const isActive = game.command === 'answering' || game.command === 'revealing'
+
+  // Career mode
+  const careerSeasons = (game.careerSeasons as unknown as Question[]) ?? []
+  const revealedSeasonCount = game.revealedSeasonCount ?? 0
+  const buzzedInPlayerId = game.buzzedInPlayerId ?? ''
+  const lockedOutPlayers = (game.lockedOutPlayers as unknown as string[]) ?? []
+  const buzzedInPlayer = players.find((p) => p.id === buzzedInPlayerId)
+
+  // H2H mode
+  const h2hCurrentPair = game.h2hCurrentPair as unknown as H2HPair | null
+
+  // HL mode
+  const hlCurrentPair = game.hlCurrentPair as unknown as HLPair | null
 
   return (
     <main className="game-bg-pattern min-h-screen flex flex-col">
@@ -39,7 +64,12 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
       <header className="border-b border-game-card-border bg-game-bg/80 backdrop-blur-sm px-6 py-3 flex items-center justify-between">
         <GameLogo />
         <div className="flex items-center gap-4 text-sm text-game-text-muted">
-          {currentQuestion && <TierBadge tier={currentQuestion.difficulty} />}
+          <span className="text-xs font-bold uppercase tracking-widest bg-magenta/20 text-magenta px-2 py-0.5 border border-magenta/30">
+            {MODE_LABELS[gameMode] ?? gameMode}
+          </span>
+          {currentQuestion && gameMode === 'classic' && (
+            <TierBadge tier={currentQuestion.difficulty} />
+          )}
           <span>Q {(game.currentQuestionIndex ?? 0) + 1} / {game.questionCount}</span>
           <span className="text-ice-blue font-bold tracking-widest">{roomId}</span>
         </div>
@@ -49,6 +79,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
         {/* Main area */}
         <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6 bg-white border-4 border-black shadow-[12px_12px_0_#000] relative">
 
+          {/* Countdown */}
           <AnimatePresence>
             {game.command === 'starting' && (
               <motion.div
@@ -64,8 +95,9 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
             )}
           </AnimatePresence>
 
+          {/* Classic mode */}
           <AnimatePresence>
-            {(game.command === 'answering' || game.command === 'revealing') && currentQuestion && (
+            {isActive && gameMode === 'classic' && currentQuestion && (
               <motion.div
                 key={currentQuestion.id}
                 initial={{ opacity: 0, y: 30 }}
@@ -78,7 +110,64 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
             )}
           </AnimatePresence>
 
-          {game.command === 'answering' && (
+          {/* Career mode */}
+          <AnimatePresence>
+            {isActive && gameMode === 'career' && careerSeasons.length > 0 && (
+              <motion.div
+                key={`career-${game.currentQuestionIndex}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -30 }}
+                className="w-full max-w-3xl"
+              >
+                <CareerRevealCard
+                  seasons={careerSeasons}
+                  revealedCount={revealedSeasonCount}
+                  buzzedInPlayerName={buzzedInPlayer?.name}
+                  lockedOutCount={lockedOutPlayers.length}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* H2H mode */}
+          <AnimatePresence>
+            {isActive && gameMode === 'h2h' && h2hCurrentPair && (
+              <motion.div
+                key={`h2h-${game.currentQuestionIndex}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -30 }}
+                className="w-full max-w-3xl"
+              >
+                <H2HComparisonCard
+                  pair={h2hCurrentPair}
+                  revealed={game.command === 'revealing'}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Higher/Lower mode */}
+          <AnimatePresence>
+            {isActive && gameMode === 'higher-lower' && hlCurrentPair && (
+              <motion.div
+                key={`hl-${game.currentQuestionIndex}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -30 }}
+                className="w-full max-w-3xl"
+              >
+                <HigherLowerCard
+                  pair={hlCurrentPair}
+                  revealed={game.command === 'revealing'}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Answer progress (classic / h2h / hl) */}
+          {game.command === 'answering' && gameMode !== 'career' && (
             <div className="flex items-center gap-3">
               <div className="h-2 bg-game-card-dark rounded-full w-56 overflow-hidden">
                 <motion.div
@@ -90,6 +179,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
             </div>
           )}
 
+          {/* Reveal: correct answer display */}
           <AnimatePresence>
             {game.command === 'revealing' && currentQuestion && (
               <motion.div
@@ -97,15 +187,40 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                 animate={{ scale: 1, opacity: 1 }}
                 className="text-center bg-game-card border border-ice-blue/30 rounded-2xl p-8"
               >
-                <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">The answer was</p>
-                <h2 className="text-5xl font-bold text-ice-blue">
-                  {currentQuestion.firstName} {currentQuestion.lastName}
-                </h2>
-                <p className="text-game-text-muted mt-2">{currentQuestion.season} · {currentQuestion.teamNames}</p>
+                {gameMode === 'classic' || gameMode === 'career' ? (
+                  <>
+                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">The answer was</p>
+                    <h2 className="text-5xl font-bold text-ice-blue">
+                      {currentQuestion.firstName} {currentQuestion.lastName}
+                    </h2>
+                    {gameMode === 'classic' && (
+                      <p className="text-game-text-muted mt-2">{currentQuestion.season} · {currentQuestion.teamNames}</p>
+                    )}
+                  </>
+                ) : gameMode === 'h2h' && h2hCurrentPair ? (
+                  <>
+                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">Correct answer</p>
+                    <h2 className="text-3xl font-bold text-ice-blue">
+                      Player {h2hCurrentPair.correctSide === 'left' ? 'A (Left)' : 'B (Right)'}
+                    </h2>
+                    <p className="text-game-text-muted mt-1">{h2hCurrentPair.targetName}</p>
+                  </>
+                ) : gameMode === 'higher-lower' && hlCurrentPair ? (
+                  <>
+                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">The answer was</p>
+                    <h2 className="text-5xl font-bold text-ice-blue capitalize">
+                      {hlCurrentPair.correctAnswer}
+                    </h2>
+                    <p className="text-game-text-muted mt-2">
+                      {hlCurrentPair.challengeValue} vs {hlCurrentPair.referenceValue} {hlCurrentPair.field}
+                    </p>
+                  </>
+                ) : null}
               </motion.div>
             )}
           </AnimatePresence>
 
+          {/* Game over */}
           <AnimatePresence>
             {game.command === 'finished' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
@@ -116,7 +231,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           </AnimatePresence>
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar scoreboard */}
         <aside className="w-72 bg-white border-4 border-black shadow-[12px_12px_0_#000] p-5 overflow-y-auto">
           <h3 className="text-sm font-bold uppercase tracking-widest text-black mb-4 border-b-4 border-black pb-2">Scoreboard</h3>
           <Scoreboard

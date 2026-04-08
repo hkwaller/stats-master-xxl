@@ -8,10 +8,10 @@ export class QuestionSelector {
   private preferredTiers: Set<DifficultyTier>
   private usedIds: Set<string>
 
-  constructor(tiers: DifficultyTier[], eras?: string[], excludeIds: string[] = []) {
+  constructor(tiers: DifficultyTier[], eras?: string[], excludeIds: string[] = [], rookiesOnly?: boolean) {
     const excludeSet = new Set(excludeIds)
     // Pool is ALL tiers so we can fall back when preferred tiers run dry
-    this.pool = getQuestionsByTiers(ALL_TIERS, eras).filter((q) => !excludeSet.has(q.id))
+    this.pool = getQuestionsByTiers(ALL_TIERS, eras, rookiesOnly).filter((q) => !excludeSet.has(q.id))
     this.preferredTiers = new Set(tiers)
     this.usedIds = new Set(excludeIds)
   }
