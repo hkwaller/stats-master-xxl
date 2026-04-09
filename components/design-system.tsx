@@ -157,10 +157,14 @@ export function PlayerChip({
         <div className="flex items-center gap-2">
           <span className="font-bold truncate text-black">{name}</span>
           {isHost && (
-            <span className="text-xs bg-yellow px-1 border-2 border-black uppercase tracking-wide">Host</span>
+            <span className="text-xs bg-yellow px-1 border-2 border-black uppercase tracking-wide">
+              Host
+            </span>
           )}
           {isBoss && (
-            <span className="text-xs bg-game-red text-white px-1 border-2 border-black uppercase tracking-wide">Boss</span>
+            <span className="text-xs bg-game-red text-white px-1 border-2 border-black uppercase tracking-wide">
+              Boss
+            </span>
           )}
         </div>
         <div className="text-black font-mono text-sm tabular-nums">{score} pts</div>
@@ -185,16 +189,12 @@ export function CountdownRing({ seconds, total, size = 80, className = '' }: Cou
   const dashOffset = circumference * (1 - progress)
 
   return (
-    <div className={`relative flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
+    <div
+      className={`relative flex items-center justify-center ${className}`}
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={8}
-          stroke="#000"
-          fill="none"
-        />
+        <circle cx={size / 2} cy={size / 2} r={radius} strokeWidth={8} stroke="#000" fill="none" />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
@@ -208,7 +208,12 @@ export function CountdownRing({ seconds, total, size = 80, className = '' }: Cou
           transition={{ duration: 1, ease: 'linear' }}
         />
       </svg>
-      <span className="absolute text-2xl font-display text-black shadow-white tabular-nums" style={{ textShadow: '2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff' }}>{Math.ceil(seconds)}</span>
+      <span
+        className="absolute text-2xl font-display text-black shadow-white tabular-nums"
+        style={{ textShadow: '2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff' }}
+      >
+        {Math.ceil(seconds)}
+      </span>
     </div>
   )
 }

@@ -6,7 +6,7 @@ import type { AnswerMode, PowerupType, RevealMode } from '@/types/game'
 import { Modal, Button } from '@/components/design-system'
 
 interface PowerupBarProps {
-  charges: Record<PowerupType, number>  // current charges for this player
+  charges: Record<PowerupType, number> // current charges for this player
   answerMode: AnswerMode
   revealMode: RevealMode
   command: string
@@ -50,7 +50,13 @@ const POWERUPS: {
   },
 ]
 
-export function PowerupBar({ charges, answerMode, revealMode, command, onActivate }: PowerupBarProps) {
+export function PowerupBar({
+  charges,
+  answerMode,
+  revealMode,
+  command,
+  onActivate,
+}: PowerupBarProps) {
   const [confirming, setConfirming] = useState<PowerupType | null>(null)
 
   const isAnswering = command === 'answering'
@@ -86,9 +92,10 @@ export function PowerupBar({ charges, answerMode, revealMode, command, onActivat
               className={`
                 relative flex flex-col items-center gap-1 px-4 py-3 rounded-xl border
                 transition-all duration-150 min-w-[72px]
-                ${canUse
-                  ? 'bg-game-card-dark border-game-card-border cursor-pointer hover:border-ice-blue/50 hover:bg-ice-blue/10'
-                  : 'bg-game-card-dark/50 border-game-card-border/30 opacity-40 cursor-not-allowed'
+                ${
+                  canUse
+                    ? 'bg-game-card-dark border-game-card-border cursor-pointer hover:border-ice-blue/50 hover:bg-ice-blue/10'
+                    : 'bg-game-card-dark/50 border-game-card-border/30 opacity-40 cursor-not-allowed'
                 }
               `}
             >

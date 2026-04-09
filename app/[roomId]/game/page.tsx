@@ -34,6 +34,7 @@ import { CareerRevealCard } from '@/components/game/CareerRevealCard'
 import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
 import { HigherLowerCard } from '@/components/game/HigherLowerCard'
 import { GameLogo, TierBadge } from '@/components/design-system'
+import { Eye, SkipForward, ChevronRight, RotateCcw, Settings } from 'lucide-react'
 import type { H2HPair, HLPair, Player, Question } from '@/types/game'
 
 interface GamePageProps {
@@ -132,7 +133,9 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           {currentQuestion && gameMode === 'classic' && (
             <TierBadge tier={currentQuestion.difficulty} />
           )}
-          <span>Q {(game.currentQuestionIndex ?? 0) + 1} / {game.questionCount}</span>
+          <span>
+            Q {(game.currentQuestionIndex ?? 0) + 1} / {game.questionCount}
+          </span>
           <span className="text-ice-blue font-bold tracking-widest">{roomId}</span>
         </div>
       </header>
@@ -140,7 +143,6 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
       <div className="flex flex-1 overflow-hidden p-6 gap-6">
         {/* Main area */}
         <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6 bg-white border-4 border-black shadow-[12px_12px_0_#000] relative">
-
           {/* Countdown */}
           <AnimatePresence>
             {game.command === 'starting' && (
@@ -202,10 +204,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                 exit={{ opacity: 0, y: -30 }}
                 className="w-full max-w-3xl"
               >
-                <H2HComparisonCard
-                  pair={h2hCurrentPair}
-                  revealed={game.command === 'revealing'}
-                />
+                <H2HComparisonCard pair={h2hCurrentPair} revealed={game.command === 'revealing'} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -220,10 +219,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                 exit={{ opacity: 0, y: -30 }}
                 className="w-full max-w-3xl"
               >
-                <HigherLowerCard
-                  pair={hlCurrentPair}
-                  revealed={game.command === 'revealing'}
-                />
+                <HigherLowerCard pair={hlCurrentPair} revealed={game.command === 'revealing'} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -234,10 +230,14 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
               <div className="h-2 bg-game-card-dark rounded-full w-56 overflow-hidden">
                 <motion.div
                   className="h-full bg-ice-blue rounded-full"
-                  animate={{ width: `${(answeredCount / Math.max(connectedCount, 1)) * 100}%` }}
+                  animate={{
+                    width: `${(answeredCount / Math.max(connectedCount, 1)) * 100}%`,
+                  }}
                 />
               </div>
-              <span className="text-sm text-game-text-muted">{answeredCount}/{connectedCount} answered</span>
+              <span className="text-sm text-game-text-muted">
+                {answeredCount}/{connectedCount} answered
+              </span>
             </div>
           )}
 
@@ -251,17 +251,23 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
               >
                 {gameMode === 'classic' || gameMode === 'career' ? (
                   <>
-                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">The answer was</p>
+                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">
+                      The answer was
+                    </p>
                     <h2 className="text-5xl font-bold text-ice-blue">
                       {currentQuestion.firstName} {currentQuestion.lastName}
                     </h2>
                     {gameMode === 'classic' && (
-                      <p className="text-game-text-muted mt-2">{currentQuestion.season} · {currentQuestion.teamNames}</p>
+                      <p className="text-game-text-muted mt-2">
+                        {currentQuestion.season} · {currentQuestion.teamNames}
+                      </p>
                     )}
                   </>
                 ) : gameMode === 'h2h' && h2hCurrentPair ? (
                   <>
-                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">Correct answer</p>
+                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">
+                      Correct answer
+                    </p>
                     <h2 className="text-3xl font-bold text-ice-blue">
                       Player {h2hCurrentPair.correctSide === 'left' ? 'A (Left)' : 'B (Right)'}
                     </h2>
@@ -269,12 +275,15 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                   </>
                 ) : gameMode === 'higher-lower' && hlCurrentPair ? (
                   <>
-                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">The answer was</p>
+                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">
+                      The answer was
+                    </p>
                     <h2 className="text-5xl font-bold text-ice-blue capitalize">
                       {hlCurrentPair.correctAnswer}
                     </h2>
                     <p className="text-game-text-muted mt-2">
-                      {hlCurrentPair.challengeValue} vs {hlCurrentPair.referenceValue} {hlCurrentPair.field}
+                      {hlCurrentPair.challengeValue} vs {hlCurrentPair.referenceValue}{' '}
+                      {hlCurrentPair.field}
                     </p>
                   </>
                 ) : null}
@@ -285,9 +294,15 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           {/* Game over */}
           <AnimatePresence>
             {game.command === 'finished' && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center"
+              >
                 <div className="text-7xl mb-4">🏆</div>
-                <h2 className="text-5xl font-bold uppercase tracking-widest text-game-gold">Game Over!</h2>
+                <h2 className="text-5xl font-bold uppercase tracking-widest text-game-gold">
+                  Game Over!
+                </h2>
               </motion.div>
             )}
           </AnimatePresence>
@@ -295,11 +310,10 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
 
         {/* Sidebar scoreboard */}
         <aside className="w-72 bg-white border-4 border-black shadow-[12px_12px_0_#000] p-5 overflow-y-auto">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-black mb-4 border-b-4 border-black pb-2">Scoreboard</h3>
-          <Scoreboard
-            players={players}
-            variant={game.command === 'finished' ? 'final' : 'live'}
-          />
+          <h3 className="text-sm font-bold uppercase tracking-widest text-black mb-4 border-b-4 border-black pb-2">
+            Scoreboard
+          </h3>
+          <Scoreboard players={players} variant={game.command === 'finished' ? 'final' : 'live'} />
         </aside>
       </div>
 
@@ -349,21 +363,25 @@ function GamePageDock({
   if (!game) return null
 
   const command = game.command as string
-  const label = isBoss ? 'Boss Controls' : 'Host Controls'
   const nextLabel = gameMode === 'classic' ? 'Next Question' : 'Next Round'
 
-  type Item = { icon: React.ReactNode; label: React.ReactNode; onClick: () => void; className?: string }
+  type Item = {
+    icon: React.ReactNode
+    label: React.ReactNode
+    onClick: () => void
+    className?: string
+  }
   const items: Item[] = []
 
   if (command === 'answering') {
     items.push({
-      icon: <span className="text-2xl">⏭</span>,
+      icon: <Eye size={24} />,
       label: 'Reveal',
       onClick: onReveal,
       className: 'bg-game-red border-2 border-black text-white',
     })
     items.push({
-      icon: <span className="text-2xl">⏩</span>,
+      icon: <SkipForward size={24} />,
       label: 'Skip',
       onClick: onSkip,
       className: 'bg-yellow border-2 border-black text-black',
@@ -372,7 +390,7 @@ function GamePageDock({
 
   if (command === 'revealing') {
     items.push({
-      icon: <span className="text-2xl">▶️</span>,
+      icon: <ChevronRight size={24} />,
       label: nextLabel,
       onClick: onNext,
       className: 'bg-cyan border-2 border-black text-black',
@@ -381,13 +399,13 @@ function GamePageDock({
 
   if (command === 'finished') {
     items.push({
-      icon: <span className="text-2xl">🔁</span>,
+      icon: <RotateCcw size={24} />,
       label: 'Play Again',
       onClick: onRematch,
       className: 'bg-magenta border-2 border-black text-white',
     })
     items.push({
-      icon: <span className="text-2xl">⚙️</span>,
+      icon: <Settings size={24} />,
       label: 'Settings',
       onClick: onSettings,
       className: 'bg-white border-2 border-black text-black',
@@ -398,17 +416,8 @@ function GamePageDock({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 flex flex-col items-center pb-4 pointer-events-none z-50">
-      <p className="text-xs font-bold uppercase tracking-widest text-game-text-muted mb-1 bg-game-bg/80 px-2 py-0.5 border border-game-card-border backdrop-blur-sm">
-        {label}
-      </p>
       <div className="pointer-events-auto">
-        <Dock
-          items={items}
-          baseItemSize={52}
-          magnification={68}
-          panelHeight={68}
-          distance={130}
-        />
+        <Dock items={items} baseItemSize={52} magnification={68} panelHeight={68} distance={130} />
       </div>
     </div>
   )

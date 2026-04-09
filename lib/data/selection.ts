@@ -22,8 +22,9 @@ export class QuestionSelector {
     rookiesOnly?: boolean,
   ): Promise<QuestionSelector> {
     const excludeSet = new Set(excludeIds)
-    const pool = (await getQuestionsByTiers(ALL_TIERS, eras, rookiesOnly))
-      .filter((q) => !excludeSet.has(q.id))
+    const pool = (await getQuestionsByTiers(ALL_TIERS, eras, rookiesOnly)).filter(
+      (q) => !excludeSet.has(q.id),
+    )
     return new QuestionSelector(pool, tiers, excludeIds)
   }
 

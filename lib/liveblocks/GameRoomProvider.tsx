@@ -1,44 +1,44 @@
-"use client";
+'use client'
 
-import { ReactNode } from "react";
-import { nanoid } from "nanoid";
-import { RoomProvider } from "./client";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { LiveList, LiveObject } from "@liveblocks/client";
-import type { GameState } from "@/types/game";
+import { ReactNode } from 'react'
+import { nanoid } from 'nanoid'
+import { RoomProvider } from './client'
+import { ClientSideSuspense } from '@liveblocks/react'
+import { LiveList, LiveObject } from '@liveblocks/client'
+import type { GameState } from '@/types/game'
 
 function createInitialGameState(roomId: string, hostId: string): GameState {
   return {
     roomId,
     hostId,
-    bossId: "",
+    bossId: '',
     bossToken: nanoid(12),
     hostPlays: true,
     players: [],
-    command: "idle",
+    command: 'idle',
     countdownTime: 3,
     reveal: false,
     // Mode
-    gameMode: "classic",
+    gameMode: 'classic',
     // Setup
     questionCount: 10,
-    answerMode: "multiplechoice",
-    difficultyTiers: ["easy", "medium"],
-    revealMode: "timed",
+    answerMode: 'multiplechoice',
+    difficultyTiers: ['easy', 'medium'],
+    revealMode: 'timed',
     hintsEnabled: true,
     powerupsEnabled: true,
     rookiesOnly: false,
-    careerRevealOrder: "best-first",
+    careerRevealOrder: 'best-first',
     careerMinSeasons: 5,
     careerMaxReveals: 8,
-    hlComparisonField: "points",
+    hlComparisonField: 'points',
     eras: [],
     // Classic sequence
     questionSequence: [],
     currentQuestion: null,
     currentQuestionIndex: -1,
     revealedColumns: 0,
-    questionStartsAt: "",
+    questionStartsAt: '',
     choices: [],
     answers: {},
     answeredAt: {},
@@ -53,7 +53,7 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     careerData: [],
     careerSeasons: [],
     revealedSeasonCount: 0,
-    buzzedInPlayerId: "",
+    buzzedInPlayerId: '',
     buzzedInSeasonCount: 0,
     lockedOutPlayers: [],
     // H2H mode
@@ -62,21 +62,17 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     // Higher/Lower mode
     hlPairs: [],
     hlCurrentPair: null,
-  };
+  }
 }
 
 interface GameRoomProviderProps {
-  roomId: string;
-  hostId: string;
-  children: ReactNode;
+  roomId: string
+  hostId: string
+  children: ReactNode
 }
 
-export function GameRoomProvider({
-  roomId,
-  hostId,
-  children,
-}: GameRoomProviderProps) {
-  const liveblocksRoomId = `nhl-stats-master-${roomId}`;
+export function GameRoomProvider({ roomId, hostId, children }: GameRoomProviderProps) {
+  const liveblocksRoomId = `nhl-stats-master-${roomId}`
 
   return (
     <RoomProvider
@@ -98,9 +94,7 @@ export function GameRoomProvider({
           <div className="flex items-center justify-center min-h-screen bg-game-bg">
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-ice-blue border-t-transparent rounded-full animate-spin" />
-              <p className="text-game-text-muted text-lg tracking-widest uppercase">
-                Loading…
-              </p>
+              <p className="text-game-text-muted text-lg tracking-widest uppercase">Loading…</p>
             </div>
           </div>
         }
@@ -108,5 +102,5 @@ export function GameRoomProvider({
         {() => children}
       </ClientSideSuspense>
     </RoomProvider>
-  );
+  )
 }

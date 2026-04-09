@@ -1,179 +1,175 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { SignInButton, useUser } from "@clerk/nextjs";
-import { StatsCard } from "./StatsCard";
-import { Button, TierBadge } from "@/components/design-system";
-import {
-  getDailyChallenge,
-  getTodayDateString,
-} from "@/app/actions/game-actions";
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { SignInButton, useUser } from '@clerk/nextjs'
+import { StatsCard } from './StatsCard'
+import { Button, TierBadge } from '@/components/design-system'
+import { getDailyChallenge, getTodayDateString } from '@/app/actions/game-actions'
 import {
   getMyDailyChallengeScore,
   saveDailyChallengeScore,
   getDailyLeaderboard,
   type LeaderboardEntry,
-} from "@/app/actions/daily-challenge-actions";
-import type { Question } from "@/types/game";
+} from '@/app/actions/daily-challenge-actions'
+import type { Question } from '@/types/game'
 
-type StoredAnswer = { result: "correct" | "incorrect"; questionId: string };
+type StoredAnswer = { result: 'correct' | 'incorrect'; questionId: string }
 
 type Phase =
-  | { name: "loading" }
-  | { name: "playing"; question: Question }
-  | { name: "answered"; result: "correct" | "incorrect"; question: Question }
+  | { name: 'loading' }
+  | { name: 'playing'; question: Question }
+  | { name: 'answered'; result: 'correct' | 'incorrect'; question: Question }
   | {
-      name: "already_answered";
-      result: "correct" | "incorrect";
-      question: Question;
-    };
+      name: 'already_answered'
+      result: 'correct' | 'incorrect'
+      question: Question
+    }
 
 function getLocalAnswer(today: string): StoredAnswer | null {
   try {
-    const raw = localStorage.getItem(`daily-challenge-${today}`);
-    return raw ? JSON.parse(raw) : null;
+    const raw = localStorage.getItem(`daily-challenge-${today}`)
+    return raw ? JSON.parse(raw) : null
   } catch {
-    return null;
+    return null
   }
 }
 
 function setLocalAnswer(today: string, answer: StoredAnswer) {
   try {
-    localStorage.setItem(`daily-challenge-${today}`, JSON.stringify(answer));
+    localStorage.setItem(`daily-challenge-${today}`, JSON.stringify(answer))
   } catch {
     // ignore
   }
 }
 
 export function DailyChallenge() {
-  const { isLoaded, isSignedIn } = useUser();
-  const [phase, setPhase] = useState<Phase>({ name: "loading" });
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const { isLoaded, isSignedIn } = useUser()
+  const [phase, setPhase] = useState<Phase>({ name: 'loading' })
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false)
 
   // Load question + check if already answered
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded) return
 
     async function load() {
-      const today = await getTodayDateString();
+      const today = await getTodayDateString()
 
       // 1. Check localStorage first (instant)
-      const local = getLocalAnswer(today);
+      const local = getLocalAnswer(today)
       if (local) {
-        const q = await getDailyChallenge();
+        const q = await getDailyChallenge()
         if (q) {
           setPhase({
-            name: "already_answered",
+            name: 'already_answered',
             result: local.result,
             question: q,
-          });
-          loadLeaderboard();
+          })
+          loadLeaderboard()
         }
-        return;
+        return
       }
 
       // 2. If signed in, check Supabase (restores state if localStorage was cleared)
       if (isSignedIn) {
-        const record = await getMyDailyChallengeScore();
+        const record = await getMyDailyChallengeScore()
         if (record) {
-          const q = await getDailyChallenge();
+          const q = await getDailyChallenge()
           if (q) {
-            const result = record.is_correct ? "correct" : "incorrect";
-            setLocalAnswer(today, { result, questionId: record.question_id });
-            setPhase({ name: "already_answered", result, question: q });
-            loadLeaderboard();
+            const result = record.is_correct ? 'correct' : 'incorrect'
+            setLocalAnswer(today, { result, questionId: record.question_id })
+            setPhase({ name: 'already_answered', result, question: q })
+            loadLeaderboard()
           }
-          return;
+          return
         }
       }
 
       // 3. Not answered yet — load the question
       try {
-        const q = await getDailyChallenge();
+        const q = await getDailyChallenge()
         if (q) {
-          setPhase({ name: "playing", question: q });
+          setPhase({ name: 'playing', question: q })
         }
       } catch (err) {
-        console.error(err);
+        console.error(err)
       }
     }
 
-    load();
-  }, [isLoaded, isSignedIn]);
+    load()
+  }, [isLoaded, isSignedIn])
 
   // Re-check Supabase when user signs in mid-session
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    if (phase.name !== "playing") return;
+    if (!isLoaded || !isSignedIn) return
+    if (phase.name !== 'playing') return
 
     async function checkAfterSignIn() {
-      const today = await getTodayDateString();
-      const record = await getMyDailyChallengeScore();
-      if (record && phase.name === "playing") {
-        const result = record.is_correct ? "correct" : "incorrect";
-        setLocalAnswer(today, { result, questionId: record.question_id });
+      const today = await getTodayDateString()
+      const record = await getMyDailyChallengeScore()
+      if (record && phase.name === 'playing') {
+        const result = record.is_correct ? 'correct' : 'incorrect'
+        setLocalAnswer(today, { result, questionId: record.question_id })
         setPhase({
-          name: "already_answered",
+          name: 'already_answered',
           result,
-          question: (phase as { name: "playing"; question: Question }).question,
-        });
-        loadLeaderboard();
+          question: (phase as { name: 'playing'; question: Question }).question,
+        })
+        loadLeaderboard()
       }
     }
 
-    checkAfterSignIn();
-  }, [isSignedIn]); // eslint-disable-line react-hooks/exhaustive-deps
+    checkAfterSignIn()
+  }, [isSignedIn]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadLeaderboard() {
-    setLoadingLeaderboard(true);
+    setLoadingLeaderboard(true)
     try {
-      const entries = await getDailyLeaderboard();
-      setLeaderboard(entries);
+      const entries = await getDailyLeaderboard()
+      setLeaderboard(entries)
     } finally {
-      setLoadingLeaderboard(false);
+      setLoadingLeaderboard(false)
     }
   }
 
   async function handleGuess(choice: string) {
-    if (phase.name !== "playing") return;
-    const { question } = phase;
-    const today = await getTodayDateString();
+    if (phase.name !== 'playing') return
+    const { question } = phase
+    const today = await getTodayDateString()
 
     const isCorrect =
-      choice.toLowerCase() ===
-      `${question.firstName} ${question.lastName}`.toLowerCase();
-    const result = isCorrect ? "correct" : "incorrect";
+      choice.toLowerCase() === `${question.firstName} ${question.lastName}`.toLowerCase()
+    const result = isCorrect ? 'correct' : 'incorrect'
 
     // Persist locally
-    setLocalAnswer(today, { result, questionId: String(question.id) });
+    setLocalAnswer(today, { result, questionId: String(question.id) })
 
     // Persist to Supabase if signed in (fire & forget)
     if (isSignedIn) {
       saveDailyChallengeScore({
         questionId: String(question.id),
         isCorrect,
-      }).catch(console.error);
+      }).catch(console.error)
     }
 
-    setPhase({ name: "answered", result, question });
+    setPhase({ name: 'answered', result, question })
     if (isCorrect) {
-      loadLeaderboard();
+      loadLeaderboard()
     }
   }
 
-  if (phase.name === "loading") {
+  if (phase.name === 'loading') {
     return (
       <div className="bg-white border-8 border-black rounded-sm p-6 shadow-[12px_12px_0_#000] rotate-[1deg] text-center min-h-[300px] flex items-center justify-center">
         <p className="font-bold uppercase tracking-widest text-game-text-muted animate-pulse">
           Loading Daily Challenge...
         </p>
       </div>
-    );
+    )
   }
 
-  if (phase.name === "already_answered") {
+  if (phase.name === 'already_answered') {
     return (
       <AlreadyAnswered
         result={phase.result}
@@ -181,12 +177,12 @@ export function DailyChallenge() {
         leaderboard={leaderboard}
         loadingLeaderboard={loadingLeaderboard}
       />
-    );
+    )
   }
 
-  if (phase.name === "playing") {
-    const { question } = phase;
-    const choices = question.choices ?? [];
+  if (phase.name === 'playing') {
+    const { question } = phase
+    const choices = question.choices ?? []
 
     return (
       <div className="bg-white border-8 border-black rounded-sm p-6 shadow-[12px_12px_0_#000] rotate-[1deg] space-y-4">
@@ -211,15 +207,15 @@ export function DailyChallenge() {
           ))}
         </div>
       </div>
-    );
+    )
   }
 
   // answered
   const { result, question } = phase as {
-    name: "answered";
-    result: "correct" | "incorrect";
-    question: Question;
-  };
+    name: 'answered'
+    result: 'correct' | 'incorrect'
+    question: Question
+  }
   return (
     <div className="bg-white border-8 border-black rounded-sm p-6 shadow-[12px_12px_0_#000] rotate-[1deg] space-y-4">
       <ChallengeHeader question={question} />
@@ -235,7 +231,7 @@ export function DailyChallenge() {
         loadingLeaderboard={loadingLeaderboard}
       />
     </div>
-  );
+  )
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -250,7 +246,7 @@ function ChallengeHeader({ question }: { question: Question }) {
       </div>
       <TierBadge tier={question.difficulty} />
     </div>
-  );
+  )
 }
 
 function ResultBanner({
@@ -261,28 +257,28 @@ function ResultBanner({
   leaderboard,
   loadingLeaderboard,
 }: {
-  result: "correct" | "incorrect";
-  question: Question;
-  isSignedIn: boolean;
-  isLoaded: boolean;
-  leaderboard: LeaderboardEntry[];
-  loadingLeaderboard: boolean;
+  result: 'correct' | 'incorrect'
+  question: Question
+  isSignedIn: boolean
+  isLoaded: boolean
+  leaderboard: LeaderboardEntry[]
+  loadingLeaderboard: boolean
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       className={`border-4 border-black p-4 text-center mt-2 rotate-[-1deg] ${
-        result === "correct"
-          ? "bg-lime text-black shadow-[4px_4px_0_#000]"
-          : "bg-game-red text-white shadow-[4px_4px_0_#000]"
+        result === 'correct'
+          ? 'bg-lime text-black shadow-[4px_4px_0_#000]'
+          : 'bg-game-red text-white shadow-[4px_4px_0_#000]'
       }`}
     >
       <h2 className="text-3xl font-display font-bold uppercase mb-2">
-        {result === "correct" ? "Nailed It! 🔥" : "Incorrect! 🧊"}
+        {result === 'correct' ? 'Nailed It! 🔥' : 'Incorrect! 🧊'}
       </h2>
       <div className="font-bold text-sm mb-3">
-        It was{" "}
+        It was{' '}
         <span className="inline-block bg-black text-white px-2 py-0.5 mx-1 font-mono">
           {question.firstName} {question.lastName}
         </span>
@@ -291,11 +287,7 @@ function ResultBanner({
       {isLoaded && !isSignedIn && (
         <div className="mb-3 border-2 border-black bg-yellow text-black p-2 text-xs font-mono font-bold shadow-[2px_2px_0_#000] rotate-[1deg]">
           <SignInButton mode="modal">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="underline cursor-pointer"
-            >
+            <Button variant="secondary" size="sm" className="underline cursor-pointer">
               Sign in to save your score
             </Button>
           </SignInButton>
@@ -303,15 +295,13 @@ function ResultBanner({
         </div>
       )}
 
-      <p className="text-xs font-mono opacity-70 mt-1">
-        New challenge drops at midnight UTC.
-      </p>
+      <p className="text-xs font-mono opacity-70 mt-1">New challenge drops at midnight UTC.</p>
 
-      {(result === "correct" || leaderboard.length > 0) && (
+      {(result === 'correct' || leaderboard.length > 0) && (
         <LeaderboardPanel entries={leaderboard} loading={loadingLeaderboard} />
       )}
     </motion.div>
-  );
+  )
 }
 
 function AlreadyAnswered({
@@ -320,10 +310,10 @@ function AlreadyAnswered({
   leaderboard,
   loadingLeaderboard,
 }: {
-  result: "correct" | "incorrect";
-  question: Question;
-  leaderboard: LeaderboardEntry[];
-  loadingLeaderboard: boolean;
+  result: 'correct' | 'incorrect'
+  question: Question
+  leaderboard: LeaderboardEntry[]
+  loadingLeaderboard: boolean
 }) {
   return (
     <div className="bg-white border-8 border-black rounded-sm p-6 shadow-[12px_12px_0_#000] rotate-[1deg] space-y-4">
@@ -337,16 +327,16 @@ function AlreadyAnswered({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className={`border-4 border-black p-4 text-center rotate-[-1deg] ${
-          result === "correct"
-            ? "bg-lime text-black shadow-[4px_4px_0_#000]"
-            : "bg-game-red text-white shadow-[4px_4px_0_#000]"
+          result === 'correct'
+            ? 'bg-lime text-black shadow-[4px_4px_0_#000]'
+            : 'bg-game-red text-white shadow-[4px_4px_0_#000]'
         }`}
       >
         <h2 className="text-2xl font-display font-bold uppercase mb-1">
-          {result === "correct" ? "You got it! 🔥" : "Better luck tomorrow 🧊"}
+          {result === 'correct' ? 'You got it! 🔥' : 'Better luck tomorrow 🧊'}
         </h2>
         <div className="font-bold text-sm mb-2">
-          It was{" "}
+          It was{' '}
           <span className="inline-block bg-black text-white px-2 py-0.5 mx-1 font-mono">
             {question.firstName} {question.lastName}
           </span>
@@ -356,34 +346,23 @@ function AlreadyAnswered({
         </p>
 
         {leaderboard.length > 0 && (
-          <LeaderboardPanel
-            entries={leaderboard}
-            loading={loadingLeaderboard}
-          />
+          <LeaderboardPanel entries={leaderboard} loading={loadingLeaderboard} />
         )}
       </motion.div>
     </div>
-  );
+  )
 }
 
-function LeaderboardPanel({
-  entries,
-  loading,
-}: {
-  entries: LeaderboardEntry[];
-  loading: boolean;
-}) {
+function LeaderboardPanel({ entries, loading }: { entries: LeaderboardEntry[]; loading: boolean }) {
   if (loading) {
     return (
       <div className="mt-4 border-t-2 border-black/30 pt-3">
-        <p className="text-xs font-mono opacity-60 animate-pulse">
-          Loading leaderboard...
-        </p>
+        <p className="text-xs font-mono opacity-60 animate-pulse">Loading leaderboard...</p>
       </div>
-    );
+    )
   }
 
-  if (entries.length === 0) return null;
+  if (entries.length === 0) return null
 
   return (
     <div className="mt-4 border-t-2 border-black/30 pt-3 text-left">
@@ -392,25 +371,20 @@ function LeaderboardPanel({
       </p>
       <ol className="space-y-1">
         {entries.map((entry, i) => (
-          <li
-            key={entry.userId}
-            className="flex items-center gap-2 text-xs font-mono"
-          >
-            <span className="font-bold opacity-60 w-4 text-right">
-              {i + 1}.
-            </span>
+          <li key={entry.userId} className="flex items-center gap-2 text-xs font-mono">
+            <span className="font-bold opacity-60 w-4 text-right">{i + 1}.</span>
             <span className="font-bold">{entry.displayName}</span>
             <span className="opacity-50 ml-auto">
               {new Date(entry.answeredAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "UTC",
-                timeZoneName: "short",
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'UTC',
+                timeZoneName: 'short',
               })}
             </span>
           </li>
         ))}
       </ol>
     </div>
-  );
+  )
 }

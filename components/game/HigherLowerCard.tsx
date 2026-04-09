@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import { motion } from "framer-motion";
-import type { HLComparisonField, HLPair } from "@/types/game";
+import { motion } from 'framer-motion'
+import type { HLComparisonField, HLPair } from '@/types/game'
 
 const FIELD_DISPLAY: Record<HLComparisonField, string> = {
-  goals: "Goals",
-  assists: "Assists",
-  points: "Points",
-  penaltyMinutes: "Penalty Minutes",
-  gamesPlayed: "Games Played",
-};
+  goals: 'Goals',
+  assists: 'Assists',
+  points: 'Points',
+  penaltyMinutes: 'Penalty Minutes',
+  gamesPlayed: 'Games Played',
+}
 
 interface HigherLowerCardProps {
-  pair: HLPair;
-  myAnswer?: string;        // 'higher' | 'lower' | undefined
-  revealed?: boolean;
-  onAnswer?: (answer: "higher" | "lower") => void;
+  pair: HLPair
+  myAnswer?: string // 'higher' | 'lower' | undefined
+  revealed?: boolean
+  onAnswer?: (answer: 'higher' | 'lower') => void
 }
 
 export function HigherLowerCard({
@@ -24,21 +24,21 @@ export function HigherLowerCard({
   revealed = false,
   onAnswer,
 }: HigherLowerCardProps) {
-  const fieldLabel = FIELD_DISPLAY[pair.field] ?? pair.field;
-  const hasAnswered = !!myAnswer;
+  const fieldLabel = FIELD_DISPLAY[pair.field] ?? pair.field
+  const hasAnswered = !!myAnswer
 
-  function buttonClass(choice: "higher" | "lower") {
-    const isMyChoice = myAnswer === choice;
-    const isCorrect = pair.correctAnswer === choice;
+  function buttonClass(choice: 'higher' | 'lower') {
+    const isMyChoice = myAnswer === choice
+    const isCorrect = pair.correctAnswer === choice
 
     if (revealed) {
-      if (isCorrect) return "bg-lime border-black text-black";
-      if (isMyChoice && !isCorrect) return "bg-game-red border-black text-white";
-      return "bg-white border-black/30 text-black/40";
+      if (isCorrect) return 'bg-lime border-black text-black'
+      if (isMyChoice && !isCorrect) return 'bg-game-red border-black text-white'
+      return 'bg-white border-black/30 text-black/40'
     }
-    if (isMyChoice) return "bg-cyan border-black text-black";
-    if (hasAnswered) return "bg-white border-black/30 text-black/40";
-    return "bg-white border-black text-black hover:bg-cyan/30 cursor-pointer";
+    if (isMyChoice) return 'bg-cyan border-black text-black'
+    if (hasAnswered) return 'bg-white border-black/30 text-black/40'
+    return 'bg-white border-black text-black hover:bg-cyan/30 cursor-pointer'
   }
 
   return (
@@ -58,9 +58,7 @@ export function HigherLowerCard({
             </p>
           </div>
           <div className="text-right">
-            <p className="text-4xl font-bold tabular-nums text-black">
-              {pair.referenceValue}
-            </p>
+            <p className="text-4xl font-bold tabular-nums text-black">{pair.referenceValue}</p>
             <p className="text-xs text-black/50 font-bold uppercase">{fieldLabel}</p>
           </div>
         </div>
@@ -99,7 +97,7 @@ export function HigherLowerCard({
 
       {/* Higher / Lower buttons */}
       <div className="flex gap-4">
-        {(["higher", "lower"] as const).map((choice) => (
+        {(['higher', 'lower'] as const).map((choice) => (
           <motion.button
             key={choice}
             onClick={() => !hasAnswered && !revealed && onAnswer?.(choice)}
@@ -113,15 +111,13 @@ export function HigherLowerCard({
               ${buttonClass(choice)}
             `}
           >
-            {choice === "higher" ? "↑ Higher" : "↓ Lower"}
+            {choice === 'higher' ? '↑ Higher' : '↓ Lower'}
             {revealed && pair.correctAnswer === choice && (
-              <span className="block text-sm font-bold mt-1">
-                {pair.challengeValue}
-              </span>
+              <span className="block text-sm font-bold mt-1">{pair.challengeValue}</span>
             )}
           </motion.button>
         ))}
       </div>
     </div>
-  );
+  )
 }

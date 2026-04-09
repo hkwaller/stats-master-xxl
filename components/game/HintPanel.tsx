@@ -50,9 +50,7 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint }: 
     <div className="space-y-2">
       <p className="text-xs font-bold uppercase tracking-widest text-game-text-muted flex items-center gap-1.5">
         <span>💡</span> Hints
-        {usedHints.length > 0 && (
-          <span className="text-game-gold">({usedHints.length} used)</span>
-        )}
+        {usedHints.length > 0 && <span className="text-game-gold">({usedHints.length} used)</span>}
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -67,9 +65,10 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint }: 
                 className={`
                   flex items-center gap-2 px-3 py-2 rounded-lg border text-sm
                   transition-all duration-150
-                  ${isUsed
-                    ? 'bg-game-card-dark border-game-card-border opacity-60 cursor-default'
-                    : 'bg-game-card-dark border-game-card-border hover:border-game-gold/50 hover:bg-game-gold/10 cursor-pointer'
+                  ${
+                    isUsed
+                      ? 'bg-game-card-dark border-game-card-border opacity-60 cursor-default'
+                      : 'bg-game-card-dark border-game-card-border hover:border-game-gold/50 hover:bg-game-gold/10 cursor-pointer'
                   }
                 `}
               >
@@ -94,9 +93,7 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint }: 
         })}
       </div>
 
-      <p className="text-xs text-game-text-muted">
-        Hints are shared — everyone sees them
-      </p>
+      <p className="text-xs text-game-text-muted">Hints are shared — everyone sees them</p>
     </div>
   )
 }

@@ -1,25 +1,21 @@
-"use client";
+'use client'
 
-import Script from "next/script";
+import Script from 'next/script'
 
 interface AdsterraBannerProps {
-  slot?: string;
-  className?: string;
+  slot?: string
+  className?: string
 }
 
 /** Adsterra uses different hostnames in embed code (e.g. highperformanceformat.com, topcreativeformat.com). Use the exact host from your dashboard snippet, or override via env. */
 const defaultInvokeHost =
-  process.env.NEXT_PUBLIC_ADSTERRA_INVOKE_HOST ??
-  "www.highperformanceformat.com";
+  process.env.NEXT_PUBLIC_ADSTERRA_INVOKE_HOST ?? 'www.highperformanceformat.com'
 
-export function AdsterraBanner({
-  slot = "top",
-  className = "",
-}: AdsterraBannerProps) {
-  const adKey = process.env.NEXT_PUBLIC_ADSTERRA_KEY;
-  if (!adKey) return null;
+export function AdsterraBanner({ slot = 'top', className = '' }: AdsterraBannerProps) {
+  const adKey = process.env.NEXT_PUBLIC_ADSTERRA_KEY
+  if (!adKey) return null
 
-  const optionsScriptId = `adsterra-atoptions-${slot}`;
+  const optionsScriptId = `adsterra-atoptions-${slot}`
 
   return (
     <div className={`w-full flex justify-center my-4 ${className}`}>
@@ -48,5 +44,5 @@ export function AdsterraBanner({
         data-cfasync="false"
       />
     </div>
-  );
+  )
 }

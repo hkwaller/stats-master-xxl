@@ -36,9 +36,10 @@ function LiveScoreboard({ players, myId }: { players: Player[]; myId?: string })
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className={`
               flex items-center gap-3 px-4 py-2.5 rounded-xl
-              ${player.id === myId
-                ? 'bg-ice-blue/15 border border-ice-blue/30'
-                : 'bg-game-card-dark border border-game-card-border'
+              ${
+                player.id === myId
+                  ? 'bg-ice-blue/15 border border-ice-blue/30'
+                  : 'bg-game-card-dark border border-game-card-border'
               }
             `}
           >
@@ -121,9 +122,10 @@ function FinalScoreboard({ players, myId }: { players: Player[]; myId?: string }
               transition={{ delay: 0.5 + i * 0.05 }}
               className={`
                 flex items-center gap-3 px-4 py-2.5 rounded-xl
-                ${player.id === myId
-                  ? 'bg-ice-blue/15 border border-ice-blue/30'
-                  : 'bg-game-card-dark border border-game-card-border'
+                ${
+                  player.id === myId
+                    ? 'bg-ice-blue/15 border border-ice-blue/30'
+                    : 'bg-game-card-dark border border-game-card-border'
                 }
               `}
             >

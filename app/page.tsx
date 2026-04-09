@@ -1,32 +1,32 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { nanoid } from "nanoid";
-import { SignInButton, useAuth, UserButton } from "@clerk/nextjs";
-import { GameLogo, Button, GameDivider } from "@/components/design-system";
-import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
-import { DailyChallenge } from "@/components/game/DailyChallenge";
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { nanoid } from 'nanoid'
+import { SignInButton, useAuth, UserButton } from '@clerk/nextjs'
+import { GameLogo, Button, GameDivider } from '@/components/design-system'
+import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
+import { DailyChallenge } from '@/components/game/DailyChallenge'
 
 export default function LandingPage() {
-  const router = useRouter();
-  const [joinCode, setJoinCode] = useState("");
-  const [error, setError] = useState("");
-  const { isSignedIn, isLoaded } = useAuth();
+  const router = useRouter()
+  const [joinCode, setJoinCode] = useState('')
+  const [error, setError] = useState('')
+  const { isSignedIn, isLoaded } = useAuth()
 
   function handleCreate() {
-    const roomId = nanoid(6).toUpperCase();
-    router.push(`/${roomId}/setup`);
+    const roomId = nanoid(6).toUpperCase()
+    router.push(`/${roomId}/setup`)
   }
 
   function handleJoin() {
-    const code = joinCode.trim().toUpperCase();
+    const code = joinCode.trim().toUpperCase()
     if (code.length < 4) {
-      setError("Enter a valid room code");
-      return;
+      setError('Enter a valid room code')
+      return
     }
-    router.push(`/${code}/lobby`);
+    router.push(`/${code}/lobby`)
   }
 
   return (
@@ -34,18 +34,18 @@ export default function LandingPage() {
       {/* Animated background particles */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {[
-          "var(--color-magenta)",
-          "var(--color-cyan)",
-          "var(--color-yellow)",
-          "var(--color-lime)",
-          "var(--color-magenta)",
-          "var(--color-cyan)",
-          "var(--color-yellow)",
-          "var(--color-lime)",
+          'var(--color-magenta)',
+          'var(--color-cyan)',
+          'var(--color-yellow)',
+          'var(--color-lime)',
+          'var(--color-magenta)',
+          'var(--color-cyan)',
+          'var(--color-yellow)',
+          'var(--color-lime)',
         ].map((color, i) => (
           <motion.div
             key={i}
-            className={`absolute border-4 border-black shadow-[4px_4px_0_#000] ${i % 2 === 0 ? "rounded-full" : "rounded-none"}`}
+            className={`absolute border-4 border-black shadow-[4px_4px_0_#000] ${i % 2 === 0 ? 'rounded-full' : 'rounded-none'}`}
             style={{
               backgroundColor: color,
               width: ((i % 3) + 1) * 30,
@@ -64,8 +64,8 @@ export default function LandingPage() {
             transition={{
               duration: 8 + Math.random() * 8,
               repeat: Infinity,
-              repeatType: "mirror",
-              ease: "linear",
+              repeatType: 'mirror',
+              ease: 'linear',
             }}
           />
         ))}
@@ -76,13 +76,11 @@ export default function LandingPage() {
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 200 }}
+          transition={{ type: 'spring', stiffness: 200 }}
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <span className="text-6xl drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-              💥
-            </span>
+            <span className="text-6xl drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">💥</span>
             <div>
               <GameLogo className="text-4xl mb-1" />
               <p className="text-black font-bold bg-cyan border-2 border-black px-3 py-1 rotate-1 inline-block text-xs tracking-widest uppercase shadow-[4px_4px_0_#000]">
@@ -109,17 +107,12 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+            transition={{ delay: 0.15, type: 'spring', stiffness: 200 }}
             className="space-y-6"
           >
             <div className="bg-white border-8 border-black rounded-sm p-6 space-y-6 shadow-[16px_16px_0px_#000] rotate-[-1deg]">
               <div>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  onClick={handleCreate}
-                >
+                <Button variant="primary" size="lg" className="w-full" onClick={handleCreate}>
                   Create New Game
                 </Button>
                 <p className="text-center text-sm font-bold text-black mt-4 border-2 border-black bg-yellow inline-block px-2 transform -rotate-1 shadow-[2px_2px_0_#000]">
@@ -137,10 +130,10 @@ export default function LandingPage() {
                   <input
                     value={joinCode}
                     onChange={(e) => {
-                      setJoinCode(e.target.value.toUpperCase());
-                      setError("");
+                      setJoinCode(e.target.value.toUpperCase())
+                      setError('')
                     }}
-                    onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
                     placeholder="ROOM CODE"
                     maxLength={8}
                     className="
@@ -154,9 +147,7 @@ export default function LandingPage() {
                     Join
                   </Button>
                 </div>
-                {error && (
-                  <p className="text-game-red text-sm text-center">{error}</p>
-                )}
+                {error && <p className="text-game-red text-sm text-center">{error}</p>}
               </div>
             </div>
 
@@ -167,7 +158,7 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+            transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
           >
             <DailyChallenge />
           </motion.div>
@@ -177,25 +168,20 @@ export default function LandingPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
           className="bg-white border-8 border-black rounded-sm p-8 shadow-[16px_16px_0px_#000] rotate-[1deg]"
         >
           <h2 className="text-4xl font-display font-bold uppercase mb-4 text-black">
             What is NHL Stats Master?
           </h2>
           <p className="text-black font-mono font-bold mb-4">
-            A chaotic, multiplayer trivia game where you guess NHL players based
-            entirely on their seasonal stats.
+            A chaotic, multiplayer trivia game where you guess NHL players based entirely on their
+            seasonal stats.
           </p>
           <ul className="list-disc pl-5 font-mono font-bold text-black space-y-3 mb-6">
             <li>Create a room and share the code.</li>
-            <li>
-              Use your phone as the controller while the main screen hosts the
-              game.
-            </li>
-            <li>
-              Outsmart your friends and answer before the countdown finishes!
-            </li>
+            <li>Use your phone as the controller while the main screen hosts the game.</li>
+            <li>Outsmart your friends and answer before the countdown finishes!</li>
           </ul>
           <div className="bg-lime p-4 rotate-[-1deg] shadow-[4px_4px_0_#000]">
             <p className="text-black font-bold uppercase tracking-widest text-sm text-center">
@@ -205,5 +191,5 @@ export default function LandingPage() {
         </motion.div>
       </div>
     </main>
-  );
+  )
 }

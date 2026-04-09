@@ -1,28 +1,28 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { usePlayerSearch } from "@/hooks/usePlayerSearch";
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { usePlayerSearch } from '@/hooks/usePlayerSearch'
 
 interface BuzzInButtonProps {
-  playerId: string;
-  buzzedInPlayerId: string;    // '' if nobody
-  lockedOutPlayers: string[];
-  onBuzzIn: () => void;
-  onSubmitAnswer: (answer: string) => void;
+  playerId: string
+  buzzedInPlayerId: string // '' if nobody
+  lockedOutPlayers: string[]
+  onBuzzIn: () => void
+  onSubmitAnswer: (answer: string) => void
 }
 
 function HighlightMatch({ text, query }: { text: string; query: string }) {
-  if (!query || query.length < 2) return <>{text}</>;
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return <>{text}</>;
+  if (!query || query.length < 2) return <>{text}</>
+  const idx = text.toLowerCase().indexOf(query.toLowerCase())
+  if (idx === -1) return <>{text}</>
   return (
     <>
       {text.slice(0, idx)}
       <span className="bg-yellow/60 font-bold">{text.slice(idx, idx + query.length)}</span>
       {text.slice(idx + query.length)}
     </>
-  );
+  )
 }
 
 export function BuzzInButton({
@@ -32,12 +32,12 @@ export function BuzzInButton({
   onBuzzIn,
   onSubmitAnswer,
 }: BuzzInButtonProps) {
-  const isLockedOut = lockedOutPlayers.includes(playerId);
-  const isBuzzed = buzzedInPlayerId === playerId;
-  const someoneElseBuzzed = buzzedInPlayerId !== "" && buzzedInPlayerId !== playerId;
+  const isLockedOut = lockedOutPlayers.includes(playerId)
+  const isBuzzed = buzzedInPlayerId === playerId
+  const someoneElseBuzzed = buzzedInPlayerId !== '' && buzzedInPlayerId !== playerId
 
-  const [answer, setAnswer] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [answer, setAnswer] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const {
     suggestions,
@@ -48,38 +48,34 @@ export function BuzzInButton({
     handleSuggestionPick,
     handleFocus,
     handleBlur,
-  } = usePlayerSearch({ value: answer, setValue: setAnswer, onSubmit: onSubmitAnswer });
+  } = usePlayerSearch({ value: answer, setValue: setAnswer, onSubmit: onSubmitAnswer })
 
   // Auto-focus input when this player buzzes in
   useEffect(() => {
     if (isBuzzed && inputRef.current) {
-      inputRef.current.focus();
+      inputRef.current.focus()
     }
-  }, [isBuzzed]);
+  }, [isBuzzed])
 
   // Clear answer when buzz state resets
   useEffect(() => {
     if (!isBuzzed) {
-      setAnswer("");
+      setAnswer('')
     }
-  }, [isBuzzed]);
+  }, [isBuzzed])
 
   function handleSubmit() {
-    if (!answer.trim()) return;
-    onSubmitAnswer(answer.trim());
+    if (!answer.trim()) return
+    onSubmitAnswer(answer.trim())
   }
 
   if (isLockedOut) {
     return (
       <div className="bg-game-red/10 border-4 border-game-red text-center py-6 px-4">
-        <p className="text-game-red font-bold text-lg uppercase tracking-widest">
-          Locked Out
-        </p>
-        <p className="text-game-red/70 text-sm mt-1">
-          Wrong guess — watch the remaining reveals
-        </p>
+        <p className="text-game-red font-bold text-lg uppercase tracking-widest">Locked Out</p>
+        <p className="text-game-red/70 text-sm mt-1">Wrong guess — watch the remaining reveals</p>
       </div>
-    );
+    )
   }
 
   if (someoneElseBuzzed) {
@@ -90,7 +86,7 @@ export function BuzzInButton({
         </p>
         <p className="text-black/70 text-sm mt-1">Stand by…</p>
       </div>
-    );
+    )
   }
 
   if (isBuzzed) {
@@ -153,7 +149,7 @@ export function BuzzInButton({
                     className={`
                       w-full text-left px-4 py-3 font-semibold text-black text-sm
                       border-b border-black/10 last:border-b-0 transition-colors
-                      ${i === activeIndex ? "bg-yellow" : "hover:bg-yellow/50"}
+                      ${i === activeIndex ? 'bg-yellow' : 'hover:bg-yellow/50'}
                     `}
                   >
                     <HighlightMatch text={name} query={answer} />
@@ -164,7 +160,7 @@ export function BuzzInButton({
           </AnimatePresence>
         </div>
       </motion.div>
-    );
+    )
   }
 
   // Default: buzz-in button — fixed to bottom of screen
@@ -184,5 +180,5 @@ export function BuzzInButton({
         🚨 Buzz In!
       </motion.button>
     </div>
-  );
+  )
 }
