@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AnswerMode } from "@/types/game";
 import { Button } from "@/components/design-system";
+import { usePlayerSearch } from "@/hooks/usePlayerSearch";
 
 interface PlayerGuessInputProps {
   answerMode: AnswerMode;
@@ -85,6 +86,21 @@ function MultipleChoiceInput({
   );
 }
 
+// ─── Highlight matched portion of a suggestion ────────────────────────────────
+
+function HighlightMatch({ text, query }: { text: string; query: string }) {
+  if (!query || query.length < 2) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="text-ice-blue font-bold">{text.slice(idx, idx + query.length)}</span>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
+
 // ─── Free Text ────────────────────────────────────────────────────────────────
 
 function FreeTextInput({
@@ -95,47 +111,22 @@ function FreeTextInput({
   onSubmit: (answer: string) => void;
 }) {
   const [value, setValue] = useState("");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const fetchSuggestions = useCallback(async (query: string) => {
-    if (query.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    try {
-      const res = await fetch(
-        `/api/players/search?q=${encodeURIComponent(query)}`,
-      );
-      if (res.ok) {
-        const data = (await res.json()) as { names: string[] };
-        setSuggestions(data.names.slice(0, 8));
-      }
-    } catch {
-      setSuggestions([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(value), 250);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [value, fetchSuggestions]);
+  const {
+    suggestions,
+    showSuggestions,
+    activeIndex,
+    handleChange,
+    handleKeyDown,
+    handleSuggestionPick,
+    handleFocus,
+    handleBlur,
+  } = usePlayerSearch({ value, setValue, onSubmit });
 
   function handleSubmit() {
     if (!value.trim()) return;
     onSubmit(value.trim());
-    setShowSuggestions(false);
-  }
-
-  function handleSuggestionPick(name: string) {
-    setValue(name);
-    setShowSuggestions(false);
-    onSubmit(name);
   }
 
   return (
@@ -144,16 +135,10 @@ function FreeTextInput({
         <input
           ref={inputRef}
           value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setShowSuggestions(true);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleSubmit();
-            if (e.key === "Escape") setShowSuggestions(false);
-          }}
-          onFocus={() => setShowSuggestions(true)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          onChange={(e) => handleChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           disabled={hasAnswered}
           placeholder="Type a player name…"
           autoComplete="off"
@@ -182,13 +167,19 @@ function FreeTextInput({
             exit={{ opacity: 0, y: -4 }}
             className="absolute top-full left-0 right-0 mt-2 z-20 bg-game-card border border-game-card-border rounded-xl overflow-hidden shadow-xl"
           >
-            {suggestions.map((name) => (
+            {suggestions.map((name, i) => (
               <button
                 key={name}
                 onMouseDown={() => handleSuggestionPick(name)}
-                className="w-full text-left px-4 py-2.5 hover:bg-game-card-dark text-sm transition-colors"
+                className={`
+                  w-full text-left px-4 py-2.5 text-sm transition-colors
+                  ${i === activeIndex
+                    ? "bg-ice-blue/20 text-game-text"
+                    : "hover:bg-game-card-dark text-game-text"
+                  }
+                `}
               >
-                {name}
+                <HighlightMatch text={name} query={value} />
               </button>
             ))}
           </motion.div>

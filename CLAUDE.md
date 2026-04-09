@@ -8,7 +8,8 @@ Player-season data lives in the **Supabase `nhl_player_seasons` table** — 46,7
 - All data access goes through `lib/data/database.ts` (server-only, async functions)
 - Classic mode queries rows with `points >= 70` (2,182 records)
 - Career mode queries all seasons per player (full careers)
-- To refresh data: `node scripts/scrape-nhl.mjs` then `node scripts/load-to-supabase.mjs`
+- To refresh data: `node scripts/scrape-nhl.mjs` then `node scripts/load-to-supabase.mjs` then `node scripts/generate-player-names.mjs`
+- Player autocomplete uses `lib/data/player-names.json` (7,745 unique players) — regenerate with the script above after a data refresh
 
 `lib/data/database.ts` is marked `server-only` — never import it in client components.
 Client-side player search uses the API route `/api/players/search`.

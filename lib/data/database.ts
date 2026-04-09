@@ -149,7 +149,7 @@ export async function getQuestionById(id: string): Promise<Question | undefined>
   return mapRecord(dbToRaw(data as DbRow));
 }
 
-/** Unique player names for typeahead search */
+/** Unique player names for typeahead search — filtered by difficulty tier */
 export async function getPlayerNamesByTiers(
   tiers: DifficultyTier[],
 ): Promise<string[]> {
@@ -160,25 +160,35 @@ export async function getPlayerNamesByTiers(
   const maxPts = Math.max(...ranges.map((r) => r[1]));
 
   const db = createSupabaseClient();
-  let query = db
-    .from("nhl_player_seasons")
-    .select("player_id, first_name, last_name")
-    .gte("points", minPts);
-  if (maxPts < 9999) query = query.lte("points", maxPts);
-
-  const { data, error } = await query;
-  if (error) throw new Error(`getPlayerNamesByTiers: ${error.message}`);
-
+  const PAGE_SIZE = 1000;
   const tierSet = new Set(tiers);
   const seen = new Set<number>();
   const names: string[] = [];
+  let from = 0;
 
-  for (const r of data as Pick<DbRow, "player_id" | "first_name" | "last_name" | "points">[] & DbRow[]) {
-    const tier = getTierForPoints(r.points);
-    if (!tier || !tierSet.has(tier)) continue;
-    if (seen.has(r.player_id)) continue;
-    seen.add(r.player_id);
-    names.push(`${r.first_name} ${r.last_name}`);
+  while (true) {
+    let query = db
+      .from("nhl_player_seasons")
+      .select("player_id, first_name, last_name, points")
+      .gte("points", minPts)
+      .range(from, from + PAGE_SIZE - 1)
+      .order("player_id");
+    if (maxPts < 9999) query = query.lte("points", maxPts);
+
+    const { data, error } = await query;
+    if (error) throw new Error(`getPlayerNamesByTiers: ${error.message}`);
+    if (!data || data.length === 0) break;
+
+    for (const r of data as Pick<DbRow, "player_id" | "first_name" | "last_name" | "points">[]) {
+      const tier = getTierForPoints(r.points);
+      if (!tier || !tierSet.has(tier)) continue;
+      if (seen.has(r.player_id)) continue;
+      seen.add(r.player_id);
+      names.push(`${r.first_name} ${r.last_name}`);
+    }
+
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
   }
 
   return names.sort();

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePlayerSearch } from "@/hooks/usePlayerSearch";
 
 interface BuzzInButtonProps {
   playerId: string;
@@ -9,6 +10,19 @@ interface BuzzInButtonProps {
   lockedOutPlayers: string[];
   onBuzzIn: () => void;
   onSubmitAnswer: (answer: string) => void;
+}
+
+function HighlightMatch({ text, query }: { text: string; query: string }) {
+  if (!query || query.length < 2) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="bg-yellow/60 font-bold">{text.slice(idx, idx + query.length)}</span>
+      {text.slice(idx + query.length)}
+    </>
+  );
 }
 
 export function BuzzInButton({
@@ -23,10 +37,18 @@ export function BuzzInButton({
   const someoneElseBuzzed = buzzedInPlayerId !== "" && buzzedInPlayerId !== playerId;
 
   const [answer, setAnswer] = useState("");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    suggestions,
+    showSuggestions,
+    activeIndex,
+    handleChange,
+    handleKeyDown,
+    handleSuggestionPick,
+    handleFocus,
+    handleBlur,
+  } = usePlayerSearch({ value: answer, setValue: setAnswer, onSubmit: onSubmitAnswer });
 
   // Auto-focus input when this player buzzes in
   useEffect(() => {
@@ -39,44 +61,12 @@ export function BuzzInButton({
   useEffect(() => {
     if (!isBuzzed) {
       setAnswer("");
-      setSuggestions([]);
     }
   }, [isBuzzed]);
-
-  const fetchSuggestions = useCallback(async (query: string) => {
-    if (query.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    try {
-      const res = await fetch(`/api/players/search?q=${encodeURIComponent(query)}`);
-      if (res.ok) {
-        const data = (await res.json()) as { names: string[] };
-        setSuggestions(data.names.slice(0, 8));
-      }
-    } catch {
-      setSuggestions([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(answer), 250);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [answer, fetchSuggestions]);
 
   function handleSubmit() {
     if (!answer.trim()) return;
     onSubmitAnswer(answer.trim());
-    setShowSuggestions(false);
-  }
-
-  function handleSuggestionPick(name: string) {
-    setAnswer(name);
-    setShowSuggestions(false);
-    onSubmitAnswer(name);
   }
 
   if (isLockedOut) {
@@ -121,16 +111,10 @@ export function BuzzInButton({
             <input
               ref={inputRef}
               value={answer}
-              onChange={(e) => {
-                setAnswer(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-                if (e.key === "Escape") setShowSuggestions(false);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              onChange={(e) => handleChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               placeholder="Type a player name…"
               autoComplete="off"
               className="
@@ -162,13 +146,17 @@ export function BuzzInButton({
                 exit={{ opacity: 0, y: -4 }}
                 className="absolute top-full left-0 right-0 mt-1 z-20 bg-white border-4 border-black shadow-[4px_4px_0_#000] overflow-hidden"
               >
-                {suggestions.map((name) => (
+                {suggestions.map((name, i) => (
                   <button
                     key={name}
                     onMouseDown={() => handleSuggestionPick(name)}
-                    className="w-full text-left px-4 py-3 hover:bg-yellow font-semibold text-black text-sm border-b border-black/10 last:border-b-0 transition-colors"
+                    className={`
+                      w-full text-left px-4 py-3 font-semibold text-black text-sm
+                      border-b border-black/10 last:border-b-0 transition-colors
+                      ${i === activeIndex ? "bg-yellow" : "hover:bg-yellow/50"}
+                    `}
                   >
-                    {name}
+                    <HighlightMatch text={name} query={answer} />
                   </button>
                 ))}
               </motion.div>
