@@ -80,7 +80,6 @@ export default function LandingPage() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <span className="text-6xl drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">💥</span>
             <div>
               <GameLogo className="text-4xl mb-1" />
               <p className="text-black font-bold bg-cyan border-2 border-black px-3 py-1 rotate-1 inline-block text-xs tracking-widest uppercase shadow-[4px_4px_0_#000]">

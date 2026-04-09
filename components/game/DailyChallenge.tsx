@@ -11,6 +11,7 @@ import {
   saveDailyChallengeScore,
   getDailyLeaderboard,
   type LeaderboardEntry,
+  type LeaderboardPeriod,
 } from '@/app/actions/daily-challenge-actions'
 import type { Question } from '@/types/game'
 
@@ -20,11 +21,7 @@ type Phase =
   | { name: 'loading' }
   | { name: 'playing'; question: Question }
   | { name: 'answered'; result: 'correct' | 'incorrect'; question: Question }
-  | {
-      name: 'already_answered'
-      result: 'correct' | 'incorrect'
-      question: Question
-    }
+  | { name: 'already_answered'; result: 'correct' | 'incorrect'; question: Question }
 
 function getLocalAnswer(today: string): StoredAnswer | null {
   try {
@@ -46,32 +43,20 @@ function setLocalAnswer(today: string, answer: StoredAnswer) {
 export function DailyChallenge() {
   const { isLoaded, isSignedIn } = useUser()
   const [phase, setPhase] = useState<Phase>({ name: 'loading' })
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false)
 
-  // Load question + check if already answered
   useEffect(() => {
     if (!isLoaded) return
 
     async function load() {
       const today = await getTodayDateString()
 
-      // 1. Check localStorage first (instant)
       const local = getLocalAnswer(today)
       if (local) {
         const q = await getDailyChallenge()
-        if (q) {
-          setPhase({
-            name: 'already_answered',
-            result: local.result,
-            question: q,
-          })
-          loadLeaderboard()
-        }
+        if (q) setPhase({ name: 'already_answered', result: local.result, question: q })
         return
       }
 
-      // 2. If signed in, check Supabase (restores state if localStorage was cleared)
       if (isSignedIn) {
         const record = await getMyDailyChallengeScore()
         if (record) {
@@ -80,18 +65,14 @@ export function DailyChallenge() {
             const result = record.is_correct ? 'correct' : 'incorrect'
             setLocalAnswer(today, { result, questionId: record.question_id })
             setPhase({ name: 'already_answered', result, question: q })
-            loadLeaderboard()
           }
           return
         }
       }
 
-      // 3. Not answered yet — load the question
       try {
         const q = await getDailyChallenge()
-        if (q) {
-          setPhase({ name: 'playing', question: q })
-        }
+        if (q) setPhase({ name: 'playing', question: q })
       } catch (err) {
         console.error(err)
       }
@@ -116,22 +97,11 @@ export function DailyChallenge() {
           result,
           question: (phase as { name: 'playing'; question: Question }).question,
         })
-        loadLeaderboard()
       }
     }
 
     checkAfterSignIn()
   }, [isSignedIn]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function loadLeaderboard() {
-    setLoadingLeaderboard(true)
-    try {
-      const entries = await getDailyLeaderboard()
-      setLeaderboard(entries)
-    } finally {
-      setLoadingLeaderboard(false)
-    }
-  }
 
   async function handleGuess(choice: string) {
     if (phase.name !== 'playing') return
@@ -142,10 +112,8 @@ export function DailyChallenge() {
       choice.toLowerCase() === `${question.firstName} ${question.lastName}`.toLowerCase()
     const result = isCorrect ? 'correct' : 'incorrect'
 
-    // Persist locally
     setLocalAnswer(today, { result, questionId: String(question.id) })
 
-    // Persist to Supabase if signed in (fire & forget)
     if (isSignedIn) {
       saveDailyChallengeScore({
         questionId: String(question.id),
@@ -154,9 +122,6 @@ export function DailyChallenge() {
     }
 
     setPhase({ name: 'answered', result, question })
-    if (isCorrect) {
-      loadLeaderboard()
-    }
   }
 
   if (phase.name === 'loading') {
@@ -170,14 +135,7 @@ export function DailyChallenge() {
   }
 
   if (phase.name === 'already_answered') {
-    return (
-      <AlreadyAnswered
-        result={phase.result}
-        question={phase.question}
-        leaderboard={leaderboard}
-        loadingLeaderboard={loadingLeaderboard}
-      />
-    )
+    return <AlreadyAnswered result={phase.result} question={phase.question} />
   }
 
   if (phase.name === 'playing') {
@@ -210,7 +168,6 @@ export function DailyChallenge() {
     )
   }
 
-  // answered
   const { result, question } = phase as {
     name: 'answered'
     result: 'correct' | 'incorrect'
@@ -222,14 +179,7 @@ export function DailyChallenge() {
       <div className="relative">
         <StatsCard question={question} revealedColumns={5} />
       </div>
-      <ResultBanner
-        result={result}
-        question={question}
-        isSignedIn={!!isSignedIn}
-        isLoaded={isLoaded}
-        leaderboard={leaderboard}
-        loadingLeaderboard={loadingLeaderboard}
-      />
+      <ResultBanner result={result} question={question} isSignedIn={!!isSignedIn} isLoaded={isLoaded} />
     </div>
   )
 }
@@ -254,15 +204,11 @@ function ResultBanner({
   question,
   isSignedIn,
   isLoaded,
-  leaderboard,
-  loadingLeaderboard,
 }: {
   result: 'correct' | 'incorrect'
   question: Question
   isSignedIn: boolean
   isLoaded: boolean
-  leaderboard: LeaderboardEntry[]
-  loadingLeaderboard: boolean
 }) {
   return (
     <motion.div
@@ -297,9 +243,7 @@ function ResultBanner({
 
       <p className="text-xs font-mono opacity-70 mt-1">New challenge drops at midnight UTC.</p>
 
-      {(result === 'correct' || leaderboard.length > 0) && (
-        <LeaderboardPanel entries={leaderboard} loading={loadingLeaderboard} />
-      )}
+      <LeaderboardPanel />
     </motion.div>
   )
 }
@@ -307,13 +251,9 @@ function ResultBanner({
 function AlreadyAnswered({
   result,
   question,
-  leaderboard,
-  loadingLeaderboard,
 }: {
   result: 'correct' | 'incorrect'
   question: Question
-  leaderboard: LeaderboardEntry[]
-  loadingLeaderboard: boolean
 }) {
   return (
     <div className="bg-white border-8 border-black rounded-sm p-6 shadow-[12px_12px_0_#000] rotate-[1deg] space-y-4">
@@ -345,46 +285,89 @@ function AlreadyAnswered({
           You already played today&apos;s challenge. New one at midnight UTC.
         </p>
 
-        {leaderboard.length > 0 && (
-          <LeaderboardPanel entries={leaderboard} loading={loadingLeaderboard} />
-        )}
+        <LeaderboardPanel />
       </motion.div>
     </div>
   )
 }
 
-function LeaderboardPanel({ entries, loading }: { entries: LeaderboardEntry[]; loading: boolean }) {
-  if (loading) {
-    return (
-      <div className="mt-4 border-t-2 border-black/30 pt-3">
-        <p className="text-xs font-mono opacity-60 animate-pulse">Loading leaderboard...</p>
-      </div>
-    )
-  }
+// ─── Leaderboard ──────────────────────────────────────────────────────────────
 
-  if (entries.length === 0) return null
+const PERIODS: { id: LeaderboardPeriod; label: string }[] = [
+  { id: 'today', label: 'Today' },
+  { id: 'week', label: 'Week' },
+  { id: 'month', label: 'Month' },
+  { id: 'ytd', label: 'YTD' },
+  { id: 'all', label: 'All Time' },
+]
+
+function LeaderboardPanel() {
+  const [period, setPeriod] = useState<LeaderboardPeriod>('today')
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    setEntries([])
+    getDailyLeaderboard(period)
+      .then(setEntries)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [period])
 
   return (
     <div className="mt-4 border-t-2 border-black/30 pt-3 text-left">
-      <p className="text-xs font-mono font-bold uppercase tracking-widest mb-2 opacity-80">
-        Today&apos;s correct answers
-      </p>
-      <ol className="space-y-1">
-        {entries.map((entry, i) => (
-          <li key={entry.userId} className="flex items-center gap-2 text-xs font-mono">
-            <span className="font-bold opacity-60 w-4 text-right">{i + 1}.</span>
-            <span className="font-bold">{entry.displayName}</span>
-            <span className="opacity-50 ml-auto">
-              {new Date(entry.answeredAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'UTC',
-                timeZoneName: 'short',
-              })}
-            </span>
-          </li>
-        ))}
-      </ol>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-mono font-bold uppercase tracking-widest opacity-80">
+          Leaderboard
+        </p>
+        <div className="flex gap-1">
+          {PERIODS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setPeriod(p.id)}
+              className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 border-2 border-black transition-colors ${
+                period === p.id
+                  ? 'bg-black text-white'
+                  : 'bg-white/20 text-inherit hover:bg-black/10'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-xs font-mono opacity-60 animate-pulse py-2">Loading...</p>
+      ) : entries.length === 0 ? (
+        <p className="text-xs font-mono opacity-60 py-2">No entries yet.</p>
+      ) : (
+        <ol className="space-y-1.5">
+          {entries.map((entry, i) => (
+            <li key={entry.userId} className="flex items-center gap-2 text-xs font-mono">
+              <span
+                className={`font-bold w-5 text-right shrink-0 ${
+                  i === 0 ? 'text-yellow-500' : i === 1 ? 'opacity-60' : i === 2 ? 'opacity-50' : 'opacity-40'
+                }`}
+              >
+                {i + 1}.
+              </span>
+              <span className="font-bold truncate">{entry.displayName}</span>
+              <span className="opacity-50 ml-auto shrink-0 tabular-nums">
+                {period === 'today' && entry.answeredAt
+                  ? new Date(entry.answeredAt).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      timeZone: 'UTC',
+                      timeZoneName: 'short',
+                    })
+                  : `${entry.correctCount} correct`}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   )
 }
