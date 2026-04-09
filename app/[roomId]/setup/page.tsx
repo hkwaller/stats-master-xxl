@@ -90,7 +90,7 @@ export default function SetupPage({ params }: SetupPageProps) {
       }
 
       if (config.gameMode === 'career') {
-        const ct = await checkCareerPlayerCount(config.careerMinSeasons, config.eras)
+        const ct = await checkCareerPlayerCount(config.careerMinSeasons, config.eras, config.difficultyTiers.length > 0 ? config.difficultyTiers : undefined)
         if (active) setAvailableCount(ct)
       } else {
         if (config.difficultyTiers.length === 0) {
@@ -117,11 +117,11 @@ export default function SetupPage({ params }: SetupPageProps) {
 
   function handleStart() {
     if (!isHost) return
-    if (config.gameMode === 'career' && config.eras.length === 0) return
-    if (config.gameMode !== 'career' && config.difficultyTiers.length === 0) return
+    if (config.eras.length === 0) return
+    if (config.difficultyTiers.length === 0) return
     setStarting(true)
     saveSettings({ config, requesterId: myId })
-    router.push(`/nhl-stats-master/${roomId}/lobby`)
+    router.push(`/${roomId}/lobby`)
   }
 
   const isClassic = config.gameMode === 'classic'
@@ -129,7 +129,7 @@ export default function SetupPage({ params }: SetupPageProps) {
   const isH2H     = config.gameMode === 'h2h'
   const isHL      = config.gameMode === 'higher-lower'
 
-  const needsTiers = isClassic || isH2H || isHL
+  const needsTiers = isClassic || isH2H || isHL || isCareer
   const canStart = isHost && config.eras.length > 0 &&
     (!needsTiers || config.difficultyTiers.length > 0) &&
     (availableCount === null || availableCount >= (isCareer ? 1 : config.questionCount))

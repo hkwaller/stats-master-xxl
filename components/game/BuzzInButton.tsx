@@ -179,20 +179,22 @@ export function BuzzInButton({
     );
   }
 
-  // Default: buzz-in button
+  // Default: buzz-in button — fixed to bottom of screen
   return (
-    <motion.button
-      onClick={onBuzzIn}
-      whileTap={{ scale: 0.95 }}
-      whileHover={{ scale: 1.02 }}
-      className="
-        w-full py-8 text-center font-bold text-2xl uppercase tracking-widest
-        bg-cyan border-8 border-black shadow-[8px_8px_0_#000]
-        text-black
-        transition-all active:translate-x-[4px] active:translate-y-[4px] active:shadow-none
-      "
-    >
-      🚨 Buzz In!
-    </motion.button>
+    <div className="fixed bottom-0 left-0 right-0 z-40 p-3 pb-safe bg-game-bg/90 backdrop-blur-sm border-t-4 border-black">
+      <motion.button
+        onClick={onBuzzIn}
+        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.02 }}
+        className="
+          w-full py-5 text-center font-bold text-2xl uppercase tracking-widest
+          bg-cyan border-8 border-black shadow-[8px_8px_0_#000]
+          text-black
+          transition-all active:translate-x-[4px] active:translate-y-[4px] active:shadow-none
+        "
+      >
+        🚨 Buzz In!
+      </motion.button>
+    </div>
   );
 }

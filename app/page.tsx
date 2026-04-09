@@ -17,7 +17,7 @@ export default function LandingPage() {
 
   function handleCreate() {
     const roomId = nanoid(6).toUpperCase();
-    router.push(`/nhl-stats-master/${roomId}/setup`);
+    router.push(`/${roomId}/setup`);
   }
 
   function handleJoin() {
@@ -26,7 +26,7 @@ export default function LandingPage() {
       setError("Enter a valid room code");
       return;
     }
-    router.push(`/nhl-stats-master/${code}/lobby`);
+    router.push(`/${code}/lobby`);
   }
 
   return (

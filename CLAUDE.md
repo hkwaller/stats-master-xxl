@@ -53,12 +53,12 @@ Normalize: lowercase + trim + collapse spaces. Accept full name OR last name onl
 ## Route Structure
 
 ```
-/nhl-stats-master                         Landing — create or join room
-/nhl-stats-master/[roomId]/setup          Host configures game
-/nhl-stats-master/[roomId]/lobby          Players wait + QR code
-/nhl-stats-master/[roomId]/connect        Mobile join page (no ads)
-/nhl-stats-master/[roomId]/game           Shared host screen (no ads)
-/nhl-stats-master/[roomId]/player/[id]    Individual player device (no ads)
+/                             Landing — create or join room
+/[roomId]/setup               Host configures game
+/[roomId]/lobby               Players wait + QR code
+/[roomId]/connect             Mobile join page (no ads)
+/[roomId]/game                Shared host screen (no ads)
+/[roomId]/player/[id]         Individual player device (no ads)
 ```
 
 ## Env Vars

@@ -43,7 +43,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     params.then(({ roomId }) => {
       setRoomId(roomId)
       const base = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
-      setConnectUrl(`${base}/nhl-stats-master/${roomId}/connect`)
+      setConnectUrl(`${base}/${roomId}/connect`)
     })
   }, [params])
 
@@ -65,7 +65,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     const isHost = game.hostId === myId
     if (isHost) return
     if (game.command === 'starting' || game.command === 'answering' || game.command === 'question') {
-      router.push(`/nhl-stats-master/${roomId}/player/${myId}`)
+      router.push(`/${roomId}/player/${myId}`)
     }
   }, [game?.command, roomId, myId, router])
 
@@ -142,6 +142,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
             maxReveals: game?.careerMaxReveals ?? 8,
             revealOrder: game?.careerRevealOrder ?? 'best-first',
             excludePlayerIds,
+            difficultyTiers: tiers,
           }),
         })
         const data = (await res.json()) as { questions: Question[]; careerData: CareerQuestion[] }
@@ -186,9 +187,9 @@ export default function LobbyPage({ params }: LobbyPageProps) {
 
       const hostPlays = game?.hostPlays !== false
       if (hostPlays) {
-        router.push(`/nhl-stats-master/${roomId}/player/${myId}`)
+        router.push(`/${roomId}/player/${myId}`)
       } else {
-        router.push(`/nhl-stats-master/${roomId}/game`)
+        router.push(`/${roomId}/game`)
       }
     } catch {
       setStarting(false)
@@ -305,9 +306,9 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                       key={player.id}
                       initial={{ opacity: 0, x: -16 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 min-w-0"
                     >
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <PlayerChip
                           name={player.name}
                           avatarUrl={player.avatarUrl}
@@ -370,7 +371,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                     variant="ghost"
                     size="sm"
                     className="sm:w-auto"
-                    onClick={() => router.push(`/nhl-stats-master/${roomId}/setup`)}
+                    onClick={() => router.push(`/${roomId}/setup`)}
                   >
                     ← Back to Setup
                   </Button>

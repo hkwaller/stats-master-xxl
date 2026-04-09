@@ -45,7 +45,7 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     hintsUsed: [],
     playerPowerups: {},
     activePowerup: null,
-    eliminatedChoices: [],
+    playerEliminatedChoices: {},
     freezeActive: false,
     playedQuestions: [],
     questionHistory: [],

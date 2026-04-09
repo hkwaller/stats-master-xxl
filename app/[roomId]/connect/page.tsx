@@ -42,7 +42,7 @@ export default function ConnectPage({ params }: ConnectPageProps) {
     if (bossToken) {
       claimBoss({ playerId: guestId, token: bossToken })
     }
-    router.push(`/nhl-stats-master/${roomId}/player/${guestId}`)
+    router.push(`/${roomId}/player/${guestId}`)
   }
 
   const avatarUrl = guestId ? getAvatarUrl(guestId) : ''

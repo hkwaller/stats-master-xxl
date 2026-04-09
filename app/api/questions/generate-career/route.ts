@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCareerQuestions } from '@/lib/data/database'
-import type { CareerRevealOrder } from '@/types/game'
+import type { CareerRevealOrder, DifficultyTier } from '@/types/game'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
       maxReveals?: number
       revealOrder?: CareerRevealOrder
       excludePlayerIds?: number[]
+      difficultyTiers?: DifficultyTier[]
     }
 
     const careerData = await getCareerQuestions({
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
       maxReveals: body.maxReveals ?? 8,
       revealOrder: body.revealOrder ?? 'best-first',
       excludePlayerIds: body.excludePlayerIds ?? [],
+      difficultyTiers: body.difficultyTiers,
     })
 
     // Anchor questions (one per player) for questionSequence — used by the existing state machine

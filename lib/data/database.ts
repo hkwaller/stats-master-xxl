@@ -297,6 +297,7 @@ export async function getCareerQuestions(options: {
   eras?: string[];
   count: number;
   excludePlayerIds?: number[];
+  difficultyTiers?: DifficultyTier[];
 }): Promise<CareerQuestion[]> {
   const db = createSupabaseClient();
 
@@ -314,6 +315,10 @@ export async function getCareerQuestions(options: {
   const { data, error } = await query;
   if (error) throw new Error(`getCareerQuestions: ${error.message}`);
 
+  const tierSet = options.difficultyTiers?.length
+    ? new Set(options.difficultyTiers)
+    : null;
+
   // Group by player in JS
   const byPlayer = new Map<number, RawStatsRecord[]>();
   for (const row of data as DbRow[]) {
@@ -326,6 +331,13 @@ export async function getCareerQuestions(options: {
   const candidates: CareerQuestion[] = [];
   for (const [, seasons] of byPlayer) {
     if (seasons.length < options.minSeasons) continue;
+
+    // Filter by best season tier when difficultyTiers is specified
+    if (tierSet) {
+      const bestPoints = Math.max(...seasons.map((s) => s.points ?? 0));
+      const bestTier = getTierForPoints(bestPoints);
+      if (!bestTier || !tierSet.has(bestTier)) continue;
+    }
 
     const selected = selectCareerSeasons(seasons, options.maxReveals);
     const ordered = orderSeasons(selected, options.revealOrder);
@@ -352,24 +364,37 @@ export async function getCareerQuestions(options: {
 export async function getCareerPlayerCount(options: {
   minSeasons: number;
   eras?: string[];
+  difficultyTiers?: DifficultyTier[];
 }): Promise<number> {
   const db = createSupabaseClient();
   let query = db
     .from("nhl_player_seasons")
-    .select("player_id");
+    .select("player_id, points");
   if (options.eras?.length) query = query.in("era", options.eras);
 
   const { data, error } = await query;
   if (error) throw new Error(`getCareerPlayerCount: ${error.message}`);
 
-  // Count players per player_id and return those with >= minSeasons
-  const counts = new Map<number, number>();
-  for (const r of data as Pick<DbRow, "player_id">[]) {
-    counts.set(r.player_id, (counts.get(r.player_id) ?? 0) + 1);
+  const tierSet = options.difficultyTiers?.length
+    ? new Set(options.difficultyTiers)
+    : null;
+
+  // Group seasons by player to check minSeasons and best-season tier
+  const byPlayer = new Map<number, number[]>();
+  for (const r of data as Pick<DbRow, "player_id" | "points">[]) {
+    const pts = byPlayer.get(r.player_id) ?? [];
+    pts.push(r.points);
+    byPlayer.set(r.player_id, pts);
   }
+
   let count = 0;
-  for (const n of counts.values()) {
-    if (n >= options.minSeasons) count++;
+  for (const pts of byPlayer.values()) {
+    if (pts.length < options.minSeasons) continue;
+    if (tierSet) {
+      const bestTier = getTierForPoints(Math.max(...pts));
+      if (!bestTier || !tierSet.has(bestTier)) continue;
+    }
+    count++;
   }
   return count;
 }

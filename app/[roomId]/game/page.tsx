@@ -95,7 +95,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   // Redirect everyone to lobby on rematch
   useEffect(() => {
     if (!game || game.command !== 'rematch') return
-    router.push(`/nhl-stats-master/${roomId}/lobby`)
+    router.push(`/${roomId}/lobby`)
   }, [game?.command])
 
   if (!game) return null
@@ -318,7 +318,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           onSkip={() => skipQuestion(myId)}
           onNext={() => advanceToNext(myId)}
           onRematch={() => rematch(myId)}
-          onSettings={() => router.push(`/nhl-stats-master/${roomId}/setup`)}
+          onSettings={() => router.push(`/${roomId}/setup`)}
         />
       )}
     </main>

@@ -200,7 +200,7 @@ export function CountdownRing({ seconds, total, size = 80, className = '' }: Cou
           cy={size / 2}
           r={radius}
           strokeWidth={8}
-          stroke={seconds <= 3 ? '#ff0000' : '#ff00ff'}
+          stroke={seconds <= 3 ? '#c8102e' : '#003087'}
           fill="none"
           strokeLinecap="square"
           strokeDasharray={circumference}
@@ -268,13 +268,13 @@ export function GameHeading({ children, className = '' }: GameHeadingProps) {
 export function GameLogo({ className = '' }: { className?: string }) {
   return (
     <div className={`flex items-baseline gap-1 ${className}`}>
-      <span className="font-display font-bold uppercase bg-magenta text-white px-3 py-1 border-4 border-black rotate-[-4deg] text-5xl tracking-tight shadow-[4px_4px_0px_#000]">
+      <span className="font-display font-bold uppercase bg-magenta text-white px-2 py-1 border-4 border-black rotate-[-4deg] text-3xl sm:text-5xl tracking-tight shadow-[4px_4px_0px_#000]">
         NHL
       </span>
-      <span className="font-display font-bold uppercase bg-cyan text-black px-3 py-1 border-4 border-black rotate-[3deg] text-5xl tracking-tight shadow-[4px_4px_0px_#000] z-10 -ml-2">
+      <span className="font-display font-bold uppercase bg-cyan text-black px-2 py-1 border-4 border-black rotate-[3deg] text-3xl sm:text-5xl tracking-tight shadow-[4px_4px_0px_#000] z-10 -ml-2">
         Stats
       </span>
-      <span className="font-display font-bold uppercase bg-yellow text-black px-3 py-1 border-4 border-black rotate-[-2deg] text-5xl tracking-tight shadow-[4px_4px_0px_#000] -ml-2">
+      <span className="font-display font-bold uppercase bg-yellow text-white px-2 py-1 border-4 border-black rotate-[-2deg] text-3xl sm:text-5xl tracking-tight shadow-[4px_4px_0px_#000] -ml-2">
         Master
       </span>
     </div>

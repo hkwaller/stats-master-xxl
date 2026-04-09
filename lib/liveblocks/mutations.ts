@@ -334,7 +334,7 @@ export function useNextQuestion() {
       game.set('answers', {} as unknown as Record<string, string>)
       game.set('answeredAt', {} as unknown as Record<string, number>)
       game.set('hintsUsed', [] as unknown as string[])
-      game.set('eliminatedChoices', [] as unknown as string[])
+      game.set('playerEliminatedChoices', {} as unknown as Record<string, string[]>)
       game.set('freezeActive', false)
       game.set('activePowerup', null)
       game.set('command', 'answering')
@@ -587,7 +587,11 @@ export function useActivatePowerup() {
           const correctName = `${currentQuestion.firstName} ${currentQuestion.lastName}`
           const wrongChoices = choices.filter((c) => c !== correctName)
           const toEliminate = wrongChoices.sort(() => Math.random() - 0.5).slice(0, 2)
-          game.set('eliminatedChoices', toEliminate as unknown as string[])
+          const existing = (game.get('playerEliminatedChoices') as unknown as Record<string, string[]>) || {}
+          game.set('playerEliminatedChoices', {
+            ...existing,
+            [playerId]: toEliminate,
+          } as unknown as Record<string, string[]>)
           break
         }
       }
@@ -636,7 +640,7 @@ export function useRematch() {
     game.set('answeredAt', {} as unknown as Record<string, number>)
     game.set('hintsUsed', [] as unknown as string[])
     game.set('playerPowerups', {} as unknown as Record<string, Record<string, number>>)
-    game.set('eliminatedChoices', [] as unknown as string[])
+    game.set('playerEliminatedChoices', {} as unknown as Record<string, string[]>)
     game.set('freezeActive', false)
     game.set('activePowerup', null)
     game.set('reveal', false)

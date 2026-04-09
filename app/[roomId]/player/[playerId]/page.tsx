@@ -158,7 +158,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   // Redirect everyone to lobby on rematch
   useEffect(() => {
     if (!game || game.command !== "rematch") return;
-    router.push(`/nhl-stats-master/${roomId}/lobby`);
+    router.push(`/${roomId}/lobby`);
   }, [game?.command]);
 
   // Save played question IDs to localStorage when game finishes (classic/career)
@@ -227,7 +227,8 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
         )}
       </header>
 
-      <div className={`flex-1 overflow-y-auto px-4 py-6 space-y-5 max-w-lg mx-auto w-full ${isController ? "pb-28" : ""}`}>
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className={`flex-1 overflow-y-auto px-4 py-6 space-y-5 max-w-lg mx-auto w-full lg:max-w-none lg:mx-0 ${isController ? "pb-28" : ""} ${gameMode === "career" && game.command === "answering" ? "pb-32" : ""}`}>
         {/* Idle */}
         {game.command === "idle" && (
           <div className="text-center py-16">
@@ -295,12 +296,14 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                     prevScores.sort((a, b) => b.prevScore - a.prevScore);
                     const prevRank = prevScores.findIndex((p) => p.id === myId) + 1;
                     let rankMessage = null;
-                    if (myRank < prevRank && prevRank > 0) {
-                      rankMessage = myRank === 1 ? "You took top spot! 🥇" : `Moved up to #${myRank}! 📈`;
-                    } else if (myRank > prevRank && prevRank > 0) {
-                      rankMessage = `Dropped to #${myRank} 📉`;
-                    } else if (myRank === 1 && prevRank === 1 && history.length > 1) {
-                      rankMessage = "Holding onto #1! 🛡️";
+                    if (players.length > 1) {
+                      if (myRank < prevRank && prevRank > 0) {
+                        rankMessage = myRank === 1 ? "You took top spot! 🥇" : `Moved up to #${myRank}! 📈`;
+                      } else if (myRank > prevRank && prevRank > 0) {
+                        rankMessage = `Dropped to #${myRank} 📉`;
+                      } else if (myRank === 1 && prevRank === 1 && history.length > 1) {
+                        rankMessage = "Holding onto #1! 🛡️";
+                      }
                     }
 
                     return (
@@ -333,15 +336,12 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                           <h3 className="text-4xl font-display font-bold text-black uppercase">
                             {currentQuestion.firstName} {currentQuestion.lastName}
                           </h3>
+                          {hasAnswered && !isCorrect && myResult?.answer && (
+                            <p className="text-sm mt-2 text-black/50 font-mono">
+                              (not {myResult.answer})
+                            </p>
+                          )}
                         </div>
-                        {hasAnswered && (
-                          <p className="text-sm mt-4 font-bold">
-                            Your answer:{" "}
-                            <span className="bg-black text-white px-3 py-1 font-mono mx-2">
-                              {myResult?.answer || "—"}
-                            </span>
-                          </p>
-                        )}
                       </motion.div>
                     );
                   })()}
@@ -351,7 +351,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                     <PlayerGuessInput
                       answerMode={game.answerMode}
                       choices={(game.choices as unknown as string[]) ?? []}
-                      eliminatedChoices={(game.eliminatedChoices as unknown as string[]) ?? []}
+                      eliminatedChoices={((game.playerEliminatedChoices as unknown as Record<string, string[]>) ?? {})[myId] ?? []}
                       hasAnswered={hasAnswered}
                       answeredCount={answeredCount}
                       totalPlayers={connectedPlayers.length}
@@ -615,6 +615,19 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
         </AnimatePresence>
       </div>
 
+      {/* ── Standings sidebar (multiplayer only, hidden on finished screen) ── */}
+      {connectedPlayers.length >= 2 && game.command !== "finished" && (
+        <aside className="shrink-0 border-t border-game-card-border lg:border-t-0 lg:border-l lg:w-72 overflow-y-auto bg-game-bg/50">
+          <div className="p-4 lg:sticky lg:top-0">
+            <p className="text-xs font-bold uppercase tracking-widest text-game-text-muted mb-3 flex items-center gap-1.5">
+              <span>🏆</span> Standings
+            </p>
+            <Scoreboard players={players} variant="live" myId={myId} />
+          </div>
+        </aside>
+      )}
+      </div>
+
       {/* ── Controller Dock (host / boss) ── */}
       {isController && (
         <ControllerDock
@@ -630,7 +643,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
           onSkip={() => skipQuestion(myId)}
           onNext={() => advanceToNext(myId)}
           onRematch={() => rematch(myId)}
-          onSettings={() => router.push(`/nhl-stats-master/${roomId}/setup`)}
+          onSettings={() => router.push(`/${roomId}/setup`)}
         />
       )}
     </main>

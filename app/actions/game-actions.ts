@@ -20,9 +20,10 @@ export async function checkAvailableCount(
 export async function checkCareerPlayerCount(
   minSeasons: number,
   eras: string[],
+  difficultyTiers?: DifficultyTier[],
 ) {
   if (eras.length === 0) return 0;
-  return await getCareerPlayerCount({ minSeasons, eras });
+  return await getCareerPlayerCount({ minSeasons, eras, difficultyTiers });
 }
 
 /** Returns today's date as a UTC string, e.g. "2026-04-06". Used as the localStorage and DB key. */

@@ -143,7 +143,7 @@ export type GameState = {
   // Powerups
   playerPowerups: Record<string, Record<string, number>>  // playerId → PowerupType → charges
   activePowerup: { type: PowerupType; playerId: string } | null
-  eliminatedChoices: string[]  // player names removed from choices
+  playerEliminatedChoices: Record<string, string[]>  // playerId → player names removed from choices
   freezeActive: boolean
 
   // Played questions (for history/rematch)
