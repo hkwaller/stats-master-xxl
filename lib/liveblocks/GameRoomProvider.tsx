@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { nanoid } from "nanoid";
 import { RoomProvider } from "./client";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveObject } from "@liveblocks/client";
@@ -11,33 +12,56 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     roomId,
     hostId,
     bossId: "",
-    bossToken: "",
+    bossToken: nanoid(12),
+    hostPlays: true,
     players: [],
     command: "idle",
     countdownTime: 3,
     reveal: false,
+    // Mode
+    gameMode: "classic",
+    // Setup
     questionCount: 10,
     answerMode: "multiplechoice",
     difficultyTiers: ["easy", "medium"],
     revealMode: "timed",
     hintsEnabled: true,
     powerupsEnabled: true,
+    rookiesOnly: false,
+    careerRevealOrder: "best-first",
+    careerMinSeasons: 5,
+    careerMaxReveals: 8,
+    hlComparisonField: "points",
+    eras: [],
+    // Classic sequence
     questionSequence: [],
     currentQuestion: null,
     currentQuestionIndex: -1,
     revealedColumns: 0,
     questionStartsAt: "",
     choices: [],
-    eras: [],
     answers: {},
     answeredAt: {},
     hintsUsed: [],
     playerPowerups: {},
     activePowerup: null,
-    eliminatedChoices: [],
+    playerEliminatedChoices: {},
     freezeActive: false,
     playedQuestions: [],
     questionHistory: [],
+    // Career mode
+    careerData: [],
+    careerSeasons: [],
+    revealedSeasonCount: 0,
+    buzzedInPlayerId: "",
+    buzzedInSeasonCount: 0,
+    lockedOutPlayers: [],
+    // H2H mode
+    h2hPairs: [],
+    h2hCurrentPair: null,
+    // Higher/Lower mode
+    hlPairs: [],
+    hlCurrentPair: null,
   };
 }
 

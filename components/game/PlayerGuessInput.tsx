@@ -21,7 +21,7 @@ interface PlayerGuessInputProps {
 const buttonColors = [
   "bg-ice-blue/20 border-ice-blue/40 hover:bg-ice-blue/30",
   "bg-game-gold/20 border-game-gold/40 hover:bg-game-gold/30",
-  "bg-game-red/20 border-game-red/40 hover:bg-game-red/30",
+  "bg-magenta/15 border-magenta/35 hover:bg-magenta/25",
   "bg-white-ice/10 border-white-ice/20 hover:bg-white-ice/20",
 ];
 

@@ -2,25 +2,25 @@
 
 @theme {
   /* Game color tokens */
-  --color-game-bg: #fdf5e6;
+  --color-game-bg: #f0ede7;
   --color-game-card: #ffffff;
   --color-game-card-border: #000000;
   --color-game-text: #000000;
-  --color-game-text-muted: #333333;
+  --color-game-text-muted: #1a1a2e;
 
   /* Accent colors */
-  --color-magenta: #454040;
-  --color-cyan: #e6f082;
-  --color-yellow: #d8d365;
-  --color-lime: #e6f082;
-  --color-game-gold: #d8d365;
-  --color-game-red: #605b51;
-  --color-ice-blue: #e6f082;
+  --color-magenta: #003087;
+  --color-cyan: #dce8ff;
+  --color-yellow: #c8102e;
+  --color-lime: #d4edda;
+  --color-game-gold: #c8102e;
+  --color-game-red: #c8102e;
+  --color-ice-blue: #dce8ff;
   
-  --color-tier-easy: #e6f082;
-  --color-tier-medium: #d8d365;
-  --color-tier-hard: #605b51;
-  --color-tier-expert: #454040;
+  --color-tier-easy: #d4edda;
+  --color-tier-medium: #dce8ff;
+  --color-tier-hard: #003087;
+  --color-tier-expert: #c8102e;
 
   /* Fonts */
   --font-display: var(--font-bebas), "Bebas Neue", impact, sans-serif;
@@ -41,7 +41,7 @@ body {
 /* Brutalist point grid pattern */
 .game-bg-pattern {
   background-color: var(--color-game-bg);
-  background-image: radial-gradient(circle, #000 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, rgba(0,48,135,0.18) 1.5px, transparent 1.5px);
   background-size: 32px 32px;
 }
 
@@ -64,7 +64,7 @@ body {
   background: linear-gradient(
     90deg,
     #ffffff 25%,
-    #e6f082 50%,
+    #dce8ff 50%,
     #ffffff 75%
   );
   border: 3px solid #000;

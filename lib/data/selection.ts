@@ -8,20 +8,29 @@ export class QuestionSelector {
   private preferredTiers: Set<DifficultyTier>
   private usedIds: Set<string>
 
-  constructor(tiers: DifficultyTier[], eras?: string[], excludeIds: string[] = []) {
-    const excludeSet = new Set(excludeIds)
-    // Pool is ALL tiers so we can fall back when preferred tiers run dry
-    this.pool = getQuestionsByTiers(ALL_TIERS, eras).filter((q) => !excludeSet.has(q.id))
+  private constructor(pool: Question[], tiers: DifficultyTier[], excludeIds: string[]) {
+    this.pool = pool
     this.preferredTiers = new Set(tiers)
     this.usedIds = new Set(excludeIds)
   }
 
+  /** Factory — use instead of `new QuestionSelector(...)` */
+  static async create(
+    tiers: DifficultyTier[],
+    eras?: string[],
+    excludeIds: string[] = [],
+    rookiesOnly?: boolean,
+  ): Promise<QuestionSelector> {
+    const excludeSet = new Set(excludeIds)
+    const pool = (await getQuestionsByTiers(ALL_TIERS, eras, rookiesOnly))
+      .filter((q) => !excludeSet.has(q.id))
+    return new QuestionSelector(pool, tiers, excludeIds)
+  }
+
   selectNext(): Question | null {
-    // Try preferred tiers first
     let available = this.pool.filter(
       (q) => !this.usedIds.has(q.id) && this.preferredTiers.has(q.difficulty),
     )
-    // Fall back to any remaining tier
     if (available.length === 0) {
       available = this.pool.filter((q) => !this.usedIds.has(q.id))
     }

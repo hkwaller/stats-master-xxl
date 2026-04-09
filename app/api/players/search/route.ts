@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ names: [] })
   }
 
-  const allNames = getPlayerNamesByTiers(tiers)
+  const allNames = await getPlayerNamesByTiers(tiers)
   const matches = allNames.filter((name) => name.toLowerCase().includes(query))
 
   return NextResponse.json({ names: matches.slice(0, 10) })

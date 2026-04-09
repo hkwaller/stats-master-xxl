@@ -4,8 +4,11 @@ Multiplayer trivia game where players guess NHL players from revealed statistics
 
 ## Data Source
 
-`scores.js` in the project root exports `export const stats = [...]` — 5,910 player-season records.
-**Key**: the export name is `stats`, NOT `scores`.
+Player-season data lives in the **Supabase `nhl_player_seasons` table** — 46,704 records covering the complete NHL history (1917-18 → 2024-25, all scoring levels).
+- All data access goes through `lib/data/database.ts` (server-only, async functions)
+- Classic mode queries rows with `points >= 70` (2,182 records)
+- Career mode queries all seasons per player (full careers)
+- To refresh data: `node scripts/scrape-nhl.mjs` then `node scripts/load-to-supabase.mjs`
 
 `lib/data/database.ts` is marked `server-only` — never import it in client components.
 Client-side player search uses the API route `/api/players/search`.
@@ -50,12 +53,12 @@ Normalize: lowercase + trim + collapse spaces. Accept full name OR last name onl
 ## Route Structure
 
 ```
-/nhl-stats-master                         Landing — create or join room
-/nhl-stats-master/[roomId]/setup          Host configures game
-/nhl-stats-master/[roomId]/lobby          Players wait + QR code
-/nhl-stats-master/[roomId]/connect        Mobile join page (no ads)
-/nhl-stats-master/[roomId]/game           Shared host screen (no ads)
-/nhl-stats-master/[roomId]/player/[id]    Individual player device (no ads)
+/                             Landing — create or join room
+/[roomId]/setup               Host configures game
+/[roomId]/lobby               Players wait + QR code
+/[roomId]/connect             Mobile join page (no ads)
+/[roomId]/game                Shared host screen (no ads)
+/[roomId]/player/[id]         Individual player device (no ads)
 ```
 
 ## Env Vars

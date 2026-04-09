@@ -23,7 +23,7 @@ const COLUMNS: {
   },
   { key: "goals", label: "Goals", abbr: "G", color: "text-black" },
   { key: "assists", label: "Assists", abbr: "A", color: "text-black" },
-  { key: "points", label: "Points", abbr: "PTS", color: "text-[#9d4edd]" },
+  { key: "points", label: "Points", abbr: "PTS", color: "text-[#c8102e]" },
   {
     key: "penaltyMinutes",
     label: "Penalty Minutes",
@@ -41,7 +41,7 @@ export function StatsCard({ question, revealedColumns }: StatsCardProps) {
       </div> */}
 
       {/* Stat columns grid */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5 gap-1 sm:gap-2">
         {COLUMNS.map((col, colIndex) => {
           const isRevealed = colIndex < revealedColumns;
 
@@ -58,27 +58,26 @@ export function StatsCard({ question, revealedColumns }: StatsCardProps) {
                     damping: 30,
                     delay: 0.05,
                   }}
-                  className="bg-white border-4 border-black shadow-[4px_4px_0_#000] rounded-none p-4 flex flex-col items-center gap-1 min-h-[130px]"
+                  className="bg-white border-4 border-black shadow-[4px_4px_0_#000] rounded-none p-2 sm:p-4 flex flex-col items-center gap-1 min-h-[90px] sm:min-h-[130px]"
                 >
                   <StatLabel>{col.abbr}</StatLabel>
                   <span
-                    className={`text-3xl font-bold tabular-nums ${col.color}`}
+                    className={`text-xl sm:text-3xl font-bold tabular-nums ${col.color}`}
                   >
                     {String(question[col.key])}
                   </span>
-                  <span className="text-xs text-game-text-muted text-center leading-tight">
+                  <span className="text-[10px] sm:text-xs text-game-text-muted text-center leading-tight">
                     {col.label}
                   </span>
                 </motion.div>
               ) : (
                 <motion.div
                   key="hidden"
-                  className="bg-white border-4 border-black shadow-[4px_4px_0_#000] rounded-none p-4 flex flex-col items-center gap-1 stat-shimmer"
-                  style={{ minHeight: 110 }}
+                  className="bg-white border-4 border-black shadow-[4px_4px_0_#000] rounded-none p-2 sm:p-4 flex flex-col items-center gap-1 stat-shimmer min-h-[90px] sm:min-h-[110px]"
                 >
                   <StatLabel>{col.abbr}</StatLabel>
-                  <div className="w-10 h-8 rounded bg-game-card-border/60 mt-1" />
-                  <div className="w-12 h-3 rounded bg-game-card-border/40 mt-1" />
+                  <div className="w-8 sm:w-10 h-6 sm:h-8 rounded bg-game-card-border/60 mt-1" />
+                  <div className="w-10 sm:w-12 h-3 rounded bg-game-card-border/40 mt-1" />
                 </motion.div>
               )}
             </motion.div>
