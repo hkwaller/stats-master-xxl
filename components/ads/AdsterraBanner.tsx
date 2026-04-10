@@ -18,10 +18,10 @@ export function AdsterraBanner({ slot = 'top', className = '' }: AdsterraBannerP
   const optionsScriptId = `adsterra-atoptions-${slot}`
 
   return (
-    <div className={`w-full flex justify-center my-4 ${className}`}>
+    <div className={`w-full flex justify-center my-4 overflow-hidden ${className}`}>
       <div
         id={`adsterra-banner-${slot}`}
-        className="w-full max-w-[728px] min-h-[90px] bg-game-card-dark/50 rounded-lg overflow-hidden"
+        className="w-full max-w-[min(728px,100%)] min-h-[90px] bg-game-card-dark/50 rounded-lg overflow-hidden [&_iframe]:!max-w-full"
       />
       <Script
         id={optionsScriptId}

@@ -10,6 +10,7 @@ interface BuzzInButtonProps {
   lockedOutPlayers: string[]
   onBuzzIn: () => void
   onSubmitAnswer: (answer: string) => void
+  offsetForDock?: boolean
 }
 
 function HighlightMatch({ text, query }: { text: string; query: string }) {
@@ -31,6 +32,7 @@ export function BuzzInButton({
   lockedOutPlayers,
   onBuzzIn,
   onSubmitAnswer,
+  offsetForDock = false,
 }: BuzzInButtonProps) {
   const isLockedOut = lockedOutPlayers.includes(playerId)
   const isBuzzed = buzzedInPlayerId === playerId
@@ -165,7 +167,7 @@ export function BuzzInButton({
 
   // Default: buzz-in button — fixed to bottom of screen
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 p-3 pb-safe bg-game-bg/90 backdrop-blur-sm border-t-4 border-black">
+    <div className={`fixed left-0 right-0 z-40 p-3 pb-safe bg-game-bg/90 backdrop-blur-sm border-t-4 border-black ${offsetForDock ? 'bottom-20' : 'bottom-0'}`}>
       <motion.button
         onClick={onBuzzIn}
         whileTap={{ scale: 0.95 }}

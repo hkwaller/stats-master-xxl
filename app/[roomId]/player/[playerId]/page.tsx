@@ -220,7 +220,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div
-          className={`flex-1 overflow-y-auto px-4 py-6 space-y-5 max-w-lg mx-auto w-full lg:max-w-none lg:mx-0 ${isController ? 'pb-28' : ''} ${gameMode === 'career' && game.command === 'answering' ? 'pb-32' : ''}`}
+          className={`flex-1 overflow-y-auto px-4 py-6 space-y-5 max-w-lg mx-auto w-full lg:max-w-none lg:mx-0 ${isController && gameMode === 'career' && game.command === 'answering' ? 'pb-48' : isController ? 'pb-28' : gameMode === 'career' && game.command === 'answering' ? 'pb-32' : ''}`}
         >
           {/* Idle */}
           {game.command === 'idle' && (
@@ -459,13 +459,14 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                       )
                     })()}
 
-                  {game.command === 'answering' && !isController && (
+                  {game.command === 'answering' && (!isController || gameMode === 'career') && (
                     <BuzzInButton
                       playerId={myId}
                       buzzedInPlayerId={buzzedInPlayerId}
                       lockedOutPlayers={lockedOutPlayers}
                       onBuzzIn={handleBuzzIn}
                       onSubmitAnswer={handleCareerAnswer}
+                      offsetForDock={isController}
                     />
                   )}
                 </motion.div>
