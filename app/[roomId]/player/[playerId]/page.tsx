@@ -459,7 +459,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                       )
                     })()}
 
-                  {game.command === 'answering' && (
+                  {game.command === 'answering' && !isController && (
                     <BuzzInButton
                       playerId={myId}
                       buzzedInPlayerId={buzzedInPlayerId}
