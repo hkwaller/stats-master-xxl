@@ -19,13 +19,6 @@ interface PlayerGuessInputProps {
 
 // ─── Multiple Choice ─────────────────────────────────────────────────────────
 
-const buttonColors = [
-  'bg-ice-blue/20 border-ice-blue/40 hover:bg-ice-blue/30',
-  'bg-game-gold/20 border-game-gold/40 hover:bg-game-gold/30',
-  'bg-magenta/15 border-magenta/35 hover:bg-magenta/25',
-  'bg-white-ice/10 border-white-ice/20 hover:bg-white-ice/20',
-]
-
 function MultipleChoiceInput({
   choices,
   eliminatedChoices,
@@ -46,34 +39,29 @@ function MultipleChoiceInput({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {choices.map((choice, i) => {
+    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-black/10 mt-4">
+      {choices.map((choice) => {
         const isEliminated = eliminatedChoices.includes(choice)
         const isSelected = selected === choice
 
         return (
-          <motion.button
+          <Button
             key={choice}
+            variant="secondary"
+            size="md"
             onClick={() => handleSelect(choice)}
             disabled={hasAnswered || isEliminated}
-            whileTap={!hasAnswered && !isEliminated ? { scale: 0.97 } : undefined}
-            whileHover={!hasAnswered && !isEliminated ? { scale: 1.02 } : undefined}
             className={`
-              relative px-4 py-4 rounded-xl border text-left font-bold text-base
-              transition-all duration-150 cursor-pointer
-              ${isEliminated ? 'opacity-30 line-through cursor-not-allowed bg-transparent border-game-card-border' : buttonColors[i % 4]}
-              ${isSelected ? 'ring-2 ring-game-gold' : ''}
+              text-sm relative
+              ${isEliminated ? 'line-through opacity-30' : ''}
               ${hasAnswered && !isSelected ? 'opacity-60' : ''}
             `}
           >
-            <span className="text-game-text-muted text-xs font-bold mr-2">
-              {String.fromCharCode(65 + i)}
-            </span>
             {choice}
             {isEliminated && (
               <span className="absolute top-2 right-3 text-game-red text-xs">✕</span>
             )}
-          </motion.button>
+          </Button>
         )
       })}
     </div>

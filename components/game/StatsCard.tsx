@@ -58,15 +58,15 @@ export function StatsCard({ question, revealedColumns }: StatsCardProps) {
                     damping: 30,
                     delay: 0.05,
                   }}
-                  className="bg-white border-4 border-black shadow-[4px_4px_0_#000] rounded-none p-2 sm:p-4 flex flex-col items-center gap-1 min-h-[90px] sm:min-h-[130px]"
+                  className="bg-white border-4 border-black shadow-[4px_4px_0_#000] rounded-none p-2 sm:p-4 flex flex-col items-center gap-1 "
                 >
                   <StatLabel>{col.abbr}</StatLabel>
                   <span className={`text-xl sm:text-3xl font-bold tabular-nums ${col.color}`}>
                     {String(question[col.key])}
                   </span>
-                  <span className="text-[10px] sm:text-xs text-game-text-muted text-center leading-tight">
+                  {/* <span className="text-[10px] sm:text-xs text-game-text-muted text-center leading-tight">
                     {col.label}
-                  </span>
+                  </span> */}
                 </motion.div>
               ) : (
                 <motion.div

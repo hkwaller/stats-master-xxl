@@ -794,7 +794,7 @@ function ControllerDock({
       icon: <SkipForward size={24} />,
       label: 'Skip',
       onClick: onSkip,
-      className: 'bg-yellow border-2 border-black text-black',
+      className: 'bg-yellow border-2 border-black text-white',
     })
   }
 
