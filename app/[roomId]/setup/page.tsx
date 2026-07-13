@@ -7,7 +7,8 @@ import { useStorage } from '@/lib/liveblocks/client'
 import { useSaveSettings } from '@/lib/liveblocks/mutations'
 import { checkAvailableCount, checkCareerPlayerCount } from '@/app/actions/game-actions'
 import { getOrCreateGuest } from '@/lib/guest'
-import { Panel, Button, GameHeading, GameDivider, GameLogo } from '@/components/design-system'
+import { Button } from '@/components/design-system'
+import { CBrand } from '@/components/arcade'
 import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
 import type {
   AnswerMode,
@@ -25,56 +26,22 @@ import { DEFAULT_SETUP } from '@/types/game'
 const TIER_OPTIONS: {
   tier: DifficultyTier
   label: string
+  range: string
   desc: string
   emoji: string
+  color: string
 }[] = [
-  {
-    tier: 'easy',
-    label: 'Easy (140+ pts)',
-    desc: 'Legends like Gretzky & Lemieux',
-    emoji: '⭐',
-  },
-  {
-    tier: 'medium',
-    label: 'Medium (120–139)',
-    desc: 'All-time great seasons',
-    emoji: '🏆',
-  },
-  {
-    tier: 'hard',
-    label: 'Hard (100–119)',
-    desc: 'Excellent scorers',
-    emoji: '🔥',
-  },
-  {
-    tier: 'expert',
-    label: 'Expert (70–99)',
-    desc: 'Solid contributors',
-    emoji: '🎯',
-  },
+  { tier: 'easy',   label: 'Easy',   range: '140+',    desc: 'Legends', emoji: '🥇', color: '#2cc66b' },
+  { tier: 'medium', label: 'Medium', range: '120–139', desc: 'Greats',  emoji: '⭐', color: '#003087' },
+  { tier: 'hard',   label: 'Hard',   range: '100–119', desc: '',        emoji: '🔥', color: '#e32437' },
+  { tier: 'expert', label: 'Expert', range: '70–99',   desc: '',        emoji: '💀', color: '#ffcf33' },
 ]
 
-const GAME_MODES: { mode: GameMode; label: string; desc: string }[] = [
-  {
-    mode: 'classic',
-    label: 'Classic',
-    desc: 'Guess the player from a single season',
-  },
-  {
-    mode: 'career',
-    label: 'Career',
-    desc: 'Career seasons revealed one by one — buzz in!',
-  },
-  {
-    mode: 'h2h',
-    label: 'Head-to-Head',
-    desc: 'Which stat line belongs to this player?',
-  },
-  {
-    mode: 'higher-lower',
-    label: 'Higher or Lower',
-    desc: 'Did the challenge player score more or less?',
-  },
+const GAME_MODES: { mode: GameMode; label: string; desc: string; emoji: string; color: string }[] = [
+  { mode: 'classic',      label: 'Classic',      desc: 'Guess the player from a single season', emoji: '🏒', color: '#e32437' },
+  { mode: 'career',       label: 'Career',       desc: 'Seasons revealed one by one — buzz in!', emoji: '📈', color: '#003087' },
+  { mode: 'h2h',          label: 'Head-to-Head', desc: 'Which stat line belongs to this player?', emoji: '🤼', color: '#ffcf33' },
+  { mode: 'higher-lower', label: 'Higher / Lower', desc: 'Did they score more or less?',        emoji: '⚖️', color: '#2cc66b' },
 ]
 
 const HL_FIELDS: { value: HLComparisonField; label: string }[] = [
@@ -86,11 +53,135 @@ const HL_FIELDS: { value: HLComparisonField; label: string }[] = [
 ]
 
 const CAREER_REVEAL_ORDERS: { value: CareerRevealOrder; label: string }[] = [
-  { value: 'best-first', label: 'Best First' },
-  { value: 'worst-first', label: 'Worst First' },
+  { value: 'best-first',    label: 'Best First' },
+  { value: 'worst-first',   label: 'Worst First' },
   { value: 'chronological', label: 'Chronological' },
-  { value: 'random', label: 'Random' },
+  { value: 'random',        label: 'Random' },
 ]
+
+const BUNGEE = 'var(--font-bungee), "Bungee", sans-serif'
+const BODY = 'var(--font-body), "Space Grotesk", sans-serif'
+const MONO = 'var(--font-jetbrains-mono), "JetBrains Mono", monospace'
+const ARCHIVO = 'var(--font-archivo-black), "Archivo Black", sans-serif'
+
+// ─── Small section label (muted Archivo) ──────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      style={{
+        fontFamily: ARCHIVO,
+        fontSize: 10,
+        fontWeight: 900,
+        letterSpacing: '0.22em',
+        color: '#6b7ea0',
+        textTransform: 'uppercase',
+        margin: 0,
+      }}
+    >
+      {children}
+    </p>
+  )
+}
+
+// ─── Pill toggle switch (44×24) ────────────────────────────────────────────────
+
+function Toggle({
+  on,
+  onClick,
+  disabled,
+}: {
+  on: boolean
+  onClick: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      aria-pressed={on}
+      style={{
+        width: 44,
+        height: 24,
+        borderRadius: 9999,
+        border: '2px solid #0a1535',
+        background: on ? '#2cc66b' : '#eef1f8',
+        position: 'relative',
+        padding: 0,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        transition: 'background 0.1s',
+        opacity: disabled ? 0.6 : 1,
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          top: 1,
+          left: on ? 21 : 1,
+          width: 18,
+          height: 18,
+          borderRadius: '50%',
+          background: '#fff',
+          border: '2px solid #0a1535',
+          transition: 'left 0.1s',
+        }}
+      />
+    </button>
+  )
+}
+
+// ─── Segmented chip ────────────────────────────────────────────────────────────
+
+function SegBtn({
+  on,
+  onClick,
+  disabled,
+  children,
+  small,
+}: {
+  on: boolean
+  onClick: () => void
+  disabled?: boolean
+  children: React.ReactNode
+  small?: boolean
+}) {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      style={{
+        background: on ? '#003087' : '#fff',
+        color: on ? '#fff' : '#0a1535',
+        border: '2px solid #0a1535',
+        borderRadius: 9,
+        padding: small ? '6px 9px' : '8px 14px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        boxShadow: on ? '0 3px 0 #0a1535' : '0 2px 0 rgba(10,21,53,0.25)',
+        fontFamily: BUNGEE,
+        fontSize: small ? 11 : 13,
+        lineHeight: 1,
+        transition: 'all 0.1s',
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+// ─── Format row (label left, control right) ────────────────────────────────────
+
+function FormatRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <span style={{ fontFamily: BODY, fontWeight: 700, fontSize: 13, color: '#0a1535' }}>{label}</span>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -123,7 +214,6 @@ export default function SetupPage({ params }: SetupPageProps) {
         if (active) setAvailableCount(0)
         return
       }
-
       if (config.gameMode === 'career') {
         const ct = await checkCareerPlayerCount(
           config.careerMinSeasons,
@@ -145,16 +235,8 @@ export default function SetupPage({ params }: SetupPageProps) {
       }
     }
     fetchCount()
-    return () => {
-      active = false
-    }
-  }, [
-    config.gameMode,
-    config.difficultyTiers,
-    config.eras,
-    config.rookiesOnly,
-    config.careerMinSeasons,
-  ])
+    return () => { active = false }
+  }, [config.gameMode, config.difficultyTiers, config.eras, config.rookiesOnly, config.careerMinSeasons])
 
   const isHost = game?.hostId === myId || game?.hostId === ''
 
@@ -172,9 +254,9 @@ export default function SetupPage({ params }: SetupPageProps) {
   }
 
   const isClassic = config.gameMode === 'classic'
-  const isCareer = config.gameMode === 'career'
-  const isH2H = config.gameMode === 'h2h'
-  const isHL = config.gameMode === 'higher-lower'
+  const isCareer  = config.gameMode === 'career'
+  const isH2H     = config.gameMode === 'h2h'
+  const isHL      = config.gameMode === 'higher-lower'
 
   const needsTiers = isClassic || isH2H || isHL || isCareer
   const canStart =
@@ -183,570 +265,484 @@ export default function SetupPage({ params }: SetupPageProps) {
     (!needsTiers || config.difficultyTiers.length > 0) &&
     (availableCount === null || availableCount >= (isCareer ? 1 : config.questionCount))
 
+  // Config summary line for the start bar
+  const modeLabel = GAME_MODES.find((m) => m.mode === config.gameMode)?.label.toUpperCase() ?? ''
+  const tiersLabel =
+    config.difficultyTiers.length > 0
+      ? config.difficultyTiers.map((t) => t.toUpperCase()).join(' + ')
+      : '—'
+  const configSummary = `${modeLabel} · ${tiersLabel} · ${config.eras.length} ERA${config.eras.length === 1 ? '' : 'S'} · ${config.questionCount} Q`
+
   return (
-    <main className="game-bg-pattern min-h-screen px-4 py-8">
-      <div className="max-w-lg md:max-w-5xl mx-auto space-y-6">
-        {/* Header */}
+    <main className="ice-bg min-h-screen" style={{ padding: 22 }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* ── Header ── */}
         <div className="flex items-center justify-between">
-          <GameLogo />
-          <div className="text-right">
-            <p className="text-xs text-game-text-muted uppercase tracking-wide">Room</p>
-            <p className="text-xl font-bold tracking-widest text-ice-blue">{roomId}</p>
+          <CBrand small />
+          <div className="flex items-center" style={{ gap: 10 }}>
+            <Button variant="ghost" size="sm" onClick={() => router.back()}>
+              ◁ BACK
+            </Button>
+            <div
+              style={{
+                background: '#fff',
+                border: '2px solid #0a1535',
+                borderRadius: 9999,
+                padding: '6px 14px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                boxShadow: '0 2px 0 rgba(10,21,53,0.25)',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: '0.18em',
+                  color: '#0a1535',
+                }}
+              >
+                ROOM · {roomId}
+              </span>
+            </div>
           </div>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Panel className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <GameHeading>Game Setup</GameHeading>
-              {!isHost && (
-                <p className="text-game-text-muted text-sm italic">
-                  Waiting for host to configure…
-                </p>
-              )}
-            </div>
+        {/* ── Title row ── */}
+        <div className="flex items-center" style={{ gap: 14 }}>
+          <span
+            style={{
+              display: 'inline-block',
+              background: '#ffcf33',
+              border: '2px solid #0a1535',
+              borderRadius: 9999,
+              padding: '4px 12px',
+              fontFamily: ARCHIVO,
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: '0.22em',
+              color: '#0a1535',
+              boxShadow: '0 2px 0 rgba(10,21,53,0.25)',
+            }}
+          >
+            STEP 1 OF 2
+          </span>
+          <h2
+            style={{
+              fontFamily: BUNGEE,
+              fontSize: 30,
+              lineHeight: 1,
+              color: '#0a1535',
+              margin: 0,
+            }}
+          >
+            SET UP YOUR GAME
+          </h2>
+        </div>
 
-            {/* Two-column grid on desktop */}
-            <div className="md:grid md:grid-cols-2 md:gap-8 md:items-start space-y-6 md:space-y-0">
-              {/* ── LEFT COLUMN: Game format ── */}
-              <div className="space-y-5">
-                {/* Game Mode */}
-                <div className="space-y-3">
-                  <p className="text-sm font-bold uppercase tracking-widest text-black">
-                    Game Mode
-                  </p>
-                  <div className="space-y-2">
-                    {GAME_MODES.map(({ mode, label, desc }) => (
-                      <button
-                        key={mode}
-                        disabled={!isHost}
-                        onClick={() => setConfig((c) => ({ ...c, gameMode: mode }))}
-                        className={`
-                          w-full flex items-center gap-3 px-4 py-3 border-2 border-black
-                          text-left transition-all shadow-[2px_2px_0_#000]
-                          ${
-                            config.gameMode === mode
-                              ? 'bg-magenta text-white shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                              : 'bg-white text-black hover:bg-magenta/10'
-                          }
-                          disabled:cursor-not-allowed
-                        `}
-                      >
-                        <div className="flex-1">
-                          <div className="font-bold text-sm">{label}</div>
-                          <div
-                            className={`text-xs mt-0.5 ${config.gameMode === mode ? 'text-white/80' : 'text-black/60'}`}
-                          >
-                            {desc}
-                          </div>
-                        </div>
-                        <div
-                          className={`w-5 h-5 border-2 flex items-center justify-center rounded-full ${config.gameMode === mode ? 'bg-white border-white' : 'border-black bg-white'}`}
-                        >
-                          {config.gameMode === mode && (
-                            <div className="w-2.5 h-2.5 rounded-full bg-magenta" />
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <GameDivider />
-
-                {/* Host device */}
-                <div className="space-y-3">
-                  <p className="text-sm font-bold uppercase tracking-widest text-black">
-                    This Device
-                  </p>
-                  <button
-                    disabled={!isHost}
-                    onClick={() => setConfig((c) => ({ ...c, hostPlays: !c.hostPlays }))}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-3 border-2 border-black
-                      text-left transition-all shadow-[2px_2px_0_#000]
-                      ${
-                        config.hostPlays
-                          ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                          : 'bg-white text-black hover:bg-cyan/20'
-                      }
-                      disabled:cursor-not-allowed
-                    `}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          {/* ── Game-mode grid (4 cols) ── */}
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            {GAME_MODES.map((m) => {
+              const on = config.gameMode === m.mode
+              const fg = on ? (m.color === '#ffcf33' ? '#0a1535' : '#fff') : '#0a1535'
+              return (
+                <button
+                  key={m.mode}
+                  disabled={!isHost}
+                  onClick={() => setConfig((c) => ({ ...c, gameMode: m.mode }))}
+                  style={{
+                    background: on ? m.color : '#fff',
+                    color: fg,
+                    border: '2px solid #0a1535',
+                    borderRadius: 14,
+                    padding: 16,
+                    cursor: isHost ? 'pointer' : 'not-allowed',
+                    boxShadow: on ? '0 5px 0 #0a1535' : '0 2px 0 rgba(10,21,53,0.25)',
+                    textAlign: 'left',
+                    transition: 'all 0.1s',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 20, lineHeight: 1 }}>{m.emoji}</span>
+                  <div style={{ fontFamily: BUNGEE, fontSize: 15, lineHeight: 1 }}>{m.label}</div>
+                  <div
+                    style={{
+                      fontFamily: BODY,
+                      fontSize: 12,
+                      lineHeight: 1.35,
+                      opacity: on ? 0.9 : 0.7,
+                    }}
                   >
-                    <span className="text-xl">🎮</span>
-                    <div className="flex-1">
-                      <div className="font-bold text-sm text-black">
-                        {config.hostPlays ? 'This Device Plays' : 'Spectator / TV Mode'}
-                      </div>
-                      <div className="text-xs text-black/70 font-bold">
-                        {config.hostPlays
-                          ? 'This device joins as a scoring player'
-                          : 'Display only — assign a player as Boss to control it'}
-                      </div>
-                    </div>
-                    <div
-                      className={`w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000] ${config.hostPlays ? 'bg-magenta' : 'bg-white'}`}
-                    >
-                      {config.hostPlays && <span className="text-white text-md font-bold">✓</span>}
-                    </div>
-                  </button>
+                    {m.desc}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* ── Two-column area ── */}
+          <div className="grid gap-4" style={{ gridTemplateColumns: '1.1fr 0.9fr', alignItems: 'start' }}>
+
+            {/* ── LEFT: Difficulty + Eras ── */}
+            <div
+              style={{
+                background: '#fff',
+                border: '2px solid #0a1535',
+                borderRadius: 16,
+                padding: 20,
+                boxShadow: '0 4px 0 #0a1535',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 18,
+              }}
+            >
+              {/* Difficulty */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <SectionLabel>Difficulty · Pick Any</SectionLabel>
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  {TIER_OPTIONS.map(({ tier, label, range, desc, emoji, color }) => {
+                    const on = config.difficultyTiers.includes(tier)
+                    const fg = on ? (color === '#ffcf33' ? '#0a1535' : '#fff') : '#0a1535'
+                    const metaColor = on ? (color === '#ffcf33' ? 'rgba(10,21,53,0.75)' : 'rgba(255,255,255,0.85)') : '#6b7ea0'
+                    const line = desc ? `${range} · ${desc.toUpperCase()}` : range
+                    return (
+                      <button
+                        key={tier}
+                        disabled={!isHost}
+                        onClick={() =>
+                          setConfig((c) => ({ ...c, difficultyTiers: toggle(c.difficultyTiers, tier) }))
+                        }
+                        style={{
+                          background: on ? color : '#fff',
+                          color: fg,
+                          border: '2px solid #0a1535',
+                          borderRadius: 12,
+                          padding: '10px 9px',
+                          cursor: isHost ? 'pointer' : 'not-allowed',
+                          boxShadow: on ? '0 3px 0 #0a1535' : '0 2px 0 rgba(10,21,53,0.25)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 5,
+                          alignItems: 'flex-start',
+                          textAlign: 'left',
+                          transition: 'all 0.1s',
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <span style={{ fontSize: 14 }}>{emoji}</span>
+                          <span style={{ fontFamily: BUNGEE, fontSize: 12, lineHeight: 1 }}>{label}</span>
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            color: metaColor,
+                          }}
+                        >
+                          {line}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
+                {config.difficultyTiers.length === 0 && (
+                  <p style={{ color: '#e32437', fontSize: 12, margin: 0, fontFamily: BODY }}>
+                    Select at least one difficulty tier
+                  </p>
+                )}
               </div>
 
-              {/* ── RIGHT COLUMN: Game content & difficulty ── */}
-              <div className="space-y-5">
-                {/* Questions / Rounds */}
-                <div className="space-y-3">
-                  <p className="text-sm font-bold uppercase tracking-widest text-black">
-                    {isCareer ? 'Players (rounds)' : 'Questions'}
-                  </p>
-                  <div className="flex gap-2">
-                    {[5, 10, 15, 20].map((n) => (
+              {/* Eras */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <SectionLabel>Eras</SectionLabel>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {['1970s', '1980s', '1990s', '2000s', '2010s', '2020s'].map((era) => {
+                    const on = config.eras.includes(era)
+                    return (
                       <button
-                        key={n}
+                        key={era}
                         disabled={!isHost}
-                        onClick={() => setConfig((c) => ({ ...c, questionCount: n }))}
-                        className={`
-                          flex-1 py-2.5 border-2 border-black font-bold text-sm transition-all shadow-[2px_2px_0_#000]
-                          ${
-                            config.questionCount === n
-                              ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                              : 'bg-white text-black hover:bg-cyan/50'
-                          }
-                          disabled:cursor-not-allowed
-                        `}
+                        onClick={() => setConfig((c) => ({ ...c, eras: toggle(c.eras, era) }))}
+                        style={{
+                          background: on ? '#003087' : '#eef1f8',
+                          color: on ? '#fff' : '#6b7ea0',
+                          border: `2px solid ${on ? '#0a1535' : '#9aa2bd'}`,
+                          borderRadius: 9999,
+                          padding: '6px 13px',
+                          cursor: isHost ? 'pointer' : 'not-allowed',
+                          boxShadow: on ? '0 2px 0 #0a1535' : 'none',
+                          fontFamily: MONO,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          letterSpacing: '0.08em',
+                          transition: 'all 0.1s',
+                        }}
+                      >
+                        {era}{on ? ' ✓' : ''}
+                      </button>
+                    )
+                  })}
+                </div>
+                {config.eras.length === 0 && (
+                  <p style={{ color: '#e32437', fontSize: 12, margin: 0, fontFamily: BODY }}>
+                    Select at least one era
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* ── RIGHT: Format ── */}
+            <div
+              style={{
+                background: '#fff',
+                border: '2px solid #0a1535',
+                borderRadius: 16,
+                padding: 20,
+                boxShadow: '0 4px 0 #0a1535',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+              }}
+            >
+              <SectionLabel>Format</SectionLabel>
+
+              {/* Questions */}
+              <FormatRow label={isCareer ? 'Players (rounds)' : 'Questions'}>
+                {[5, 10, 15, 20].map((n) => (
+                  <SegBtn
+                    key={n}
+                    on={config.questionCount === n}
+                    onClick={() => setConfig((c) => ({ ...c, questionCount: n }))}
+                    disabled={!isHost}
+                  >
+                    {n}
+                  </SegBtn>
+                ))}
+              </FormatRow>
+
+              {/* Answers */}
+              <FormatRow label="Answers">
+                {([
+                  { value: 'multiplechoice', label: 'MULTIPLE CHOICE' },
+                  { value: 'freetext',        label: 'TYPE IT' },
+                ] as { value: AnswerMode; label: string }[]).map(({ value, label }) => (
+                  <SegBtn
+                    key={value}
+                    on={config.answerMode === value}
+                    onClick={() => setConfig((c) => ({ ...c, answerMode: value }))}
+                    disabled={!isHost}
+                    small
+                  >
+                    {label}
+                  </SegBtn>
+                ))}
+              </FormatRow>
+
+              {/* Classic-only extras */}
+              {isClassic && (
+                <>
+                  <FormatRow label="Stats reveal">
+                    {([
+                      { value: 'instant', label: 'ALL AT ONCE' },
+                      { value: 'timed',   label: 'TIMED' },
+                    ] as { value: RevealMode; label: string }[]).map(({ value, label }) => (
+                      <SegBtn
+                        key={value}
+                        on={config.revealMode === value}
+                        onClick={() => setConfig((c) => ({ ...c, revealMode: value }))}
+                        disabled={!isHost}
+                        small
+                      >
+                        {label}
+                      </SegBtn>
+                    ))}
+                  </FormatRow>
+
+                  <FormatRow label="Rookies only">
+                    <Toggle
+                      on={config.rookiesOnly}
+                      onClick={() => setConfig((c) => ({ ...c, rookiesOnly: !c.rookiesOnly }))}
+                      disabled={!isHost}
+                    />
+                  </FormatRow>
+
+                  <FormatRow label="Hints">
+                    <Toggle
+                      on={config.hintsEnabled}
+                      onClick={() => setConfig((c) => ({ ...c, hintsEnabled: !c.hintsEnabled }))}
+                      disabled={!isHost}
+                    />
+                  </FormatRow>
+                </>
+              )}
+
+              {/* Power plays (powerups) */}
+              <FormatRow label="Power plays">
+                <Toggle
+                  on={config.powerupsEnabled}
+                  onClick={() => setConfig((c) => ({ ...c, powerupsEnabled: !c.powerupsEnabled }))}
+                  disabled={!isHost}
+                />
+              </FormatRow>
+
+              {/* This device */}
+              <FormatRow label="This device plays">
+                <Toggle
+                  on={config.hostPlays}
+                  onClick={() => setConfig((c) => ({ ...c, hostPlays: !c.hostPlays }))}
+                  disabled={!isHost}
+                />
+              </FormatRow>
+
+              {/* HL: compare stat */}
+              {isHL && (
+                <FormatRow label="Compare stat">
+                  {HL_FIELDS.map(({ value, label }) => (
+                    <SegBtn
+                      key={value}
+                      on={config.hlComparisonField === value}
+                      onClick={() => setConfig((c) => ({ ...c, hlComparisonField: value }))}
+                      disabled={!isHost}
+                      small
+                    >
+                      {label}
+                    </SegBtn>
+                  ))}
+                </FormatRow>
+              )}
+
+              {/* Career-specific options */}
+              {isCareer && (
+                <>
+                  <FormatRow label="Reveal order">
+                    {CAREER_REVEAL_ORDERS.map(({ value, label }) => (
+                      <SegBtn
+                        key={value}
+                        on={config.careerRevealOrder === value}
+                        onClick={() => setConfig((c) => ({ ...c, careerRevealOrder: value }))}
+                        disabled={!isHost}
+                        small
+                      >
+                        {label}
+                      </SegBtn>
+                    ))}
+                  </FormatRow>
+
+                  <FormatRow label="Min seasons">
+                    {[3, 5, 7, 10].map((n) => (
+                      <SegBtn
+                        key={n}
+                        on={config.careerMinSeasons === n}
+                        onClick={() => setConfig((c) => ({ ...c, careerMinSeasons: n }))}
+                        disabled={!isHost}
+                        small
                       >
                         {n}
-                      </button>
+                      </SegBtn>
                     ))}
-                  </div>
-                </div>
+                  </FormatRow>
 
-                {/* Classic-specific: Reveal mode & Answer mode */}
-                {isClassic && (
-                  <>
-                    <GameDivider />
-                    <div className="space-y-3">
-                      <p className="text-sm font-bold uppercase tracking-widest text-black">
-                        Stats Reveal
-                      </p>
-                      <div className="flex gap-2">
-                        {(
-                          [
-                            {
-                              value: 'instant',
-                              label: '⚡ All at Once',
-                              desc: 'See all stats immediately',
-                            },
-                            {
-                              value: 'timed',
-                              label: '⏱ Timed Reveal',
-                              desc: 'Columns reveal every 8s',
-                            },
-                          ] as {
-                            value: RevealMode
-                            label: string
-                            desc: string
-                          }[]
-                        ).map(({ value, label, desc }) => (
-                          <button
-                            key={value}
-                            disabled={!isHost}
-                            onClick={() => setConfig((c) => ({ ...c, revealMode: value }))}
-                            className={`
-                              flex-1 py-3 border-2 border-black text-sm transition-all text-left px-3 shadow-[2px_2px_0_#000]
-                              ${
-                                config.revealMode === value
-                                  ? 'bg-magenta text-white shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                                  : 'bg-white text-black hover:bg-magenta/20'
-                              }
-                              disabled:cursor-not-allowed
-                            `}
-                          >
-                            <div className="font-bold">{label}</div>
-                            <div className="text-xs mt-0.5">{desc}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <p className="text-sm font-bold uppercase tracking-widest text-black">
-                        Answer Mode
-                      </p>
-                      <div className="flex gap-2">
-                        {(
-                          [
-                            {
-                              value: 'multiplechoice',
-                              label: '🔘 Multiple Choice',
-                            },
-                            { value: 'freetext', label: '✏️ Free Text' },
-                          ] as { value: AnswerMode; label: string }[]
-                        ).map(({ value, label }) => (
-                          <button
-                            key={value}
-                            disabled={!isHost}
-                            onClick={() => setConfig((c) => ({ ...c, answerMode: value }))}
-                            className={`
-                              flex-1 py-2.5 border-2 border-black font-bold text-sm transition-all shadow-[2px_2px_0_#000]
-                              ${
-                                config.answerMode === value
-                                  ? 'bg-yellow text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                                  : 'bg-white text-black hover:bg-yellow/50'
-                              }
-                              disabled:cursor-not-allowed
-                            `}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Career-specific options */}
-                {isCareer && (
-                  <>
-                    <GameDivider />
-                    <div className="space-y-3">
-                      <p className="text-sm font-bold uppercase tracking-widest text-black">
-                        Reveal Order
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {CAREER_REVEAL_ORDERS.map(({ value, label }) => (
-                          <button
-                            key={value}
-                            disabled={!isHost}
-                            onClick={() =>
-                              setConfig((c) => ({
-                                ...c,
-                                careerRevealOrder: value,
-                              }))
-                            }
-                            className={`
-                              py-2.5 border-2 border-black font-bold text-sm transition-all shadow-[2px_2px_0_#000]
-                              ${
-                                config.careerRevealOrder === value
-                                  ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                                  : 'bg-white text-black hover:bg-cyan/40'
-                              }
-                              disabled:cursor-not-allowed
-                            `}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-widest text-black">
-                          Min Seasons
-                        </p>
-                        <div className="flex gap-1">
-                          {[3, 5, 7, 10].map((n) => (
-                            <button
-                              key={n}
-                              disabled={!isHost}
-                              onClick={() =>
-                                setConfig((c) => ({
-                                  ...c,
-                                  careerMinSeasons: n,
-                                }))
-                              }
-                              className={`
-                                flex-1 py-2 border-2 border-black font-bold text-xs transition-all shadow-[1px_1px_0_#000]
-                                ${
-                                  config.careerMinSeasons === n
-                                    ? 'bg-lime text-black shadow-[2px_2px_0_#000] -translate-x-px -translate-y-px'
-                                    : 'bg-white text-black hover:bg-lime/30'
-                                }
-                                disabled:cursor-not-allowed
-                              `}
-                            >
-                              {n}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-widest text-black">
-                          Max Reveals
-                        </p>
-                        <div className="flex gap-1">
-                          {[5, 6, 8, 10].map((n) => (
-                            <button
-                              key={n}
-                              disabled={!isHost}
-                              onClick={() =>
-                                setConfig((c) => ({
-                                  ...c,
-                                  careerMaxReveals: n,
-                                }))
-                              }
-                              className={`
-                                flex-1 py-2 border-2 border-black font-bold text-xs transition-all shadow-[1px_1px_0_#000]
-                                ${
-                                  config.careerMaxReveals === n
-                                    ? 'bg-lime text-black shadow-[2px_2px_0_#000] -translate-x-px -translate-y-px'
-                                    : 'bg-white text-black hover:bg-lime/30'
-                                }
-                                disabled:cursor-not-allowed
-                              `}
-                            >
-                              {n}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Higher/Lower: stat field */}
-                {isHL && (
-                  <>
-                    <GameDivider />
-                    <div className="space-y-3">
-                      <p className="text-sm font-bold uppercase tracking-widest text-black">
-                        Compare Stat
-                      </p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {HL_FIELDS.map(({ value, label }) => (
-                          <button
-                            key={value}
-                            disabled={!isHost}
-                            onClick={() =>
-                              setConfig((c) => ({
-                                ...c,
-                                hlComparisonField: value,
-                              }))
-                            }
-                            className={`
-                              py-2 border-2 border-black font-bold text-xs transition-all shadow-[2px_2px_0_#000]
-                              ${
-                                config.hlComparisonField === value
-                                  ? 'bg-yellow text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                                  : 'bg-white text-black hover:bg-yellow/40'
-                              }
-                              disabled:cursor-not-allowed
-                            `}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Difficulty tiers */}
-                {needsTiers && (
-                  <>
-                    <GameDivider />
-                    <div className="space-y-3">
-                      <p className="text-sm font-bold uppercase tracking-widest text-black">
-                        Difficulty
-                      </p>
-                      <div className="space-y-2">
-                        {TIER_OPTIONS.map(({ tier, label, desc, emoji }) => {
-                          const selected = config.difficultyTiers.includes(tier)
-                          return (
-                            <button
-                              key={tier}
-                              disabled={!isHost}
-                              onClick={() =>
-                                setConfig((c) => ({
-                                  ...c,
-                                  difficultyTiers: toggle(c.difficultyTiers, tier),
-                                }))
-                              }
-                              className={`
-                                w-full flex items-center gap-3 px-4 py-3 border-2 border-black
-                                text-left transition-all shadow-[2px_2px_0_#000]
-                                ${
-                                  selected
-                                    ? 'bg-lime text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                                    : 'bg-white text-black hover:bg-lime/20'
-                                }
-                                disabled:cursor-not-allowed
-                              `}
-                            >
-                              <span className="text-xl">{emoji}</span>
-                              <div className="flex-1">
-                                <div className="font-bold text-sm text-black">{label}</div>
-                                <div className="text-xs text-black/80 font-bold">{desc}</div>
-                              </div>
-                              <div
-                                className={`w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000] ${selected ? 'bg-magenta' : 'bg-white'}`}
-                              >
-                                {selected && (
-                                  <span className="text-white text-md font-bold">✓</span>
-                                )}
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </div>
-                      {config.difficultyTiers.length === 0 && (
-                        <p className="text-game-red text-xs">Select at least one difficulty tier</p>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {/* Eras */}
-                <GameDivider />
-                <div className="space-y-3">
-                  <div className="flex justify-between items-end">
-                    <p className="text-sm font-bold uppercase tracking-widest text-black">Eras</p>
-                    {availableCount !== null && (
-                      <p className="text-xs font-bold font-mono bg-yellow border-2 border-black px-2 shadow-[2px_2px_0_#000]">
-                        Pool: {availableCount} {isCareer ? 'players' : 'seasons'}
-                      </p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['1970s', '1980s', '1990s', '2000s', '2010s', '2020s'].map((era) => {
-                      const selected = config.eras.includes(era)
-                      return (
-                        <button
-                          key={era}
-                          disabled={!isHost}
-                          onClick={() =>
-                            setConfig((c) => ({
-                              ...c,
-                              eras: toggle(c.eras, era),
-                            }))
-                          }
-                          className={`
-                            py-2 text-center font-bold text-sm border-2 border-black shadow-[2px_2px_0_#000]
-                            transition-all
-                            ${
-                              selected
-                                ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                                : 'bg-white text-black hover:bg-cyan/30'
-                            }
-                            disabled:cursor-not-allowed
-                          `}
-                        >
-                          {era}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {config.eras.length === 0 && (
-                    <p className="text-game-red text-xs">Select at least one era</p>
-                  )}
-                </div>
-
-                {/* Classic extras: Hints, Powerups, Rookies */}
-                {isClassic && (
-                  <>
-                    <GameDivider />
-                    <div className="flex gap-4">
-                      {(
-                        [
-                          {
-                            key: 'hintsEnabled',
-                            label: '💡 Hints',
-                            desc: '-10 pts each',
-                          },
-                          {
-                            key: 'powerupsEnabled',
-                            label: '⚡ Powerups',
-                            desc: '1 charge each',
-                          },
-                        ] as {
-                          key: keyof GameSetupConfig
-                          label: string
-                          desc: string
-                        }[]
-                      ).map(({ key, label, desc }) => (
-                        <button
-                          key={key}
-                          disabled={!isHost}
-                          onClick={() => setConfig((c) => ({ ...c, [key]: !c[key] }))}
-                          className={`
-                            flex-1 flex flex-col items-center gap-1 py-3 px-2 border-2 border-black shadow-[2px_2px_0_#000]
-                            transition-all text-sm
-                            ${
-                              config[key]
-                                ? 'bg-cyan text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                                : 'bg-white text-black hover:bg-cyan/30'
-                            }
-                            disabled:cursor-not-allowed
-                          `}
-                        >
-                          <span className="font-bold text-black">{label}</span>
-                          <span className="text-xs text-black/80 font-bold">{desc}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      disabled={!isHost}
-                      onClick={() =>
-                        setConfig((c) => ({
-                          ...c,
-                          rookiesOnly: !c.rookiesOnly,
-                        }))
-                      }
-                      className={`
-                        w-full flex items-center gap-3 px-4 py-3 border-2 border-black
-                        text-left transition-all shadow-[2px_2px_0_#000]
-                        ${
-                          config.rookiesOnly
-                            ? 'bg-lime text-black shadow-[4px_4px_0_#000] translate-x-[-2px] translate-y-[-2px]'
-                            : 'bg-white text-black hover:bg-lime/20'
-                        }
-                        disabled:cursor-not-allowed
-                      `}
-                    >
-                      <span className="text-xl">🌱</span>
-                      <div className="flex-1">
-                        <div className="font-bold text-sm text-black">Rookies Only</div>
-                        <div className="text-xs text-black/80 font-bold">
-                          Only show debut seasons
-                        </div>
-                      </div>
-                      <div
-                        className={`w-6 h-6 border-2 border-black flex items-center justify-center shadow-[1px_1px_0_#000] ${config.rookiesOnly ? 'bg-magenta' : 'bg-white'}`}
+                  <FormatRow label="Max reveals">
+                    {[5, 6, 8, 10].map((n) => (
+                      <SegBtn
+                        key={n}
+                        on={config.careerMaxReveals === n}
+                        onClick={() => setConfig((c) => ({ ...c, careerMaxReveals: n }))}
+                        disabled={!isHost}
+                        small
                       >
-                        {config.rookiesOnly && (
-                          <span className="text-white text-md font-bold">✓</span>
-                        )}
-                      </div>
-                    </button>
-                  </>
-                )}
-
-                {/* CTA */}
-                {isHost && (
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full mt-2"
-                    onClick={handleStart}
-                    disabled={!canStart || starting}
-                  >
-                    {starting
-                      ? 'Starting…'
-                      : !canStart &&
-                          availableCount !== null &&
-                          availableCount < config.questionCount
-                        ? 'Not enough players'
-                        : '🏒 Continue to Lobby'}
-                  </Button>
-                )}
-              </div>
-              {/* end right column */}
+                        {n}
+                      </SegBtn>
+                    ))}
+                  </FormatRow>
+                </>
+              )}
             </div>
-            {/* end two-column grid */}
-          </Panel>
+          </div>
+
+          {/* ── Start bar ── */}
+          <div
+            style={{
+              background: '#0a1535',
+              borderRadius: 14,
+              padding: '14px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+              flexWrap: 'wrap',
+              boxShadow: '0 2px 0 rgba(10,21,53,0.25)',
+            }}
+          >
+            {availableCount !== null && (
+              <span
+                style={{
+                  background: '#2cc66b',
+                  color: '#0a1535',
+                  border: '2px solid #0a1535',
+                  borderRadius: 9999,
+                  padding: '5px 12px',
+                  fontFamily: ARCHIVO,
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                ✓ {availableCount} PLAYERS IN POOL
+              </span>
+            )}
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                color: '#9fb3d9',
+              }}
+            >
+              {configSummary}
+            </span>
+            <div style={{ marginLeft: 'auto' }}>
+              {isHost ? (
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleStart}
+                  disabled={!canStart || starting}
+                  style={{ border: '2px solid #fff' }}
+                >
+                  {starting
+                    ? 'STARTING…'
+                    : !canStart && availableCount !== null && availableCount < config.questionCount
+                      ? 'NOT ENOUGH PLAYERS'
+                      : 'CONTINUE TO LOBBY →'}
+                </Button>
+              ) : (
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: '0.16em',
+                    color: '#9fb3d9',
+                  }}
+                >
+                  WAITING FOR HOST…
+                </span>
+              )}
+            </div>
+          </div>
         </motion.div>
 
         <AdsterraBanner slot="setup" />

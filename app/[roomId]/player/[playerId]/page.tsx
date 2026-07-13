@@ -27,19 +27,19 @@ import {
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
 import Dock from '@/components/ui/Dock'
-import { StatsCard } from '@/components/game/StatsCard'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
 import { BuzzInButton } from '@/components/game/BuzzInButton'
 import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
 import { HigherLowerCard } from '@/components/game/HigherLowerCard'
 import { PlayerGuessInput } from '@/components/game/PlayerGuessInput'
 import { Scoreboard } from '@/components/game/Scoreboard'
-import { PowerupBar } from '@/components/game/PowerupBar'
 import { HintPanel } from '@/components/game/HintPanel'
-import { Avatar, Button, GameLogo, TierBadge } from '@/components/design-system'
+import { Avatar, Button, Modal } from '@/components/design-system'
+import { CBrand, StatTile } from '@/components/arcade'
 import { getAvatarUrl } from '@/lib/avatar'
 import { Eye, SkipForward, ChevronRight, RotateCcw, Settings } from 'lucide-react'
 import type {
+  AnswerMode,
   H2HPair,
   HintType,
   HLPair,
@@ -47,8 +47,71 @@ import type {
   PowerupType,
   Question,
   QuestionResult,
+  RevealMode,
 } from '@/types/game'
 import { POWERUP_INITIAL_CHARGES } from '@/types/game'
+
+// ─── Fresh Ice palette / helpers ──────────────────────────────────────────────
+const INK = '#0a1535'
+const RED = '#e32437'
+const ROYAL = '#003087'
+
+const STAT_COLUMNS: { key: keyof Question; abbr: string; highlight: boolean }[] = [
+  { key: 'gamesPlayed', abbr: 'GP', highlight: false },
+  { key: 'goals', abbr: 'G', highlight: false },
+  { key: 'assists', abbr: 'A', highlight: false },
+  { key: 'points', abbr: 'PTS', highlight: true },
+  { key: 'penaltyMinutes', abbr: 'PIM', highlight: false },
+]
+
+const ANSWER_LETTERS = ['A', 'B', 'C', 'D']
+const ANSWER_LETTER_BG = [RED, ROYAL, '#2cc66b', '#ffcf33']
+
+type PowerupMeta = {
+  type: PowerupType
+  icon: string
+  label: string
+  description: string
+  availableIn: (answerMode: AnswerMode, revealMode: RevealMode) => boolean
+}
+
+const PU_LIST: PowerupMeta[] = [
+  {
+    type: 'eliminate',
+    icon: '✂',
+    label: 'Eliminate',
+    description: 'Remove 2 wrong choices from the board',
+    availableIn: (answerMode) => answerMode === 'multiplechoice',
+  },
+  {
+    type: 'doubledown',
+    icon: '×2',
+    label: 'Double Down',
+    description: '2× points if correct — lose 50 if wrong',
+    availableIn: () => true,
+  },
+  {
+    type: 'freeze',
+    icon: '❄',
+    label: 'Freeze',
+    description: 'Stop the reveal timer — lock the columns',
+    availableIn: (_am, revealMode) => revealMode === 'timed',
+  },
+  {
+    type: 'extrahint',
+    icon: '⚡',
+    label: 'Rush',
+    description: 'Reveal the next stat column immediately',
+    availableIn: (_am, revealMode) => revealMode === 'timed',
+  },
+]
+
+function formatClock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds))
+  const m = Math.floor(s / 60)
+  const ss = String(s % 60).padStart(2, '0')
+  return `${m}:${ss}`
+}
 
 interface PlayerPageProps {
   params: Promise<{ roomId: string; playerId: string }>
@@ -59,6 +122,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const [roomId, setRoomId] = useState('')
   const [playerId, setPlayerId] = useState('')
   const [myId, setMyId] = useState('')
+  const [confirmingPowerup, setConfirmingPowerup] = useState<PowerupType | null>(null)
 
   const game = useStorage((root) => root.game)
 
@@ -202,21 +266,52 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
   if (!game) return null
 
+  // In the classic active controller we hide the global brand header so the
+  // Q-badge / timer row sits at the very top (matches the phone-controller design).
+  const classicController =
+    gameMode === 'classic' &&
+    (game.command === 'answering' || game.command === 'revealing') &&
+    !!currentQuestion
+
   return (
-    <main className="game-bg-pattern min-h-screen flex flex-col">
+    <main className="ice-bg min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-game-card-border bg-game-bg/80 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
-        <GameLogo className="text-lg" />
-        {me && (
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="font-bold text-sm tabular-nums">{me.score} pts</div>
-              <div className="text-xs text-game-text-muted">Rank #{myRank}</div>
+      {!classicController && (
+        <header
+          className="flex items-center justify-between px-4 py-3"
+          style={{ background: '#f4f8ff', borderBottom: `2px solid ${INK}` }}
+        >
+          <CBrand small />
+          {me && (
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div
+                  style={{
+                    fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                    fontSize: 15,
+                    color: INK,
+                  }}
+                  className="tabular-nums"
+                >
+                  {me.score}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
+                    fontSize: 8,
+                    letterSpacing: '0.16em',
+                    color: '#6b7ea0',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Rank #{myRank}
+                </div>
+              </div>
+              <Avatar url={getAvatarUrl(me.id)} name={me.name} size={36} />
             </div>
-            <Avatar url={getAvatarUrl(me.id)} name={me.name} size={36} />
-          </div>
-        )}
-      </header>
+          )}
+        </header>
+      )}
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div
@@ -225,7 +320,27 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
           {/* Idle */}
           {game.command === 'idle' && (
             <div className="text-center py-16">
-              <p className="text-game-text-muted text-lg">Waiting for the game to start…</p>
+              <p
+                style={{
+                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                  fontSize: 20,
+                  color: INK,
+                }}
+              >
+                Waiting to start…
+              </p>
+              <p
+                style={{
+                  fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
+                  fontSize: 10,
+                  letterSpacing: '0.18em',
+                  color: '#6b7ea0',
+                  textTransform: 'uppercase',
+                  marginTop: 8,
+                }}
+              >
+                Hold tight
+              </p>
             </div>
           )}
 
@@ -238,10 +353,29 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 exit={{ scale: 0.8, opacity: 0 }}
                 className="flex flex-col items-center justify-center py-12 gap-4"
               >
-                <div className="text-[30vw] font-bold text-black tabular-nums">
+                <div
+                  className="tabular-nums"
+                  style={{
+                    fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                    fontSize: '30vw',
+                    lineHeight: 1,
+                    color: RED,
+                    textShadow: '0 6px 0 rgba(227,36,55,0.25)',
+                  }}
+                >
                   {game.countdownTime || '🏒'}
                 </div>
-                <p className="text-game-text-muted uppercase tracking-widest">Get ready!</p>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
+                    fontSize: 12,
+                    letterSpacing: '0.22em',
+                    color: INK,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Get ready!
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -256,19 +390,84 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-4 bg-white p-8 border-8 border-black"
+                  className="space-y-3"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-game-text-muted">
+                  {/* Controller header row: Q badge · name·score · timer */}
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      style={{
+                        background: RED,
+                        color: '#fff',
+                        border: `2px solid ${INK}`,
+                        borderRadius: 9999,
+                        padding: '4px 12px',
+                        fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
+                        fontSize: 11,
+                        letterSpacing: '0.12em',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
                     </span>
-                    <TierBadge tier={currentQuestion.difficulty} />
+                    <span
+                      className="flex-1 truncate"
+                      style={{
+                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                        fontSize: 15,
+                        color: INK,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {me ? `${me.name} · ${me.score}` : ''}
+                    </span>
+                    <span
+                      className="tabular-nums"
+                      style={{
+                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                        fontSize: 20,
+                        color: RED,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {formatClock(game.countdownTime ?? 0)}
+                    </span>
                   </div>
 
-                  <StatsCard
-                    question={currentQuestion}
-                    revealedColumns={game.revealedColumns ?? 0}
-                  />
+                  {/* Progress bar (time remaining) */}
+                  <div
+                    style={{
+                      height: 8,
+                      boxSizing: 'border-box',
+                      background: '#d3e3ff',
+                      border: `2px solid ${INK}`,
+                      borderRadius: 9999,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${Math.max(0, Math.min(100, ((game.countdownTime ?? 0) / 30) * 100))}%`,
+                        background: RED,
+                        borderRadius: 9999,
+                        transition: 'width 0.4s linear',
+                      }}
+                    />
+                  </div>
+
+                  {/* Compact stat strip */}
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {STAT_COLUMNS.map((col, ci) => (
+                      <StatTile
+                        key={col.key}
+                        abbr={col.abbr}
+                        size="sm"
+                        value={String(currentQuestion[col.key])}
+                        highlight={col.highlight}
+                        hidden={ci >= (game.revealedColumns ?? 0)}
+                      />
+                    ))}
+                  </div>
 
                   {game.command === 'revealing' &&
                     (() => {
@@ -277,11 +476,12 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                       const myResult = latestResult?.playerAnswers?.[myId]
                       const isCorrect = myResult?.correct ?? false
                       const pointsEarned = myResult?.points ?? 0
-                      const color = hasAnswered
+                      const resultBg = hasAnswered
                         ? isCorrect
-                          ? 'bg-lime text-black'
-                          : 'bg-game-red text-white'
-                        : 'bg-yellow text-black'
+                          ? '#2cc66b'
+                          : RED
+                        : '#ffcf33'
+                      const resultText = hasAnswered && !isCorrect ? '#fff' : INK
 
                       const prevScores = players.map((p) => {
                         const pts = latestResult?.playerAnswers?.[p.id]?.points ?? 0
@@ -305,38 +505,111 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95, y: 20 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
-                          className={`${color} border-8 border-black p-6 text-center shadow-[12px_12px_0_#000] rotate-1 my-4`}
+                          className="p-5 text-center"
+                          style={{
+                            background: resultBg,
+                            color: resultText,
+                            border: `2px solid ${INK}`,
+                            borderRadius: 14,
+                            boxShadow: `0 4px 0 ${INK}`,
+                          }}
                         >
                           {hasAnswered ? (
                             <>
-                              <h2 className="text-5xl font-display font-bold uppercase mb-2 mt-2">
-                                {isCorrect ? 'Nailed It! 🔥' : 'Oof, Incorrect! 🧊'}
+                              <h2
+                                style={{
+                                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                                  fontSize: 30,
+                                  lineHeight: 1.05,
+                                  marginBottom: 8,
+                                }}
+                              >
+                                {isCorrect ? 'Nailed It! 🔥' : 'Oof! 🧊'}
                               </h2>
-                              <p className="font-mono font-bold mb-2">
+                              <p
+                                style={{
+                                  fontFamily: 'var(--font-jetbrains-mono), monospace',
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  marginBottom: 8,
+                                }}
+                              >
                                 {isCorrect
-                                  ? `Amazing! You earned +${pointsEarned} Pts.`
-                                  : 'Tough luck, better try again next round.'}
+                                  ? `You earned +${pointsEarned} pts`
+                                  : 'Tough luck — next round is yours'}
                               </p>
                               {rankMessage && (
-                                <p className="inline-block bg-black text-white font-bold uppercase tracking-widest text-sm px-3 py-1 mb-2 transform -rotate-1 shadow-[2px_2px_0_rgba(0,0,0,0.5)] border border-white/20">
+                                <p
+                                  className="inline-block"
+                                  style={{
+                                    background: INK,
+                                    color: '#fff',
+                                    fontFamily:
+                                      'var(--font-archivo-black), "Archivo Black", sans-serif',
+                                    fontSize: 11,
+                                    letterSpacing: '0.14em',
+                                    textTransform: 'uppercase',
+                                    padding: '4px 10px',
+                                    borderRadius: 9999,
+                                    marginBottom: 8,
+                                  }}
+                                >
                                   {rankMessage}
                                 </p>
                               )}
                             </>
                           ) : (
-                            <h2 className="text-4xl font-display font-bold uppercase mb-2 mt-2">
-                              Time's Up! ⏱️
+                            <h2
+                              style={{
+                                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                                fontSize: 26,
+                                marginBottom: 8,
+                              }}
+                            >
+                              Time&apos;s Up! ⏱️
                             </h2>
                           )}
-                          <div className="bg-white border-4 border-black p-4 -rotate-1 shadow-[4px_4px_0_#000] my-6">
-                            <p className="text-black/80 font-bold text-xs uppercase tracking-widest mb-1">
+                          <div
+                            style={{
+                              background: '#fff',
+                              border: `2px solid ${INK}`,
+                              borderRadius: 12,
+                              boxShadow: `0 3px 0 ${INK}`,
+                              padding: 16,
+                              marginTop: 16,
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontFamily:
+                                  'var(--font-archivo-black), "Archivo Black", sans-serif',
+                                fontSize: 9,
+                                letterSpacing: '0.18em',
+                                textTransform: 'uppercase',
+                                color: '#6b7ea0',
+                                marginBottom: 6,
+                              }}
+                            >
                               The Correct Answer Was
                             </p>
-                            <h3 className="text-4xl font-display font-bold text-black uppercase">
+                            <h3
+                              style={{
+                                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                                fontSize: 22,
+                                color: INK,
+                              }}
+                            >
                               {currentQuestion.firstName} {currentQuestion.lastName}
                             </h3>
                             {hasAnswered && !isCorrect && myResult?.answer && (
-                              <p className="text-sm mt-2 text-black/50 font-mono">
+                              <p
+                                style={{
+                                  fontFamily: 'var(--font-jetbrains-mono), monospace',
+                                  fontSize: 12,
+                                  color: '#6b7ea0',
+                                  marginTop: 8,
+                                }}
+                              >
                                 (not {myResult.answer})
                               </p>
                             )}
@@ -345,44 +618,201 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                       )
                     })()}
 
-                  {game.command === 'answering' && (
-                    <div className="space-y-4">
-                      <PlayerGuessInput
-                        answerMode={game.answerMode}
-                        choices={(game.choices as unknown as string[]) ?? []}
-                        eliminatedChoices={
-                          ((game.playerEliminatedChoices as unknown as Record<string, string[]>) ??
-                            {})[myId] ?? []
-                        }
-                        hasAnswered={hasAnswered}
-                        answeredCount={answeredCount}
-                        totalPlayers={connectedPlayers.length}
-                        onSubmit={handleAnswer}
-                      />
-                      {game.hintsEnabled && (
-                        <HintPanel
-                          question={currentQuestion}
-                          usedHints={sharedHints}
-                          hintsEnabled={game.hintsEnabled}
-                          onRequestHint={handleHint}
-                        />
-                      )}
-                      {game.powerupsEnabled && (
-                        <div className="pt-2">
-                          <p className="text-xs text-game-text-muted uppercase tracking-widest mb-2 text-center">
-                            Powerups
-                          </p>
-                          <PowerupBar
-                            charges={myPowerupCharges}
-                            answerMode={game.answerMode}
-                            revealMode={game.revealMode}
-                            command={game.command}
-                            onActivate={handlePowerup}
-                          />
+                  {game.command === 'answering' &&
+                    (() => {
+                      const choices = (game.choices as unknown as string[]) ?? []
+                      const myEliminated =
+                        ((game.playerEliminatedChoices as unknown as Record<string, string[]>) ??
+                          {})[myId] ?? []
+                      const mySelected = (game.answers as Record<string, string> | undefined)?.[myId]
+
+                      return (
+                        <div className="space-y-3">
+                          {game.answerMode === 'multiplechoice' ? (
+                            <div className="space-y-3">
+                              {choices.map((choice, i) => {
+                                const isEliminated = myEliminated.includes(choice)
+                                const isSelected = mySelected === choice
+                                const disabled = hasAnswered || isEliminated
+                                const letterBg = ANSWER_LETTER_BG[i] ?? INK
+                                return (
+                                  <button
+                                    key={choice}
+                                    onClick={() => {
+                                      if (!disabled) handleAnswer(choice)
+                                    }}
+                                    disabled={disabled}
+                                    className="btn-puffy"
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 12,
+                                      width: '100%',
+                                      textAlign: 'left',
+                                      minHeight: 52,
+                                      padding: '10px 14px',
+                                      borderRadius: 14,
+                                      border: `2px solid ${isEliminated ? '#9aa2bd' : INK}`,
+                                      background: isSelected
+                                        ? ROYAL
+                                        : isEliminated
+                                          ? '#d9d9e6'
+                                          : '#fff',
+                                      boxShadow: isEliminated
+                                        ? 'none'
+                                        : isSelected
+                                          ? `0 5px 0 ${INK}`
+                                          : `0 4px 0 ${INK}`,
+                                      opacity: isEliminated ? 0.55 : 1,
+                                      cursor: disabled ? 'default' : 'pointer',
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: 32,
+                                        height: 32,
+                                        flexShrink: 0,
+                                        borderRadius: 8,
+                                        border: `2px solid ${INK}`,
+                                        background: isSelected ? '#fff' : letterBg,
+                                        color: isSelected ? ROYAL : '#fff',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                                        fontSize: 14,
+                                        lineHeight: 1,
+                                      }}
+                                    >
+                                      {ANSWER_LETTERS[i] ?? ''}
+                                    </span>
+                                    <span
+                                      className="flex-1"
+                                      style={{
+                                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                                        fontSize: 14,
+                                        color: isSelected ? '#fff' : isEliminated ? '#6b7ea0' : INK,
+                                        textDecoration: isEliminated ? 'line-through' : 'none',
+                                      }}
+                                    >
+                                      {choice}
+                                      {isSelected ? ' ✓' : ''}
+                                    </span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <PlayerGuessInput
+                              answerMode={game.answerMode}
+                              choices={choices}
+                              eliminatedChoices={myEliminated}
+                              hasAnswered={hasAnswered}
+                              answeredCount={answeredCount}
+                              totalPlayers={connectedPlayers.length}
+                              onSubmit={handleAnswer}
+                            />
+                          )}
+
+                          {hasAnswered && (
+                            <p
+                              className="text-center"
+                              style={{
+                                fontFamily:
+                                  'var(--font-archivo-black), "Archivo Black", sans-serif',
+                                fontSize: 10,
+                                letterSpacing: '0.16em',
+                                textTransform: 'uppercase',
+                                color: '#6b7ea0',
+                              }}
+                            >
+                              Answer locked · {answeredCount}/{connectedPlayers.length} in
+                            </p>
+                          )}
+
+                          {game.hintsEnabled && (
+                            <HintPanel
+                              question={currentQuestion}
+                              usedHints={sharedHints}
+                              hintsEnabled={game.hintsEnabled}
+                              onRequestHint={handleHint}
+                            />
+                          )}
+
+                          {game.powerupsEnabled && (
+                            <div className="pt-1 flex gap-2.5 justify-center">
+                              {PU_LIST.map((pu) => {
+                                const charge = myPowerupCharges[pu.type] ?? 0
+                                const available = pu.availableIn(
+                                  game.answerMode,
+                                  game.revealMode
+                                )
+                                const canUse =
+                                  available && charge > 0 && game.command === 'answering'
+                                return (
+                                  <button
+                                    key={pu.type}
+                                    disabled={!canUse}
+                                    onClick={() => canUse && setConfirmingPowerup(pu.type)}
+                                    title={pu.label}
+                                    className={canUse ? 'btn-puffy' : undefined}
+                                    style={{
+                                      position: 'relative',
+                                      width: 44,
+                                      height: 44,
+                                      borderRadius: 12,
+                                      border: `2px solid ${canUse ? INK : '#9aa2bd'}`,
+                                      background: !canUse
+                                        ? '#e6e8f2'
+                                        : pu.type === 'doubledown'
+                                          ? '#ffcf33'
+                                          : '#fff',
+                                      boxShadow: canUse ? `0 3px 0 ${INK}` : 'none',
+                                      color: INK,
+                                      opacity: canUse ? 1 : 0.45,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                                      fontSize: pu.type === 'doubledown' ? 15 : 18,
+                                      cursor: canUse ? 'pointer' : 'not-allowed',
+                                    }}
+                                  >
+                                    {pu.icon}
+                                    {charge > 0 && (
+                                      <span
+                                        style={{
+                                          position: 'absolute',
+                                          top: -6,
+                                          right: -6,
+                                          minWidth: 16,
+                                          height: 16,
+                                          padding: '0 3px',
+                                          borderRadius: 9999,
+                                          background: INK,
+                                          color: '#fff',
+                                          border: '1.5px solid #fff',
+                                          fontFamily:
+                                            'var(--font-jetbrains-mono), monospace',
+                                          fontSize: 9,
+                                          fontWeight: 700,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          lineHeight: 1,
+                                        }}
+                                      >
+                                        {charge}
+                                      </span>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  )}
+                      )
+                    })()}
                 </motion.div>
               )}
           </AnimatePresence>
@@ -397,13 +827,13 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-4 bg-white p-6 border-8 border-black"
+                  className="space-y-4 bg-white p-6 card-puffy"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-black/50">
+                    <span className="text-xs font-bold uppercase tracking-widest text-game-text-muted">
                       Career Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
                     </span>
-                    <span className="text-xs font-bold text-magenta uppercase tracking-widest">
+                    <span className="text-xs font-bold text-game-red uppercase tracking-widest">
                       Career Mode
                     </span>
                   </div>
@@ -433,25 +863,25 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className={`border-8 border-black p-6 text-center shadow-[8px_8px_0_#000] ${isCorrect ? 'bg-lime text-black' : 'bg-white text-black'}`}
+                          className={`card-puffy p-6 text-center ${isCorrect ? 'bg-lime text-game-text' : 'bg-white text-game-text'}`}
                         >
                           {isCorrect ? (
                             <>
-                              <h2 className="text-4xl font-bold uppercase mb-1">Nailed It! 🔥</h2>
+                              <h2 className="font-display text-3xl uppercase mb-1">Nailed It! 🔥</h2>
                               <p className="font-mono font-bold">+{pts} pts</p>
                             </>
                           ) : (
-                            <h2 className="text-3xl font-bold uppercase mb-1">
+                            <h2 className="font-display text-2xl uppercase mb-1">
                               {lockedOutPlayers.includes(myId)
                                 ? 'Wrong guess ❌'
                                 : 'Nobody got it 🏒'}
                             </h2>
                           )}
-                          <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0_#000] mt-4">
-                            <p className="text-black/60 text-xs uppercase tracking-widest mb-1">
+                          <div className="bg-white card-puffy-sm p-4 mt-4">
+                            <p className="text-game-text-muted text-xs uppercase tracking-widest mb-1">
                               The Answer Was
                             </p>
-                            <h3 className="text-3xl font-bold text-black">
+                            <h3 className="font-display text-2xl text-game-text">
                               {currentQuestion.firstName} {currentQuestion.lastName}
                             </h3>
                           </div>
@@ -483,13 +913,13 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white p-6 border-8 border-black space-y-4"
+                  className="bg-white p-6 card-puffy space-y-4"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-game-text-muted">
                       Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
                     </span>
-                    <span className="text-xs font-bold text-magenta uppercase tracking-widest">
+                    <span className="text-xs font-bold text-game-red uppercase tracking-widest">
                       Head-to-Head
                     </span>
                   </div>
@@ -516,9 +946,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className={`border-8 border-black p-5 text-center shadow-[8px_8px_0_#000] ${isCorrect ? 'bg-lime text-black' : 'bg-game-red text-white'}`}
+                          className={`card-puffy p-5 text-center ${isCorrect ? 'bg-lime text-game-text' : 'bg-game-red text-white'}`}
                         >
-                          <h2 className="text-3xl font-bold uppercase">
+                          <h2 className="font-display text-2xl uppercase">
                             {hasAnswered ? (isCorrect ? 'Correct! 🔥' : 'Wrong ❌') : "Time's up!"}
                           </h2>
                           {isCorrect && pts > 0 && (
@@ -549,13 +979,13 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white p-6 border-8 border-black space-y-4"
+                  className="bg-white p-6 card-puffy space-y-4"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-game-text-muted">
                       Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
                     </span>
-                    <span className="text-xs font-bold text-magenta uppercase tracking-widest">
+                    <span className="text-xs font-bold text-game-red uppercase tracking-widest">
                       Higher or Lower
                     </span>
                   </div>
@@ -582,9 +1012,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className={`border-8 border-black p-5 text-center shadow-[8px_8px_0_#000] ${isCorrect ? 'bg-lime text-black' : 'bg-game-red text-white'}`}
+                          className={`card-puffy p-5 text-center ${isCorrect ? 'bg-lime text-game-text' : 'bg-game-red text-white'}`}
                         >
-                          <h2 className="text-3xl font-bold uppercase">
+                          <h2 className="font-display text-2xl uppercase">
                             {hasAnswered ? (isCorrect ? 'Correct! 🔥' : 'Wrong ❌') : "Time's up!"}
                           </h2>
                           {isCorrect && pts > 0 && (
@@ -611,13 +1041,11 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6 bg-white p-8 border-4 border-black"
+                className="space-y-6 bg-white p-8 card-puffy"
               >
                 <div className="text-center py-4">
                   <div className="text-6xl mb-3">🏆</div>
-                  <h2 className="text-3xl font-bold uppercase tracking-widest text-game-gold">
-                    Game Over!
-                  </h2>
+                  <h2 className="font-display text-3xl uppercase text-game-text">Game Over!</h2>
                 </div>
 
                 <Scoreboard players={players} variant="final" myId={myId} />
@@ -670,6 +1098,59 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
           onSettings={() => router.push(`/${roomId}/setup`)}
         />
       )}
+
+      {/* ── Powerup confirmation ── */}
+      <AnimatePresence>
+        {confirmingPowerup &&
+          (() => {
+            const pu = PU_LIST.find((p) => p.type === confirmingPowerup)
+            if (!pu) return null
+            return (
+              <Modal open onClose={() => setConfirmingPowerup(null)}>
+                <div className="text-center space-y-4">
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                      fontSize: 40,
+                      color: INK,
+                    }}
+                  >
+                    {pu.icon}
+                  </div>
+                  <h3
+                    style={{
+                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                      fontSize: 20,
+                      color: INK,
+                    }}
+                  >
+                    {pu.label}
+                  </h3>
+                  <p className="text-game-text-muted text-sm">{pu.description}</p>
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      variant="ghost"
+                      className="flex-1"
+                      onClick={() => setConfirmingPowerup(null)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      className="flex-1"
+                      onClick={() => {
+                        handlePowerup(pu.type)
+                        setConfirmingPowerup(null)
+                      }}
+                    >
+                      Use It
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+            )
+          })()}
+      </AnimatePresence>
     </main>
   )
 }
@@ -697,14 +1178,11 @@ function QuestionHistory({
       {history.map((entry, i) => {
         const q = entry.question
         return (
-          <div
-            key={q.id + i}
-            className="bg-game-card-dark border border-game-card-border rounded-xl p-4 space-y-3"
-          >
+          <div key={q.id + i} className="bg-white card-flat p-4 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <span className="text-xs text-game-text-muted mr-2">Q{i + 1}</span>
-                <span className="font-bold text-black">
+                <span className="font-bold text-game-text">
                   {gameMode === 'higher-lower' ? 'Higher or Lower' : `${q.firstName} ${q.lastName}`}
                 </span>
                 {(gameMode === 'classic' || gameMode === 'career') && (
@@ -722,10 +1200,10 @@ function QuestionHistory({
                 return (
                   <div
                     key={player.id}
-                    className={`flex items-center gap-3 text-sm rounded-lg px-3 py-1.5 ${isMe ? 'bg-ice-blue/10 border border-ice-blue/20' : ''}`}
+                    className={`flex items-center gap-3 text-sm rounded-lg px-3 py-1.5 ${isMe ? 'bg-ice-blue border border-game-card-border' : ''}`}
                   >
                     <span
-                      className={`text-base ${result.correct ? 'text-game-accent-4' : 'text-game-red'}`}
+                      className={`text-base ${result.correct ? 'text-tier-easy' : 'text-game-red'}`}
                     >
                       {result.correct ? '✓' : '✗'}
                     </span>
@@ -734,7 +1212,7 @@ function QuestionHistory({
                       {result.answer || '—'}
                     </span>
                     <span
-                      className={`font-bold tabular-nums ${result.points > 0 ? 'text-game-gold' : result.points < 0 ? 'text-game-red' : 'text-game-text-muted'}`}
+                      className={`font-bold tabular-nums ${result.points > 0 ? 'text-tier-easy' : result.points < 0 ? 'text-game-red' : 'text-game-text-muted'}`}
                     >
                       {result.points > 0 ? `+${result.points}` : result.points}
                     </span>
@@ -788,13 +1266,13 @@ function ControllerDock({
       icon: <Eye size={24} />,
       label: 'Reveal',
       onClick: onReveal,
-      className: 'bg-game-red border-2 border-black text-white',
+      className: 'bg-game-red border-2 border-game-card-border text-white',
     })
     items.push({
       icon: <SkipForward size={24} />,
       label: 'Skip',
       onClick: onSkip,
-      className: 'bg-yellow border-2 border-black text-white',
+      className: 'bg-yellow border-2 border-game-card-border text-white',
     })
   }
 
@@ -803,7 +1281,7 @@ function ControllerDock({
       icon: <ChevronRight size={24} />,
       label: nextLabel,
       onClick: onNext,
-      className: 'bg-cyan border-2 border-black text-black',
+      className: 'bg-cyan border-2 border-game-card-border text-black',
     })
   }
 
@@ -812,13 +1290,13 @@ function ControllerDock({
       icon: <RotateCcw size={24} />,
       label: 'Play Again',
       onClick: onRematch,
-      className: 'bg-magenta border-2 border-black text-white',
+      className: 'bg-magenta border-2 border-game-card-border text-white',
     })
     items.push({
       icon: <Settings size={24} />,
       label: 'Settings',
       onClick: onSettings,
-      className: 'bg-white border-2 border-black text-black',
+      className: 'bg-white border-2 border-game-card-border text-black',
     })
   }
 

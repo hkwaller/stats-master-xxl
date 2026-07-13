@@ -7,7 +7,8 @@ import { useStorage } from '@/lib/liveblocks/client'
 import { useClaimBoss, useJoinGame } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest, updateGuestName } from '@/lib/guest'
 import { getAvatarUrl } from '@/lib/avatar'
-import { Button, GameLogo } from '@/components/design-system'
+import { Button } from '@/components/design-system'
+import { CBrand } from '@/components/arcade'
 
 interface ConnectPageProps {
   params: Promise<{ roomId: string }>
@@ -47,48 +48,111 @@ export default function ConnectPage({ params }: ConnectPageProps) {
 
   const avatarUrl = guestId ? getAvatarUrl(guestId) : ''
 
+  const caption: React.CSSProperties = {
+    fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
+    fontSize: 11,
+    letterSpacing: '0.18em',
+    color: '#6b7ea0',
+    textTransform: 'uppercase',
+  }
+
   return (
-    <main className="game-bg-pattern min-h-screen flex flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <GameLogo className="justify-center mb-2" />
+    <main className="ice-bg min-h-screen flex flex-col items-center justify-center px-4 py-8">
+      <div className="w-full max-w-sm space-y-5">
+        {/* Brand + caption */}
+        <div className="flex flex-col items-center text-center gap-2">
+          <CBrand />
           {roomId && (
-            <p className="text-game-text-muted text-sm">
-              Joining room <span className="text-ice-blue font-bold">{roomId}</span>
+            <p style={caption}>
+              JOINING ROOM · <span style={{ color: '#0a1535' }}>{roomId}</span>
             </p>
           )}
         </div>
 
+        {/* Boss invite banner */}
         {bossToken && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-yellow border-2 border-black px-4 py-3 text-center shadow-[4px_4px_0_#000]"
+            className="text-center"
+            style={{
+              background: '#ffcf33',
+              border: '2px solid #0a1535',
+              borderRadius: 14,
+              boxShadow: '0 4px 0 #0a1535',
+              padding: '12px 16px',
+            }}
           >
-            <p className="font-bold text-black text-sm">👑 Boss Invite</p>
-            <p className="text-xs text-black/70">You will have host controls after joining</p>
+            <p
+              style={{
+                fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
+                fontSize: 12,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: '#0a1535',
+                margin: 0,
+              }}
+            >
+              👑 Boss Invite
+            </p>
+            <p
+              style={{
+                fontFamily: 'var(--font-space-grotesk), "Space Grotesk", sans-serif',
+                fontSize: 13,
+                color: '#0a1535',
+                marginTop: 3,
+              }}
+            >
+              You&apos;ll have host controls after joining.
+            </p>
           </motion.div>
         )}
 
+        {/* Main card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-game-card border border-game-card-border rounded-2xl p-6 space-y-6"
+          style={{
+            background: '#ffffff',
+            border: '2px solid #0a1535',
+            borderRadius: 16,
+            boxShadow: '0 5px 0 #0a1535',
+            padding: 20,
+          }}
         >
           {/* Avatar preview */}
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-2">
             {avatarUrl && (
-              <div className="w-20 h-20 rounded-full overflow-hidden bg-game-card-dark border-2 border-game-card-border">
+              <div
+                style={{
+                  width: 76,
+                  height: 76,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  border: '3px solid #0a1535',
+                  background: '#eaf2ff',
+                }}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={avatarUrl} alt="avatar" width={80} height={80} className="w-full h-full" />
+                <img src={avatarUrl} alt="avatar" width={76} height={76} className="w-full h-full" />
               </div>
             )}
-            <p className="text-xs text-game-text-muted">Your avatar (auto-generated)</p>
+            <p style={caption}>Your Avatar · Auto-Generated</p>
           </div>
 
           {/* Name input */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold uppercase tracking-widest text-game-text-muted">
+          <div className="mt-4">
+            <label
+              style={{
+                display: 'block',
+                fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
+                fontSize: 11,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: '#0a1535',
+                marginBottom: 6,
+              }}
+            >
               Your Name
             </label>
             <input
@@ -97,40 +161,70 @@ export default function ConnectPage({ params }: ConnectPageProps) {
               onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
               placeholder="Enter your name…"
               maxLength={20}
-              className="
-                w-full bg-game-card-dark border border-game-card-border rounded-xl
-                px-4 py-3 text-game-text placeholder-game-text-muted text-lg font-bold
-                focus:outline-none focus:border-ice-blue transition-colors text-center
-              "
+              className="w-full focus:outline-none"
+              style={{
+                background: '#eaf2ff',
+                border: '3px solid #0a1535',
+                borderRadius: 12,
+                padding: '0 14px',
+                minHeight: 44,
+                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                fontSize: 17,
+                color: '#0a1535',
+                textAlign: 'center',
+              }}
             />
           </div>
 
           {/* Game info */}
           {game && (
-            <div className="bg-game-card-dark rounded-xl p-3 space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-game-text-muted">Players</span>
-                <span className="font-bold">{game.players?.length ?? 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-game-text-muted">Questions</span>
-                <span className="font-bold">{game.questionCount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-game-text-muted">Mode</span>
-                <span className="font-bold capitalize">{game.answerMode}</span>
-              </div>
+            <div
+              className="mt-4"
+              style={{ background: '#eef1f8', borderRadius: 12, padding: 14 }}
+            >
+              {[
+                { label: 'Players', value: String(game.players?.length ?? 0) },
+                { label: 'Questions', value: String(game.questionCount) },
+                { label: 'Mode', value: game.gameMode },
+              ].map((row) => (
+                <div
+                  key={row.label}
+                  className="flex justify-between items-center"
+                  style={{ padding: '3px 0' }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-space-grotesk), "Space Grotesk", sans-serif',
+                      fontSize: 14,
+                      color: '#6b7ea0',
+                    }}
+                  >
+                    {row.label}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                      fontSize: 14,
+                      color: '#0a1535',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {row.value}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
 
+          {/* Join button */}
           <Button
             variant="primary"
-            size="lg"
-            className="w-full"
+            className="w-full mt-4"
             onClick={handleJoin}
             disabled={!name.trim() || joining}
+            style={{ minHeight: 44, fontSize: 15, boxShadow: '0 5px 0 #0a1535' }}
           >
-            {joining ? 'Joining…' : '🏒 Join Game'}
+            {joining ? 'Joining…' : 'LACE UP → JOIN'}
           </Button>
         </motion.div>
       </div>

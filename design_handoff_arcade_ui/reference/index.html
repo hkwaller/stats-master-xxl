@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stats Master — UI exploration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bungee&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800;900&family=VT323&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin:0; padding:0; background:#e8e5de; color:#111; font-family:"Space Grotesk", system-ui, sans-serif; }
+  *, *::before, *::after { box-sizing: border-box; }
+  .nav {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display:flex; gap:6px; padding:6px;
+    background:#111; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,0.18);
+  }
+  .nav button {
+    background: transparent; color:#eee; border:0; cursor:pointer;
+    font: 600 12px/1 "Space Grotesk", sans-serif; letter-spacing:0.12em; text-transform:uppercase;
+    padding: 10px 14px; border-radius:999px;
+  }
+  .nav button.active { background:#fff; color:#111; }
+  .nav .sep { width:1px; background:#333; margin:6px 4px; }
+  .shell {
+    position:relative; width:100vw; height:100vh; overflow:auto;
+  }
+  .frame-host {
+    display:flex; flex-direction:column; align-items:center; gap:80px;
+    padding: 90px 40px 120px;
+    min-width: 100%;
+    width: max-content;
+  }
+  .frame-row {
+    display:flex; gap: 56px; align-items:flex-start;
+  }
+  .frame-title {
+    font:700 14px/1 "Space Grotesk"; letter-spacing: 0.18em; text-transform:uppercase;
+    color: #333; margin-bottom: 10px;
+  }
+  .frame-sub { font: 400 12px/1.4 "JetBrains Mono", monospace; color:#777; margin-bottom: 18px; }
+  .frame {
+    width: 1280px; /* desktop artboard */
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 30px 60px -20px rgba(0,0,0,0.25);
+    overflow: hidden;
+    position: relative;
+  }
+  .frame.mobile { width: 420px; }
+  .direction-heading {
+    align-self:flex-start;
+    padding: 28px 48px;
+    background:#111;
+    color:#fff;
+    border-radius: 16px;
+    max-width: 1280px;
+  }
+  .direction-heading h2 {
+    font: 900 44px/1 "Archivo Black", sans-serif; letter-spacing:-0.02em; margin:0 0 8px;
+  }
+  .direction-heading p { font: 400 15px/1.5 "Space Grotesk"; opacity:0.8; margin:0; max-width:760px; }
+  .direction-heading .eyebrow { font:700 11px/1 "JetBrains Mono"; letter-spacing:0.22em; opacity:0.55; text-transform:uppercase; margin-bottom:10px; display:block; }
+
+  /* Tweaks panel */
+  .tweaks {
+    position: fixed; bottom: 20px; right: 20px; z-index:200;
+    background:#111; color:#fff; padding:16px 18px; border-radius:14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    font: 500 12px/1.3 "Space Grotesk";
+    min-width: 240px;
+    display:none;
+  }
+  .tweaks.show { display:block; }
+  .tweaks h4 { margin:0 0 12px; font: 700 11px/1 "JetBrains Mono"; letter-spacing: 0.2em; text-transform:uppercase; opacity:0.7; }
+  .tweaks label { display:flex; justify-content:space-between; align-items:center; padding:6px 0; gap:12px; }
+  .tweaks select, .tweaks input[type="range"] { background:#222; color:#fff; border:1px solid #333; border-radius:6px; padding:4px 6px; font: 500 12px/1 "Space Grotesk"; }
+
+</style>
+</head>
+<body>
+
+<div class="nav" id="nav"></div>
+
+<div class="shell" id="shell">
+  <div id="root"></div>
+</div>
+
+<div class="tweaks" id="tweaks">
+  <h4>Tweaks</h4>
+  <label>Direction
+    <select id="tw-dir">
+      <option value="A">A — Broadcast</option>
+      <option value="B">B — Collector</option>
+      <option value="C">C — Arcade</option>
+    </select>
+  </label>
+  <label>Screen
+    <select id="tw-screen">
+      <option value="landing">Landing</option>
+      <option value="setup">Setup</option>
+      <option value="lobby">Lobby</option>
+      <option value="game">Game</option>
+    </select>
+  </label>
+  <label>Accent
+    <select id="tw-accent">
+      <option value="red">Red primary</option>
+      <option value="navy">Navy primary</option>
+    </select>
+  </label>
+  <label>Motion
+    <input id="tw-motion" type="range" min="0" max="10" value="7" />
+  </label>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="direction-a-broadcast.jsx"></script>
+<script type="text/babel" src="direction-b-collector.jsx"></script>
+<script type="text/babel" src="direction-c-arcade.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+
+</body>
+</html>

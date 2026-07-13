@@ -8,14 +8,8 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useStorage } from '@/lib/liveblocks/client'
 import { useAssignBoss, useJoinGame, useStartGame } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
-import {
-  Panel,
-  Button,
-  PlayerChip,
-  GameLogo,
-  GameDivider,
-  GameHeading,
-} from '@/components/design-system'
+import { Button } from '@/components/design-system'
+import { CBrand } from '@/components/arcade'
 import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
 import type { CareerQuestion, H2HPair, HLPair, Question } from '@/types/game'
 
@@ -52,14 +46,12 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     const g = getOrCreateGuest()
     setMyId(g.id)
     const isHost = game.hostId === g.id || game.hostId === ''
-    // Only join as player if host chose to play, or if this is a non-host joiner
     if (!isHost || game.hostPlays !== false) {
       joinGame({ id: g.id, name: g.name })
     }
     setHasJoined(true)
   }, [game, joinGame, hasJoined])
 
-  // Non-host players follow when game starts
   useEffect(() => {
     if (!game || !roomId || !myId) return
     const isHost = game.hostId === myId
@@ -84,7 +76,6 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     const hostPlays = game?.hostPlays !== false
     const hasBoss = !!(game?.bossId)
     const playerList = (game?.players ?? []) as { id: string; name: string }[]
-    // If host isn't playing and nobody is boss yet, show boss selection modal
     if (!hostPlays && !hasBoss) {
       setPendingBossId(playerList[0]?.id ?? '')
       setShowBossModal(true)
@@ -116,9 +107,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tiers,
-            eras,
-            count,
+            tiers, eras, count,
             answerMode: game?.answerMode ?? 'multiplechoice',
             excludeIds,
             rookiesOnly: game?.rookiesOnly ?? false,
@@ -126,18 +115,14 @@ export default function LobbyPage({ params }: LobbyPageProps) {
         })
         const data = (await res.json()) as { questions: Question[] }
         questionSequence = data.questions
-
       } else if (gameMode === 'career') {
-        // Exclude recently-played playerIds
         const playedCareerKey = `nhl-career-played-${today}`
         const excludePlayerIds: number[] = JSON.parse(localStorage.getItem(playedCareerKey) ?? '[]')
-
         const res = await fetch('/api/questions/generate-career', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            eras,
-            count,
+            eras, count,
             minSeasons: game?.careerMinSeasons ?? 5,
             maxReveals: game?.careerMaxReveals ?? 8,
             revealOrder: game?.careerRevealOrder ?? 'best-first',
@@ -148,7 +133,6 @@ export default function LobbyPage({ params }: LobbyPageProps) {
         const data = (await res.json()) as { questions: Question[]; careerData: CareerQuestion[] }
         questionSequence = data.questions
         careerData = data.careerData
-
       } else if (gameMode === 'h2h') {
         const res = await fetch('/api/questions/generate-h2h', {
           method: 'POST',
@@ -158,32 +142,18 @@ export default function LobbyPage({ params }: LobbyPageProps) {
         const data = (await res.json()) as { questions: Question[]; pairs: H2HPair[] }
         questionSequence = data.questions
         h2hPairs = data.pairs
-
       } else if (gameMode === 'higher-lower') {
         const res = await fetch('/api/questions/generate-hl', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tiers,
-            eras,
-            count,
-            field: game?.hlComparisonField ?? 'points',
-          }),
+          body: JSON.stringify({ tiers, eras, count, field: game?.hlComparisonField ?? 'points' }),
         })
         const data = (await res.json()) as { questions: Question[]; pairs: HLPair[] }
         questionSequence = data.questions
         hlPairs = data.pairs
       }
 
-      startGame({
-        requesterId: myId,
-        questionSequence,
-        bossToken,
-        gameMode,
-        careerData,
-        h2hPairs,
-        hlPairs,
-      })
+      startGame({ requesterId: myId, questionSequence, bossToken, gameMode, careerData, h2hPairs, hlPairs })
 
       const hostPlays = game?.hostPlays !== false
       if (hostPlays) {
@@ -196,250 +166,554 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     }
   }
 
-  const players = (game?.players ?? []) as { id: string; name: string; avatarUrl: string; score: number; isHost: boolean; isBoss: boolean }[]
+  const players = (game?.players ?? []) as {
+    id: string; name: string; avatarUrl: string; score: number; isHost: boolean; isBoss: boolean
+  }[]
   const isHost = game?.hostId === myId
   const canStart = players.length >= 1
+  const maxPlayers = 8
   const modeName = {
-    'classic': 'Classic',
-    'career': 'Career',
-    'h2h': 'Head-to-Head',
+    classic: 'Classic',
+    career: 'Career',
+    h2h: 'Head-to-Head',
     'higher-lower': 'Higher or Lower',
   }[game?.gameMode ?? 'classic'] ?? 'Classic'
+  const configTiers = (game?.difficultyTiers as string[] | undefined) ?? []
+  const configSummary = [
+    modeName.toUpperCase(),
+    `${game?.questionCount ?? 10} QUESTIONS`,
+    configTiers.length ? configTiers.map((t) => t.toUpperCase()).join(' + ') : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
-    <main className="game-bg-pattern min-h-screen px-4 py-8">
-      <div className="max-w-lg md:max-w-4xl mx-auto space-y-6">
+    <main className="ice-bg min-h-screen px-4 py-6">
+      <div className="max-w-5xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="flex items-center justify-between">
-          <GameLogo />
-          <div className="text-right">
-            <p className="text-xs text-game-text-muted uppercase tracking-wide">Room</p>
-            <p className="text-2xl font-bold tracking-widest text-ice-blue">{roomId}</p>
+          <CBrand small />
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: '#e32437',
+              color: '#fff',
+              border: '2px solid #0a1535',
+              borderRadius: 9999,
+              padding: '6px 14px',
+              fontFamily: 'var(--font-archivo-black), sans-serif',
+              fontSize: 11,
+              fontWeight: 900,
+              letterSpacing: '0.2em',
+              boxShadow: '0 3px 0 #0a1535',
+            }}
+          >
+            <span
+              className="animate-pulse"
+              style={{
+                width: 7,
+                height: 7,
+                background: '#fff',
+                borderRadius: '50%',
+                display: 'inline-block',
+              }}
+            />
+            WAITING TO START
           </div>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Panel className="p-6">
+        {/* ── Heading row ── */}
+        <div className="flex items-end justify-between" style={{ gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span
+              style={{
+                display: 'inline-block',
+                background: '#ffcf33',
+                border: '2px solid #0a1535',
+                borderRadius: 9999,
+                padding: '4px 14px',
+                fontFamily: 'var(--font-archivo-black), sans-serif',
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: '0.22em',
+                color: '#0a1535',
+                boxShadow: '0 3px 0 #0a1535',
+              }}
+            >
+              STEP 2 OF 2
+            </span>
+            <h2
+              style={{
+                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                fontSize: 30,
+                lineHeight: 0.95,
+                color: '#0a1535',
+                margin: 0,
+              }}
+            >
+              GATHER YOUR SQUAD
+            </h2>
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+              fontSize: 12,
+              letterSpacing: '0.16em',
+              color: '#6b7ea0',
+              textTransform: 'uppercase',
+            }}
+          >
+            {configSummary}
+          </div>
+        </div>
 
-            {/* Panel header */}
-            <div className="flex items-center justify-between mb-5">
-              <GameHeading>Lobby</GameHeading>
-              <span className="text-xs font-bold uppercase tracking-widest bg-magenta text-white px-2 py-1 border-2 border-black shadow-[2px_2px_0_#000]">
-                {modeName}
-              </span>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid gap-5"
+          style={{ gridTemplateColumns: '360px 1fr', alignItems: 'start' }}
+        >
+          {/* ── LEFT: QR / invite card ── */}
+          <div
+            style={{
+              background: '#fff',
+              border: '2px solid #0a1535',
+              borderRadius: 16,
+              padding: 20,
+              boxShadow: '0 5px 0 #0a1535',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-archivo-black), sans-serif',
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: '0.22em',
+                color: '#6b7ea0',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              📱 SCAN TO JOIN
             </div>
 
-            {/* Two-column on desktop: QR left, players right */}
-            <div className="md:grid md:grid-cols-[280px,1fr] md:gap-8 space-y-5 md:space-y-0">
-
-              {/* ── LEFT: Invite / QR ── */}
-              <div className="space-y-4">
-                <p className="text-sm font-bold uppercase tracking-widest text-game-text-muted">
-                  Invite Players
-                </p>
-
-                {/* QR code — larger on desktop */}
-                <div className="flex md:block gap-4 items-start">
-                  <div className="bg-white p-3 border-4 border-black shadow-[4px_4px_0_#000] inline-block shrink-0">
-                    {connectUrl && (
-                      <QRCodeSVG
-                        value={connectUrl}
-                        size={120}
-                        className="md:hidden"
-                        bgColor="#ffffff"
-                        fgColor="#0a0e1a"
-                      />
-                    )}
-                    {connectUrl && (
-                      <QRCodeSVG
-                        value={connectUrl}
-                        size={200}
-                        className="hidden md:block"
-                        bgColor="#ffffff"
-                        fgColor="#0a0e1a"
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex-1 md:mt-3 space-y-2">
-                    <p className="text-xs text-game-text-muted break-all leading-relaxed">{connectUrl}</p>
-                    <Button variant="ghost" size="sm" onClick={handleCopy}>
-                      {copied ? '✓ Copied!' : '📋 Copy Link'}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Game summary (desktop) */}
-                <div className="hidden md:block bg-game-card-dark border border-game-card-border p-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-game-text-muted">Mode</span>
-                    <span className="font-bold text-black">{modeName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-game-text-muted">Questions</span>
-                    <span className="font-bold text-black">{game?.questionCount ?? '—'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-game-text-muted">Difficulty</span>
-                    <span className="font-bold text-black capitalize">
-                      {(game?.difficultyTiers as string[] | undefined)?.join(', ') ?? '—'}
-                    </span>
-                  </div>
-                </div>
+            {/* QR box */}
+            {connectUrl && (
+              <div
+                style={{
+                  width: 170,
+                  height: 170,
+                  background: '#fff',
+                  padding: 10,
+                  border: '2px solid #0a1535',
+                  borderRadius: 12,
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                <QRCodeSVG
+                  value={connectUrl}
+                  size={150}
+                  bgColor="#ffffff"
+                  fgColor="#0a1535"
+                />
               </div>
-
-              {/* ── RIGHT: Players list ── */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold uppercase tracking-widest text-game-text-muted">
-                    Players ({players.length})
-                  </p>
-                  {isHost && players.length > 0 && (
-                    <p className="text-xs text-game-text-muted">👑 to assign Boss</p>
-                  )}
-                </div>
-
-                <div className="space-y-2 md:min-h-[160px]">
-                  {players.map((player) => (
-                    <motion.div
-                      key={player.id}
-                      initial={{ opacity: 0, x: -16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-2 min-w-0"
-                    >
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <PlayerChip
-                          name={player.name}
-                          avatarUrl={player.avatarUrl}
-                          score={0}
-                          isHost={player.isHost}
-                          isBoss={player.isBoss}
-                          isMe={player.id === myId}
-                        />
-                      </div>
-                      {isHost && (
-                        <button
-                          onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
-                          title={player.isBoss ? 'Remove boss' : 'Make boss'}
-                          className={`
-                            w-9 h-9 shrink-0 border-2 border-black flex items-center justify-center
-                            shadow-[2px_2px_0_#000] transition-all text-base
-                            ${player.isBoss
-                              ? 'bg-yellow shadow-[3px_3px_0_#000] -translate-x-px -translate-y-px'
-                              : 'bg-white hover:bg-yellow/40'
-                            }
-                          `}
-                        >
-                          👑
-                        </button>
-                      )}
-                    </motion.div>
-                  ))}
-                  {players.length === 0 && (
-                    <p className="text-game-text-muted text-sm text-center py-8">
-                      Waiting for players to join…
-                    </p>
-                  )}
-                </div>
-
-                {!isHost && (
-                  <p className="text-center text-game-text-muted text-sm pt-2">
-                    Waiting for host to start the game…
-                  </p>
-                )}
-              </div>
-
-            </div>
-            {/* end two-column */}
-
-            {/* Host actions — full width below both columns */}
-            {isHost && (
-              <>
-                <GameDivider className="mt-5" />
-                <div className="flex flex-col sm:flex-row gap-3 mt-5">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="flex-1"
-                    disabled={!canStart || starting}
-                    onClick={handleStartGame}
-                  >
-                    {starting ? '⏳ Starting…' : '🚀 Start Game'}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="sm:w-auto"
-                    onClick={() => router.push(`/${roomId}/setup`)}
-                  >
-                    ← Back to Setup
-                  </Button>
-                </div>
-              </>
             )}
 
-          </Panel>
+            {/* URL chip */}
+            <div
+              style={{
+                background: '#eef1f8',
+                border: '2px solid #0a1535',
+                borderRadius: 10,
+                padding: '8px 12px',
+                width: '100%',
+                textAlign: 'center',
+                fontFamily: 'var(--font-jetbrains-mono), monospace',
+                fontSize: 12,
+                letterSpacing: '0.06em',
+                color: '#0a1535',
+                wordBreak: 'break-all',
+              }}
+            >
+              {connectUrl}
+            </div>
+
+            {/* Copy link */}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleCopy}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              {copied ? '✓ COPIED!' : '📋 COPY LINK'}
+            </Button>
+          </div>
+
+          {/* ── RIGHT: Roster card ── */}
+          <div
+            style={{
+              background: '#fff',
+              border: '2px solid #0a1535',
+              borderRadius: 16,
+              padding: 20,
+              boxShadow: '0 5px 0 #0a1535',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-archivo-black), sans-serif',
+                  fontSize: 11,
+                  fontWeight: 900,
+                  letterSpacing: '0.22em',
+                  color: '#6b7ea0',
+                  textTransform: 'uppercase',
+                }}
+              >
+                ON THE BENCH
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                  fontSize: 18,
+                  color: '#0a1535',
+                }}
+              >
+                {players.length}/{maxPlayers}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3" style={{ minHeight: 160 }}>
+              {players.map((player) => (
+                <motion.div
+                  key={player.id}
+                  initial={{ opacity: 0, x: -16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  style={{
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    background: '#fff',
+                    border: '2px solid #0a1535',
+                    borderRadius: 12,
+                    padding: '10px 12px',
+                    boxShadow: '0 2px 0 rgba(10,21,53,0.25)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 38,
+                      height: 38,
+                      border: '2px solid #0a1535',
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={player.avatarUrl}
+                      alt={player.name}
+                      width={38}
+                      height={38}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                        fontSize: 13,
+                        lineHeight: 1,
+                        color: '#0a1535',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {player.name}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-jetbrains-mono), monospace',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: '0.16em',
+                        color: '#6b7ea0',
+                        marginTop: 4,
+                      }}
+                    >
+                      READY
+                    </div>
+                  </div>
+                  {player.isHost && (
+                    <span
+                      style={{
+                        background: '#0a1535',
+                        color: '#ffcf33',
+                        padding: '3px 8px',
+                        fontFamily: 'var(--font-archivo-black), sans-serif',
+                        fontSize: 9,
+                        borderRadius: 6,
+                        border: '2px solid #0a1535',
+                        letterSpacing: '0.14em',
+                        flexShrink: 0,
+                      }}
+                    >
+                      HOST
+                    </span>
+                  )}
+                  {player.isBoss && (
+                    <span
+                      style={{
+                        background: '#e32437',
+                        color: '#fff',
+                        padding: '3px 8px',
+                        fontFamily: 'var(--font-archivo-black), sans-serif',
+                        fontSize: 9,
+                        borderRadius: 6,
+                        border: '2px solid #0a1535',
+                        letterSpacing: '0.14em',
+                        flexShrink: 0,
+                      }}
+                    >
+                      👑 BOSS
+                    </span>
+                  )}
+                  {isHost && (
+                    <button
+                      onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
+                      title={player.isBoss ? 'Remove boss' : 'Make boss'}
+                      style={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        border: '2px solid #0a1535',
+                        background: player.isBoss ? '#ffcf33' : '#fff',
+                        cursor: 'pointer',
+                        display: 'grid',
+                        placeItems: 'center',
+                        fontSize: 11,
+                        boxShadow: '0 2px 0 #0a1535',
+                      }}
+                    >
+                      👑
+                    </button>
+                  )}
+                </motion.div>
+              ))}
+
+              {/* Empty slot */}
+              {players.length < maxPlayers && (
+                <div
+                  style={{
+                    gridColumn: players.length % 2 === 0 ? '1 / -1' : 'auto',
+                    border: '2px dashed #9aa2bd',
+                    borderRadius: 12,
+                    padding: 18,
+                    display: 'grid',
+                    placeItems: 'center',
+                    minHeight: 60,
+                    fontFamily: 'var(--font-archivo-black), sans-serif',
+                    fontSize: 11,
+                    fontWeight: 900,
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: '#9aa2bd',
+                  }}
+                >
+                  WAITING FOR PLAYERS…
+                </div>
+              )}
+            </div>
+          </div>
         </motion.div>
+
+        {/* ── START BAR ── */}
+        <div
+          style={{
+            background: '#0a1535',
+            borderRadius: 14,
+            padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+              fontSize: 12,
+              letterSpacing: '0.14em',
+              color: '#c3d2f0',
+              textTransform: 'uppercase',
+            }}
+          >
+            {isHost ? 'EVERYONE IN? PHONES ARE THE BUZZERS.' : 'WAITING FOR HOST TO START THE GAME…'}
+          </div>
+          {isHost && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={() => router.push(`/${roomId}/setup`)}
+              >
+                ⚙ BACK TO SETUP
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                disabled={!canStart || starting}
+                onClick={handleStartGame}
+              >
+                {starting ? '⏳ STARTING…' : '🏒 DROP THE PUCK'}
+              </Button>
+            </div>
+          )}
+        </div>
 
         <AdsterraBanner slot="lobby" />
       </div>
 
-      {/* Boss selection modal — shown when hostPlays=false and no boss assigned */}
+      {/* ── Boss selection modal ── */}
       {showBossModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(10,21,53,0.65)', backdropFilter: 'blur(4px)' }}
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="bg-white border-4 border-black shadow-[8px_8px_0_#000] w-full max-w-sm p-6 space-y-5"
+            style={{
+              background: '#fff',
+              border: '3px solid #0a1535',
+              borderRadius: 18,
+              boxShadow: '0 10px 0 #0a1535',
+              width: '100%',
+              maxWidth: 380,
+              padding: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20,
+            }}
           >
             <div>
-              <h2 className="text-xl font-bold uppercase tracking-widest text-black">Assign a Boss</h2>
-              <p className="text-sm text-black/60 mt-1">
-                Since this device is in spectator mode, a player needs boss controls to reveal answers and advance rounds.
+              <h2
+                style={{
+                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                  fontSize: 24,
+                  color: '#0a1535',
+                  margin: 0,
+                }}
+              >
+                ASSIGN A BOSS
+              </h2>
+              <p
+                style={{
+                  fontFamily: 'var(--font-body), sans-serif',
+                  fontSize: 13,
+                  color: '#6b7ea0',
+                  marginTop: 8,
+                }}
+              >
+                Spectator mode needs a Boss to reveal answers and advance rounds.
               </p>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-widest text-black/50">Choose Boss</p>
-              <div className="space-y-2">
-                {players.map((player) => (
-                  <button
-                    key={player.id}
-                    onClick={() => setPendingBossId(player.id)}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-3 border-2 border-black text-left
-                      transition-all shadow-[2px_2px_0_#000]
-                      ${pendingBossId === player.id
-                        ? 'bg-yellow shadow-[4px_4px_0_#000] -translate-x-0.5 -translate-y-0.5'
-                        : 'bg-white hover:bg-yellow/20'
-                      }
-                    `}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {players.map((player) => (
+                <button
+                  key={player.id}
+                  onClick={() => setPendingBossId(player.id)}
+                  style={{
+                    background: pendingBossId === player.id ? '#ffcf33' : '#fff',
+                    border: '2.5px solid #0a1535',
+                    borderRadius: 12,
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    textAlign: 'left',
+                    boxShadow: pendingBossId === player.id ? '0 4px 0 #0a1535' : '0 2px 0 rgba(10,21,53,0.2)',
+                    transition: 'all 0.1s',
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={player.avatarUrl}
+                    alt={player.name}
+                    width={32}
+                    height={32}
+                    style={{ borderRadius: 10, border: '2px solid #0a1535', flexShrink: 0 }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                      fontSize: 14,
+                      color: '#0a1535',
+                      flex: 1,
+                    }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={player.avatarUrl} alt={player.name} width={32} height={32} className="w-8 h-8 rounded-full border-2 border-black" />
-                    <span className="font-bold text-sm text-black flex-1">{player.name}</span>
-                    <div className={`w-5 h-5 border-2 border-black flex items-center justify-center rounded-full ${pendingBossId === player.id ? 'bg-black' : 'bg-white'}`}>
-                      {pendingBossId === player.id && <div className="w-2 h-2 rounded-full bg-yellow" />}
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    {player.name}
+                  </span>
+                  <div
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      border: '2px solid #0a1535',
+                      background: pendingBossId === player.id ? '#0a1535' : '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {pendingBossId === player.id && (
+                      <div
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: '#ffcf33',
+                        }}
+                      />
+                    )}
+                  </div>
+                </button>
+              ))}
             </div>
 
             <div className="flex gap-3">
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex-1"
+                style={{ flex: 1 }}
                 onClick={() => setShowBossModal(false)}
               >
-                Cancel
+                CANCEL
               </Button>
               <Button
                 variant="primary"
                 size="sm"
-                className="flex-1"
+                style={{ flex: 1 }}
                 disabled={!pendingBossId || starting}
                 onClick={() => {
                   if (!pendingBossId) return
@@ -448,7 +722,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                   doStartGame()
                 }}
               >
-                {starting ? '⏳ Starting…' : '👑 Assign & Start'}
+                {starting ? '⏳ STARTING…' : '👑 ASSIGN & START'}
               </Button>
             </div>
           </motion.div>

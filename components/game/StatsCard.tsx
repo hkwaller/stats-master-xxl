@@ -1,8 +1,8 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { Question } from '@/types/game'
-import { TierBadge, StatLabel } from '@/components/design-system'
+import { StatTile } from '@/components/arcade'
 
 interface StatsCardProps {
   question: Question
@@ -11,74 +11,49 @@ interface StatsCardProps {
 
 const COLUMNS: {
   key: keyof Question
-  label: string
   abbr: string
-  color: string
+  highlight: boolean
 }[] = [
-  {
-    key: 'gamesPlayed',
-    label: 'Games Played',
-    abbr: 'GP',
-    color: 'text-black',
-  },
-  { key: 'goals', label: 'Goals', abbr: 'G', color: 'text-black' },
-  { key: 'assists', label: 'Assists', abbr: 'A', color: 'text-black' },
-  { key: 'points', label: 'Points', abbr: 'PTS', color: 'text-[#c8102e]' },
-  {
-    key: 'penaltyMinutes',
-    label: 'Penalty Minutes',
-    abbr: 'PIM',
-    color: 'text-black',
-  },
+  { key: 'gamesPlayed',    abbr: 'GP',  highlight: false },
+  { key: 'goals',          abbr: 'G',   highlight: false },
+  { key: 'assists',        abbr: 'A',   highlight: false },
+  { key: 'points',         abbr: 'PTS', highlight: true  },
+  { key: 'penaltyMinutes', abbr: 'PIM', highlight: false },
 ]
 
 export function StatsCard({ question, revealedColumns }: StatsCardProps) {
   return (
     <div className="w-full">
-      {/* Difficulty tier badge */}
-      {/* <div className="flex items-center mb-3 px-1">
-        <TierBadge tier={question.difficulty} />
-      </div> */}
-
-      {/* Stat columns grid */}
-      <div className="grid grid-cols-5 gap-1 sm:gap-2">
+      <div className="grid grid-cols-5 gap-2 sm:gap-3">
         {COLUMNS.map((col, colIndex) => {
           const isRevealed = colIndex < revealedColumns
 
           return (
-            <motion.div key={col.key} className="relative" initial={false}>
+            <AnimatePresence key={col.key} mode="wait" initial={false}>
               {isRevealed ? (
                 <motion.div
                   key="revealed"
-                  initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
+                  initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 30,
-                    delay: 0.05,
-                  }}
-                  className="bg-white border-4 border-black shadow-[4px_4px_0_#000] rounded-none p-2 sm:p-4 flex flex-col items-center gap-1 "
+                  transition={{ type: 'spring', stiffness: 300, damping: 28, delay: 0.05 }}
                 >
-                  <StatLabel>{col.abbr}</StatLabel>
-                  <span className={`text-xl sm:text-3xl font-bold tabular-nums ${col.color}`}>
-                    {String(question[col.key])}
-                  </span>
-                  {/* <span className="text-[10px] sm:text-xs text-game-text-muted text-center leading-tight">
-                    {col.label}
-                  </span> */}
+                  <StatTile
+                    abbr={col.abbr}
+                    value={String(question[col.key])}
+                    highlight={col.highlight}
+                  />
                 </motion.div>
               ) : (
-                <motion.div
-                  key="hidden"
-                  className="bg-white border-4 border-black shadow-[4px_4px_0_#000] rounded-none p-2 sm:p-4 flex flex-col items-center gap-1 stat-shimmer min-h-[90px] sm:min-h-[110px]"
-                >
-                  <StatLabel>{col.abbr}</StatLabel>
-                  <div className="w-8 sm:w-10 h-6 sm:h-8 rounded bg-game-card-border/60 mt-1" />
-                  <div className="w-10 sm:w-12 h-3 rounded bg-game-card-border/40 mt-1" />
+                <motion.div key="hidden">
+                  <StatTile
+                    abbr={col.abbr}
+                    value="—"
+                    highlight={col.highlight}
+                    hidden
+                  />
                 </motion.div>
               )}
-            </motion.div>
+            </AnimatePresence>
           )
         })}
       </div>

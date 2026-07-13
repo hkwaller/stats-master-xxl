@@ -1,30 +1,54 @@
 @import "tailwindcss";
 
 @theme {
-  /* Game color tokens */
-  --color-game-bg: #f0ede7;
-  --color-game-card: #ffffff;
-  --color-game-card-border: #000000;
-  --color-game-text: #000000;
-  --color-game-text-muted: #1a1a2e;
+  /* ── Fresh Ice palette ───────────────────────────────────────────────────── */
+  --color-c-ice:        #eaf2ff;
+  --color-c-ice-2:      #d3e3ff;
+  --color-c-cream:      #fdfaf1;
+  --color-c-ink:        #0a1535;
+  --color-c-navy:       #003087;
+  --color-c-red:        #e32437;
+  --color-c-red-soft:   #ffd6dc;
+  --color-c-yellow:     #ffcf33;
+  --color-c-green:      #2cc66b;
+  --color-c-muted:      #6b7ea0;
+  --color-c-shadow:     rgba(10,21,53,0.22);
 
-  /* Accent colors */
-  --color-magenta: #003087;
-  --color-cyan: #dce8ff;
-  --color-yellow: #c8102e;
-  --color-lime: #d4edda;
-  --color-game-gold: #c8102e;
-  --color-game-red: #c8102e;
-  --color-ice-blue: #dce8ff;
-  
-  --color-tier-easy: #d4edda;
-  --color-tier-medium: #dce8ff;
-  --color-tier-hard: #003087;
-  --color-tier-expert: #c8102e;
+  /* Disabled / eliminated */
+  --color-c-disabled-border: #9aa2bd;
+  --color-c-disabled-fill:   #eef1f8;
+  --color-c-eliminated:      #d9d9e6;
 
-  /* Fonts */
-  --font-display: var(--font-bebas), "Bebas Neue", impact, sans-serif;
-  --font-mono: var(--font-space-mono), "Space Mono", monospace;
+  /* Jumbotron stat-tile panels */
+  --color-tile-blue-top:  #00266b;
+  --color-tile-blue-bot:  #001c50;
+  --color-tile-red-top:   #c0182a;
+  --color-tile-red-bot:   #8f1220;
+  --color-tile-label-blue: #9db9f0;
+  --color-tile-label-red:  #ffb9c2;
+
+  /* ── Backward-compat aliases (setup/lobby/player pages use these classes) ── */
+  --color-magenta:          #003087;
+  --color-cyan:             #d3e3ff;
+  --color-yellow:           #ffcf33;
+  --color-lime:             #d4f4de;
+  --color-game-bg:          #eaf2ff;
+  --color-game-card:        #ffffff;
+  --color-game-card-border: #0a1535;
+  --color-game-text:        #0a1535;
+  --color-game-text-muted:  #6b7ea0;
+  --color-game-red:         #e32437;
+  --color-ice-blue:         #dce8ff;
+  --color-tier-easy:        #2cc66b;
+  --color-tier-medium:      #003087;
+  --color-tier-hard:        #e32437;
+  --color-tier-expert:      #ffcf33;
+
+  /* ── Fonts ────────────────────────────────────────────────────────────────── */
+  --font-display:     var(--font-bungee), "Bungee", impact, sans-serif;
+  --font-display-alt: var(--font-archivo-black), "Archivo Black", sans-serif;
+  --font-body:        var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  --font-mono:        var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 }
 
 :root {
@@ -32,62 +56,56 @@
 }
 
 body {
-  background-color: var(--color-game-bg);
-  color: var(--color-game-text);
-  font-family: var(--font-mono);
+  background-color: var(--color-c-ice);
+  color: var(--color-c-ink);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Brutalist point grid pattern */
-.game-bg-pattern {
-  background-color: var(--color-game-bg);
-  background-image: radial-gradient(circle, rgba(0,48,135,0.18) 1.5px, transparent 1.5px);
-  background-size: 32px 32px;
+/* ── Ice page background ───────────────────────────────────────────────────── */
+.ice-bg {
+  background: linear-gradient(180deg, #f4f8ff 0%, #eaf2ff 60%, #e0ebff 100%);
 }
 
-/* 3D button press effect */
-.game-btn-press {
-  transition: transform 0.05s ease, box-shadow 0.05s ease;
-}
-.game-btn-press:active {
-  transform: translate(6px, 6px) !important;
-  box-shadow: 0px 0px 0px #000 !important;
+/* ── Card treatments — one hard offset shadow per element class, no blur ───── */
+.card-puffy {
+  border: 2px solid #0a1535;
+  box-shadow: 0 4px 0 #0a1535;
+  border-radius: 16px;
 }
 
-/* Stat column shimmer */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+.card-puffy-sm {
+  border: 2px solid #0a1535;
+  box-shadow: 0 3px 0 #0a1535;
+  border-radius: 12px;
 }
 
-.stat-shimmer {
-  background: linear-gradient(
-    90deg,
-    #ffffff 25%,
-    #dce8ff 50%,
-    #ffffff 75%
-  );
-  border: 3px solid #000;
-  background-size: 200% 100%;
-  animation: shimmer 1s infinite linear;
+/* Resting / non-interactive card (softer shadow) */
+.card-flat {
+  border: 2px solid #0a1535;
+  box-shadow: 0 3px 0 rgba(10,21,53,0.22);
+  border-radius: 14px;
 }
 
-/* Score delta float */
+/* ── Button press animation ────────────────────────────────────────────────── */
+.btn-puffy {
+  transition: box-shadow 0.1s ease, transform 0.1s ease;
+}
+.btn-puffy:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #0a1535 !important;
+}
+
+/* ── Score delta float ────────────────────────────────────────────────────── */
 @keyframes scoreFloat {
-  0% { opacity: 1; transform: translateY(0); }
+  0%   { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-40px); }
 }
-
 .score-delta {
   animation: scoreFloat 1.5s ease-out forwards;
 }
 
-/* Tabular nums on monospace font */
+/* ── Tabular nums ─────────────────────────────────────────────────────────── */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
-}
-
-.ice-gradient {
-  background: white;
 }

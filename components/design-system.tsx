@@ -2,6 +2,7 @@
 
 import { motion, HTMLMotionProps } from 'framer-motion'
 import type { DifficultyTier } from '@/types/game'
+import { CBrand } from './arcade/Brand'
 
 // ─── Panel ────────────────────────────────────────────────────────────────────
 
@@ -11,15 +12,9 @@ interface PanelProps {
   glow?: boolean
 }
 
-export function Panel({ children, className = '', glow = false }: PanelProps) {
+export function Panel({ children, className = '' }: PanelProps) {
   return (
-    <div
-      className={`
-        bg-game-card border-4 border-black
-        ${glow ? 'shadow-[8px_8px_0px_#000]' : 'shadow-[4px_4px_0px_#000]'}
-        ${className}
-      `}
-    >
+    <div className={`bg-white card-puffy ${className}`}>
       {children}
     </div>
   )
@@ -33,17 +28,17 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   size?: 'sm' | 'md' | 'lg'
 }
 
-const variantClasses = {
-  primary: 'bg-magenta text-white border-4 border-black shadow-[4px_4px_0px_#000]',
-  secondary: 'bg-cyan text-black border-4 border-black shadow-[4px_4px_0px_#000]',
-  danger: 'bg-game-red text-white border-4 border-black shadow-[4px_4px_0px_#000]',
-  ghost: 'bg-game-bg border-4 border-black text-black shadow-[4px_4px_0px_#000]',
+const variantStyles: Record<string, { bg: string; fg: string }> = {
+  primary:   { bg: '#e32437', fg: '#ffffff' },
+  secondary: { bg: '#003087', fg: '#ffffff' },
+  danger:    { bg: '#e32437', fg: '#ffffff' },
+  ghost:     { bg: '#ffffff', fg: '#0a1535' },
 }
 
-const sizeClasses = {
-  sm: 'px-4 py-2 text-sm tracking-wide',
-  md: 'px-6 py-3 text-base tracking-wider',
-  lg: 'px-8 py-4 text-lg tracking-widest',
+const sizeStyles = {
+  sm: { padding: '9px 16px', fontSize: 13, borderRadius: 12, shadow: 3 },
+  md: { padding: '13px 20px', fontSize: 15, borderRadius: 12, shadow: 4 },
+  lg: { padding: '16px 26px', fontSize: 18, borderRadius: 12, shadow: 5 },
 }
 
 export function Button({
@@ -52,20 +47,34 @@ export function Button({
   size = 'md',
   className = '',
   disabled,
+  style,
   ...props
 }: ButtonProps) {
+  const v = variantStyles[variant]
+  const s = sizeStyles[size]
+
   return (
     <motion.button
-      whileHover={!disabled ? { x: -2, y: -2, boxShadow: '6px 6px 0px #000' } : undefined}
-      whileTap={!disabled ? { x: 2, y: 2, boxShadow: '0px 0px 0px #000' } : undefined}
-      transition={{ duration: 0.05 }}
+      whileHover={!disabled ? { y: -2, boxShadow: `0 ${s.shadow + 2}px 0 #0a1535` } : undefined}
+      whileTap={!disabled ? { y: 2, boxShadow: `0 2px 0 #0a1535` } : undefined}
+      transition={{ duration: 0.1 }}
       disabled={disabled}
-      className={`
-        font-display cursor-pointer font-bold
-        transition-colors duration-150
-        disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
-        ${variantClasses[variant]} ${sizeClasses[size]} ${className}
-      `}
+      style={{
+        backgroundColor: v.bg,
+        color: v.fg,
+        border: '2px solid #0a1535',
+        borderRadius: s.borderRadius,
+        padding: s.padding,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+        fontSize: s.fontSize,
+        lineHeight: 1,
+        letterSpacing: '0.01em',
+        boxShadow: `0 ${s.shadow}px 0 #0a1535`,
+        opacity: disabled ? 0.4 : 1,
+        ...style,
+      } as React.CSSProperties}
+      className={`btn-puffy ${className}`}
       {...props}
     >
       {children}
@@ -73,30 +82,39 @@ export function Button({
   )
 }
 
-// ─── Badge (difficulty tier) ──────────────────────────────────────────────────
+// ─── TierBadge ────────────────────────────────────────────────────────────────
 
 interface BadgeProps {
   tier: DifficultyTier
   className?: string
 }
 
-const tierConfig: Record<DifficultyTier, { label: string; color: string }> = {
-  easy: { label: 'Easy', color: 'bg-lime text-black border-black' },
-  medium: { label: 'Medium', color: 'bg-cyan text-black border-black' },
-  hard: { label: 'Hard', color: 'bg-magenta text-white border-black' },
-  expert: { label: 'Expert', color: 'bg-game-red text-white border-black' },
+const tierConfig: Record<DifficultyTier, { label: string; bg: string; fg: string }> = {
+  easy:   { label: 'Easy',   bg: '#2cc66b', fg: '#ffffff' },
+  medium: { label: 'Medium', bg: '#003087', fg: '#ffffff' },
+  hard:   { label: 'Hard',   bg: '#e32437', fg: '#ffffff' },
+  expert: { label: 'Expert', bg: '#ffcf33', fg: '#0a1535' },
 }
 
 export function TierBadge({ tier, className = '' }: BadgeProps) {
-  const { label, color } = tierConfig[tier]
+  const cfg = tierConfig[tier]
   return (
     <span
-      className={`
-        inline-flex items-center px-3 py-1 text-xs font-bold uppercase
-        border-2 tracking-widest ${color} ${className} shadow-[2px_2px_0px_#000]
-      `}
+      className={`inline-flex items-center ${className}`}
+      style={{
+        background: cfg.bg,
+        color: cfg.fg,
+        border: '2px solid #0a1535',
+        borderRadius: 9999,
+        padding: '3px 12px',
+        fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
+        fontSize: 10,
+        fontWeight: 900,
+        letterSpacing: '0.16em',
+        textTransform: 'uppercase',
+      }}
     >
-      {label}
+      {cfg.label}
     </span>
   )
 }
@@ -113,8 +131,14 @@ interface AvatarProps {
 export function Avatar({ url, name, size = 40, className = '' }: AvatarProps) {
   return (
     <div
-      className={`border-4 border-black overflow-hidden bg-white flex-shrink-0 ${className} shadow-[2px_2px_0_#000]`}
-      style={{ width: size, height: size }}
+      className={`overflow-hidden flex-shrink-0 ${className}`}
+      style={{
+        width: size,
+        height: size,
+        border: '2px solid #0a1535',
+        borderRadius: 12,
+        background: '#fff',
+      }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={url} alt={name} width={size} height={size} className="w-full h-full object-cover" />
@@ -132,6 +156,8 @@ interface PlayerChipProps {
   isBoss?: boolean
   isMe?: boolean
   size?: 'sm' | 'md'
+  /** Overrides the "{score} pts" meta line (e.g. "READY"). */
+  statusLabel?: string
 }
 
 export function PlayerChip({
@@ -142,32 +168,94 @@ export function PlayerChip({
   isBoss,
   isMe,
   size = 'md',
+  statusLabel,
 }: PlayerChipProps) {
+  const avatarSize = size === 'sm' ? 28 : 40
+
   return (
     <div
-      className={`
-        flex items-center gap-3 px-3 py-2
-        border-4 border-black
-        ${isMe ? 'bg-cyan shadow-[4px_4px_0px_#000]' : 'bg-white shadow-[4px_4px_0px_#000]'}
-        ${size === 'sm' ? 'text-sm' : 'text-base font-bold'}
-      `}
+      className="card-puffy-sm flex items-center"
+      style={{
+        gap: 10,
+        padding: size === 'sm' ? '6px 10px' : '10px 14px',
+        background: isMe ? '#003087' : '#ffffff',
+        color: isMe ? '#ffffff' : '#0a1535',
+      }}
     >
-      <Avatar url={avatarUrl} name={name} size={size === 'sm' ? 32 : 40} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-bold truncate text-black">{name}</span>
+      <div
+        style={{
+          width: avatarSize,
+          height: avatarSize,
+          border: `2px solid ${isMe ? '#fff' : '#0a1535'}`,
+          borderRadius: 10,
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={avatarUrl} alt={name} width={avatarSize} height={avatarSize} className="w-full h-full object-cover" />
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+              fontSize: size === 'sm' ? 13 : 16,
+              lineHeight: 1,
+              color: isMe ? '#ffffff' : '#0a1535',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {name}
+          </span>
           {isHost && (
-            <span className="text-xs bg-yellow px-1 border-2 border-black uppercase tracking-wide">
-              Host
+            <span
+              style={{
+                background: '#e32437',
+                color: '#fff',
+                padding: '2px 7px',
+                fontFamily: 'var(--font-archivo-black), sans-serif',
+                fontSize: 9,
+                borderRadius: 5,
+                border: '1.5px solid #0a1535',
+                letterSpacing: '0.14em',
+              }}
+            >
+              HOST
             </span>
           )}
           {isBoss && (
-            <span className="text-xs bg-game-red text-white px-1 border-2 border-black uppercase tracking-wide">
-              Boss
+            <span
+              style={{
+                background: '#ffcf33',
+                color: '#0a1535',
+                padding: '2px 7px',
+                fontFamily: 'var(--font-archivo-black), sans-serif',
+                fontSize: 9,
+                borderRadius: 5,
+                border: '1.5px solid #0a1535',
+                letterSpacing: '0.14em',
+              }}
+            >
+              👑 BOSS
             </span>
           )}
         </div>
-        <div className="text-black font-mono text-sm tabular-nums">{score} pts</div>
+        <div
+          style={{
+            fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            color: isMe ? 'rgba(255,255,255,0.7)' : '#6b7ea0',
+            marginTop: 3,
+          }}
+        >
+          {statusLabel ?? `${score} pts`}
+        </div>
       </div>
     </div>
   )
@@ -182,38 +270,58 @@ interface CountdownRingProps {
   className?: string
 }
 
-export function CountdownRing({ seconds, total, size = 80, className = '' }: CountdownRingProps) {
-  const radius = (size - 8) / 2
+export function CountdownRing({ seconds, total, size = 76, className = '' }: CountdownRingProps) {
+  const strokeWidth = size >= 100 ? 9 : 7
+  const radius = (size - strokeWidth - 4) / 2
   const circumference = 2 * Math.PI * radius
-  const progress = seconds / total
+  const progress = Math.max(0, Math.min(1, seconds / total))
   const dashOffset = circumference * (1 - progress)
+  const cx = size / 2
+  const cy = size / 2
+  const fontSize = size >= 100 ? 38 : 26
 
   return (
     <div
-      className={`relative flex items-center justify-center ${className}`}
+      className={`relative flex-shrink-0 ${className}`}
       style={{ width: size, height: size }}
     >
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} strokeWidth={8} stroke="#000" fill="none" />
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        {/* Track */}
+        <circle
+          cx={cx}
+          cy={cy}
           r={radius}
-          strokeWidth={8}
-          stroke={seconds <= 3 ? '#c8102e' : '#003087'}
+          strokeWidth={strokeWidth}
+          stroke="#d3e3ff"
+          fill="white"
+        />
+        {/* Progress */}
+        <motion.circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          strokeWidth={strokeWidth}
+          stroke="#e32437"
           fill="none"
-          strokeLinecap="square"
+          strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
           transition={{ duration: 1, ease: 'linear' }}
         />
+        {/* Center number — rendered in SVG space so it rotates back correctly */}
+        <text
+          x={cx}
+          y={cy}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill="#e32437"
+          fontFamily='var(--font-bungee), "Bungee", sans-serif'
+          fontSize={fontSize}
+          style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px`, fontWeight: 400 }}
+        >
+          {Math.ceil(seconds)}
+        </text>
       </svg>
-      <span
-        className="absolute text-2xl font-display text-black shadow-white tabular-nums"
-        style={{ textShadow: '2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff' }}
-      >
-        {Math.ceil(seconds)}
-      </span>
     </div>
   )
 }
@@ -234,7 +342,8 @@ export function Modal({ open, onClose, children, className = '' }: ModalProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(10,21,53,0.65)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <motion.div
@@ -242,7 +351,7 @@ export function Modal({ open, onClose, children, className = '' }: ModalProps) {
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`bg-game-card border-4 border-black p-6 max-w-md w-full shadow-[16px_16px_0px_#000] ${className}`}
+        className={`bg-white card-puffy p-6 max-w-md w-full ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -261,7 +370,15 @@ interface GameHeadingProps {
 export function GameHeading({ children, className = '' }: GameHeadingProps) {
   return (
     <h1
-      className={`font-display font-bold uppercase tracking-widest text-3xl text-game-text ${className}`}
+      className={className}
+      style={{
+        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+        fontSize: 36,
+        lineHeight: 0.9,
+        color: '#0a1535',
+        letterSpacing: '-0.01em',
+        margin: 0,
+      }}
     >
       {children}
     </h1>
@@ -271,29 +388,17 @@ export function GameHeading({ children, className = '' }: GameHeadingProps) {
 // ─── GameLogo ─────────────────────────────────────────────────────────────────
 
 export function GameLogo({ className = '' }: { className?: string }) {
-  return (
-    <div className={`flex items-baseline gap-1 ${className}`}>
-      <span className="font-display font-bold uppercase bg-magenta text-white px-2 py-1 border-4 border-black rotate-[-4deg] text-3xl sm:text-5xl tracking-tight shadow-[4px_4px_0px_#000]">
-        NHL
-      </span>
-      <span className="font-display font-bold uppercase bg-cyan text-black px-2 py-1 border-4 border-black rotate-[3deg] text-3xl sm:text-5xl tracking-tight shadow-[4px_4px_0px_#000] z-10 -ml-2">
-        Stats
-      </span>
-      <span className="font-display font-bold uppercase bg-yellow text-white px-2 py-1 border-4 border-black rotate-[-2deg] text-3xl sm:text-5xl tracking-tight shadow-[4px_4px_0px_#000] -ml-2">
-        Master
-      </span>
-    </div>
-  )
+  return <CBrand className={className} />
 }
 
-// ─── Divider ─────────────────────────────────────────────────────────────────
+// ─── GameDivider ─────────────────────────────────────────────────────────────
 
 export function GameDivider({ className = '' }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <div className="flex-1 h-2 bg-black" />
-      <div className="w-5 h-5 bg-magenta border-4 border-black rotate-45 shadow-[2px_2px_0px_#000]" />
-      <div className="flex-1 h-2 bg-black" />
+    <div className={`flex items-center gap-2 ${className}`}>
+      <div style={{ flex: 1, height: 1, background: '#003087' }} />
+      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#e32437' }} />
+      <div style={{ flex: 1, height: 1, background: '#e32437' }} />
     </div>
   )
 }
@@ -302,7 +407,20 @@ export function GameDivider({ className = '' }: { className?: string }) {
 
 export function StatLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-xs font-bold uppercase tracking-widest text-black bg-cyan border-2 border-black px-1 shadow-[2px_2px_0_#000] transform -rotate-1 inline-block">
+    <span
+      style={{
+        display: 'inline-block',
+        background: '#0a1535',
+        color: '#ffffff',
+        borderRadius: 9999,
+        padding: '2px 8px',
+        fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
+        fontSize: 11,
+        fontWeight: 900,
+        letterSpacing: '0.2em',
+        textTransform: 'uppercase',
+      }}
+    >
       {children}
     </span>
   )

@@ -77,7 +77,7 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, idx)}
-      <span className="text-ice-blue font-bold">{text.slice(idx, idx + query.length)}</span>
+      <span style={{ color: '#e32437', fontWeight: 700 }}>{text.slice(idx, idx + query.length)}</span>
       {text.slice(idx + query.length)}
     </>
   )
@@ -124,12 +124,13 @@ function FreeTextInput({
           disabled={hasAnswered}
           placeholder="Type a player name…"
           autoComplete="off"
-          className="
-            flex-1 bg-game-card-dark border border-game-card-border rounded-xl
-            px-4 py-3 text-game-text placeholder-game-text-muted
-            focus:outline-none focus:border-ice-blue transition-colors
-            disabled:opacity-50
-          "
+          className="flex-1 rounded-xl px-4 py-3 focus:outline-none transition-colors disabled:opacity-50"
+          style={{
+            background: '#eaf2ff',
+            border: '2px solid #0a1535',
+            color: '#0a1535',
+            fontFamily: 'var(--font-body), sans-serif',
+          }}
         />
         <Button
           variant="primary"
@@ -147,19 +148,16 @@ function FreeTextInput({
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full left-0 right-0 mt-2 z-20 bg-game-card border border-game-card-border rounded-xl overflow-hidden shadow-xl"
+            className="absolute top-full left-0 right-0 mt-2 z-20 bg-white rounded-xl overflow-hidden"
+            style={{ border: '2px solid #0a1535', boxShadow: '0 4px 0 rgba(10,21,53,0.2)' }}
           >
             {suggestions.map((name, i) => (
               <button
                 key={name}
                 onMouseDown={() => handleSuggestionPick(name)}
                 className={`
-                  w-full text-left px-4 py-2.5 text-sm transition-colors
-                  ${
-                    i === activeIndex
-                      ? 'bg-ice-blue/20 text-game-text'
-                      : 'hover:bg-game-card-dark text-game-text'
-                  }
+                  w-full text-left px-4 py-2.5 text-sm transition-colors text-game-text
+                  ${i === activeIndex ? 'bg-c-ice-2' : 'hover:bg-c-ice'}
                 `}
               >
                 <HighlightMatch text={name} query={value} />
@@ -199,9 +197,9 @@ export function PlayerGuessInput({
               Answer submitted — waiting for others
             </p>
             <div className="flex items-center gap-2">
-              <div className="h-1.5 bg-game-card-dark rounded-full w-32 overflow-hidden">
+              <div className="h-1.5 bg-c-ice-2 rounded-full w-32 overflow-hidden" style={{ border: '1px solid #0a1535' }}>
                 <motion.div
-                  className="h-full bg-ice-blue rounded-full"
+                  className="h-full bg-c-red rounded-full"
                   initial={{ width: 0 }}
                   animate={{
                     width: `${(answeredCount / totalPlayers) * 100}%`,

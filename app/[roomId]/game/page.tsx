@@ -33,7 +33,8 @@ import { Scoreboard } from '@/components/game/Scoreboard'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
 import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
 import { HigherLowerCard } from '@/components/game/HigherLowerCard'
-import { GameLogo, TierBadge } from '@/components/design-system'
+import { TierBadge, CountdownRing } from '@/components/design-system'
+import { CBrand, RinkBg } from '@/components/arcade'
 import { Eye, SkipForward, ChevronRight, RotateCcw, Settings } from 'lucide-react'
 import type { H2HPair, HLPair, Player, Question } from '@/types/game'
 
@@ -42,10 +43,10 @@ interface GamePageProps {
 }
 
 const MODE_LABELS: Record<string, string> = {
-  classic: 'Classic',
-  career: 'Career',
-  h2h: 'Head-to-Head',
-  'higher-lower': 'Higher or Lower',
+  classic:       'Classic',
+  career:        'Career',
+  h2h:           'Head-to-Head',
+  'higher-lower':'Higher or Lower',
 }
 
 export default function GamePage({ params: paramsPromise }: GamePageProps) {
@@ -54,20 +55,19 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const [myId, setMyId] = useState('')
   const game = useStorage((root) => root.game)
 
-  // Mutations (needed when host is not playing and drives the machine from here)
-  const tickCountdown = useTickCountdown()
-  const nextQuestion = useNextQuestion()
-  const nextCareerRound = useNextCareerRound()
+  const tickCountdown         = useTickCountdown()
+  const nextQuestion          = useNextQuestion()
+  const nextCareerRound       = useNextCareerRound()
   const revealNextCareerSeason = useRevealNextCareerSeason()
-  const revealCareerAnswer = useRevealCareerAnswer()
-  const nextH2HRound = useNextH2HRound()
-  const nextHLRound = useNextHLRound()
-  const revealAnswers = useRevealAnswers()
-  const revealH2HAnswers = useRevealH2HAnswers()
-  const revealHLAnswers = useRevealHLAnswers()
-  const advanceToNext = useAdvanceToNext()
-  const skipQuestion = useSkipQuestion()
-  const rematch = useRematch()
+  const revealCareerAnswer    = useRevealCareerAnswer()
+  const nextH2HRound          = useNextH2HRound()
+  const nextHLRound           = useNextHLRound()
+  const revealAnswers         = useRevealAnswers()
+  const revealH2HAnswers      = useRevealH2HAnswers()
+  const revealHLAnswers       = useRevealHLAnswers()
+  const advanceToNext         = useAdvanceToNext()
+  const skipQuestion          = useSkipQuestion()
+  const rematch               = useRematch()
 
   useEffect(() => {
     paramsPromise.then(({ roomId }) => setRoomId(roomId))
@@ -75,11 +75,10 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
     setMyId(guest.id)
   }, [paramsPromise])
 
-  const isHost = game?.hostId === myId
-  const isBoss = game?.bossId === myId
+  const isHost       = game?.hostId === myId
+  const isBoss       = game?.bossId === myId
   const isController = isHost || isBoss
 
-  // Drive the state machine from the game page when host is not playing
   useHostStateMachine(isHost, myId, game as unknown as import('@/types/game').GameState | null, {
     tickCountdown,
     nextQuestion,
@@ -93,7 +92,6 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
     revealHLAnswers,
   })
 
-  // Redirect everyone to lobby on rematch
   useEffect(() => {
     if (!game || game.command !== 'rematch') return
     router.push(`/${roomId}/lobby`)
@@ -101,223 +99,588 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
 
   if (!game) return null
 
-  const players = (game.players as unknown as Player[]) ?? []
-  const answeredCount = Object.keys(game.answers ?? {}).length
+  const players        = (game.players as unknown as Player[]) ?? []
+  const topPlayer      = players.length
+    ? players.reduce((top, p) => ((p.score ?? 0) > (top.score ?? 0) ? p : top), players[0])
+    : null
+  const leaderId       = topPlayer && (topPlayer.score ?? 0) > 0 ? topPlayer.id : ''
+  const choices        = (game.choices as unknown as string[]) ?? []
+  const answeredCount  = Object.keys(game.answers ?? {}).length
   const connectedCount = players.filter((p) => p.isConnected).length
   const currentQuestion = game.currentQuestion as unknown as Question | null
-  const gameMode = game.gameMode ?? 'classic'
-  const isActive = game.command === 'answering' || game.command === 'revealing'
+  const gameMode       = game.gameMode ?? 'classic'
+  const isActive       = game.command === 'answering' || game.command === 'revealing'
 
-  // Career mode
-  const careerSeasons = (game.careerSeasons as unknown as Question[]) ?? []
+  const careerSeasons      = (game.careerSeasons as unknown as Question[]) ?? []
   const revealedSeasonCount = game.revealedSeasonCount ?? 0
-  const buzzedInPlayerId = game.buzzedInPlayerId ?? ''
-  const lockedOutPlayers = (game.lockedOutPlayers as unknown as string[]) ?? []
-  const buzzedInPlayer = players.find((p) => p.id === buzzedInPlayerId)
+  const buzzedInPlayerId   = game.buzzedInPlayerId ?? ''
+  const lockedOutPlayers   = (game.lockedOutPlayers as unknown as string[]) ?? []
+  const buzzedInPlayer     = players.find((p) => p.id === buzzedInPlayerId)
 
-  // H2H mode
   const h2hCurrentPair = game.h2hCurrentPair as unknown as H2HPair | null
+  const hlCurrentPair  = game.hlCurrentPair as unknown as HLPair | null
 
-  // HL mode
-  const hlCurrentPair = game.hlCurrentPair as unknown as HLPair | null
+  const timeLeft = game.countdownTime ?? 30
 
   return (
-    <main className="game-bg-pattern min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b border-game-card-border bg-game-bg/80 backdrop-blur-sm px-6 py-3 flex items-center justify-between">
-        <GameLogo />
-        <div className="flex items-center gap-4 text-sm text-game-text-muted">
-          <span className="text-xs font-bold uppercase tracking-widest bg-magenta/20 text-magenta px-2 py-0.5 border border-magenta/30">
-            {MODE_LABELS[gameMode] ?? gameMode}
+    <main
+      className="ice-bg min-h-screen flex flex-col"
+      style={{ position: 'relative', overflow: 'hidden' }}
+    >
+      {/* Rink background overlay */}
+      <RinkBg opacity={0.06} />
+
+      {/* ── Top scoreboard strip (floating navy bar) ── */}
+      <header
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          maxWidth: 1180,
+          width: 'calc(100% - 44px)',
+          margin: '16px auto 0',
+          background: '#0a1535',
+          color: '#fff',
+          borderRadius: 14,
+          padding: '10px 16px',
+          display: 'grid',
+          gridTemplateColumns: 'auto 1fr auto',
+          gap: 16,
+          alignItems: 'center',
+          boxShadow: '0 4px 0 rgba(10,21,53,0.25)',
+        }}
+      >
+        {/* Brand */}
+        <CBrand small light subtitle="ARCADE MODE" />
+
+        {/* Player chips */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            justifyContent: 'center',
+            overflow: 'hidden',
+            flexWrap: 'wrap',
+          }}
+        >
+          {players.map((p) => {
+            const isLeader = p.id === leaderId
+            return (
+              <div
+                key={p.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  padding: '5px 10px 5px 6px',
+                  borderRadius: 9999,
+                  background: isLeader ? '#e32437' : 'rgba(255,255,255,0.08)',
+                  border: isLeader ? '2px solid #0a1535' : '2px solid transparent',
+                }}
+              >
+                <div
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 6,
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    border: '1.5px solid rgba(0,0,0,0.3)',
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.avatarUrl} alt={p.name} width={20} height={20} className="w-full h-full object-cover" />
+                </div>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-archivo-black), sans-serif',
+                    fontSize: 9,
+                    letterSpacing: '0.08em',
+                    color: '#fff',
+                    textTransform: 'uppercase',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {p.name}
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-bungee), sans-serif',
+                    fontSize: 12,
+                    color: isLeader ? '#fff' : '#ffcf33',
+                    lineHeight: 1,
+                  }}
+                >
+                  {p.score ?? 0}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Mode + room code */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span
+            style={{
+              background: '#e32437',
+              color: '#fff',
+              border: '2px solid #0a1535',
+              borderRadius: 9999,
+              padding: '5px 12px',
+              fontFamily: 'var(--font-archivo-black), sans-serif',
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: '0.14em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {(MODE_LABELS[gameMode] ?? gameMode).toUpperCase()}
           </span>
-          {currentQuestion && gameMode === 'classic' && (
-            <TierBadge tier={currentQuestion.difficulty} />
-          )}
-          <span>
-            Q {(game.currentQuestionIndex ?? 0) + 1} / {game.questionCount}
+          <span
+            style={{
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.2em',
+              color: '#9db9f0',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {roomId}
           </span>
-          <span className="text-ice-blue font-bold tracking-widest">{roomId}</span>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden p-6 gap-6">
-        {/* Main area */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6 bg-white border-4 border-black shadow-[12px_12px_0_#000] relative">
-          {/* Countdown */}
-          <AnimatePresence>
-            {game.command === 'starting' && (
-              <motion.div
-                initial={{ scale: 2, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.5, opacity: 0 }}
-                className="text-center"
+      {/* ── Main content ── */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '14px 22px 22px',
+          gap: 14,
+          maxWidth: 1180,
+          margin: '0 auto',
+          width: '100%',
+        }}
+      >
+        {/* Starting countdown overlay */}
+        <AnimatePresence>
+          {game.command === 'starting' && (
+            <motion.div
+              initial={{ scale: 2, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              style={{ textAlign: 'center', padding: '40px 0' }}
+            >
+              <div
+                style={{
+                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                  fontSize: 140,
+                  lineHeight: 1,
+                  color: '#e32437',
+                  textShadow: '0 8px 0 rgba(227,36,55,0.3)',
+                }}
               >
-                <div className="text-9xl font-bold tabular-nums text-game-gold">
-                  {game.countdownTime || '🏒'}
+                {game.countdownTime || '🏒'}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Classic mode ── */}
+        <AnimatePresence>
+          {isActive && gameMode === 'classic' && currentQuestion && (
+            <motion.div
+              key={currentQuestion.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}
+            >
+              {/* Question bar */}
+              <div
+                style={{
+                  background: '#fff',
+                  border: '2px solid #0a1535',
+                  borderRadius: 14,
+                  padding: '10px 18px',
+                  boxShadow: '0 4px 0 #0a1535',
+                  display: 'grid',
+                  gridTemplateColumns: 'auto 1fr auto auto',
+                  gap: 14,
+                  alignItems: 'center',
+                }}
+              >
+                {/* Q chip */}
+                <span
+                  style={{
+                    background: '#e32437',
+                    color: '#fff',
+                    border: '2px solid #0a1535',
+                    borderRadius: 8,
+                    padding: '4px 10px',
+                    fontFamily: 'var(--font-archivo-black), sans-serif',
+                    fontSize: 12,
+                    fontWeight: 900,
+                    letterSpacing: '0.16em',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
+                </span>
+
+                {/* Title + difficulty */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                      fontSize: 22,
+                      color: '#0a1535',
+                    }}
+                  >
+                    WHO'S THIS?
+                  </span>
+                  <TierBadge tier={currentQuestion.difficulty} />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
-          {/* Classic mode */}
-          <AnimatePresence>
-            {isActive && gameMode === 'classic' && currentQuestion && (
-              <motion.div
-                key={currentQuestion.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -30 }}
-                className="w-full max-w-3xl"
-              >
-                <StatsCard question={currentQuestion} revealedColumns={game.revealedColumns ?? 0} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {/* Answered count */}
+                {game.command === 'answering' && (
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono), monospace',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: '#6b7ea0',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {answeredCount}/{connectedCount} in
+                  </span>
+                )}
 
-          {/* Career mode */}
-          <AnimatePresence>
-            {isActive && gameMode === 'career' && careerSeasons.length > 0 && (
-              <motion.div
-                key={`career-${game.currentQuestionIndex}`}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -30 }}
-                className="w-full max-w-3xl"
-              >
+                {/* Countdown ring */}
+                <CountdownRing seconds={timeLeft} total={30} size={90} />
+              </div>
+
+              {/* Stat tiles */}
+              <StatsCard
+                question={currentQuestion}
+                revealedColumns={game.revealedColumns ?? 0}
+              />
+
+              {/* Answer grid (multiple choice) */}
+              {game.answerMode === 'multiplechoice' && choices.length > 0 && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 12,
+                  }}
+                >
+                  {choices.map((choice, i) => {
+                    const letter = ['A', 'B', 'C', 'D'][i] ?? '?'
+                    const letterBg = ['#e32437', '#003087', '#2cc66b', '#ffcf33'][i] ?? '#0a1535'
+                    const letterFg = i === 3 ? '#0a1535' : '#ffffff'
+                    const isCorrect =
+                      game.command === 'revealing' &&
+                      choice.trim().toLowerCase() ===
+                        `${currentQuestion.firstName} ${currentQuestion.lastName}`.trim().toLowerCase()
+                    return (
+                      <div
+                        key={`${choice}-${i}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          padding: 12,
+                          background: isCorrect ? '#003087' : '#fff',
+                          border: '2px solid #0a1535',
+                          borderRadius: 14,
+                          boxShadow: isCorrect ? '0 5px 0 #0a1535' : '0 4px 0 #0a1535',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 42,
+                            height: 42,
+                            flexShrink: 0,
+                            display: 'grid',
+                            placeItems: 'center',
+                            background: letterBg,
+                            color: letterFg,
+                            border: '2px solid #0a1535',
+                            borderRadius: 10,
+                            fontFamily: 'var(--font-bungee), sans-serif',
+                            fontSize: 18,
+                          }}
+                        >
+                          {letter}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-bungee), sans-serif',
+                            fontSize: 19,
+                            color: isCorrect ? '#fff' : '#0a1535',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {choice}
+                        </span>
+                        {isCorrect && (
+                          <span
+                            style={{
+                              marginLeft: 'auto',
+                              background: '#ffcf33',
+                              color: '#0a1535',
+                              border: '2px solid #0a1535',
+                              borderRadius: 8,
+                              padding: '2px 8px',
+                              fontFamily: 'var(--font-archivo-black), sans-serif',
+                              fontSize: 10,
+                              letterSpacing: '0.1em',
+                              transform: 'rotate(4deg)',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            ✓ CORRECT
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Career mode ── */}
+        <AnimatePresence>
+          {isActive && gameMode === 'career' && careerSeasons.length > 0 && (
+            <motion.div
+              key={`career-${game.currentQuestionIndex}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              className="w-full"
+            >
+              <div className="card-puffy bg-white p-6">
                 <CareerRevealCard
                   seasons={careerSeasons}
                   revealedCount={revealedSeasonCount}
                   buzzedInPlayerName={buzzedInPlayer?.name}
                   lockedOutCount={lockedOutPlayers.length}
                 />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* H2H mode */}
-          <AnimatePresence>
-            {isActive && gameMode === 'h2h' && h2hCurrentPair && (
-              <motion.div
-                key={`h2h-${game.currentQuestionIndex}`}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -30 }}
-                className="w-full max-w-3xl"
-              >
+        {/* ── H2H mode ── */}
+        <AnimatePresence>
+          {isActive && gameMode === 'h2h' && h2hCurrentPair && (
+            <motion.div
+              key={`h2h-${game.currentQuestionIndex}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              className="w-full"
+            >
+              <div className="card-puffy bg-white p-6">
                 <H2HComparisonCard pair={h2hCurrentPair} revealed={game.command === 'revealing'} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Higher/Lower mode */}
-          <AnimatePresence>
-            {isActive && gameMode === 'higher-lower' && hlCurrentPair && (
-              <motion.div
-                key={`hl-${game.currentQuestionIndex}`}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -30 }}
-                className="w-full max-w-3xl"
-              >
+        {/* ── Higher/Lower mode ── */}
+        <AnimatePresence>
+          {isActive && gameMode === 'higher-lower' && hlCurrentPair && (
+            <motion.div
+              key={`hl-${game.currentQuestionIndex}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              className="w-full"
+            >
+              <div className="card-puffy bg-white p-6">
                 <HigherLowerCard pair={hlCurrentPair} revealed={game.command === 'revealing'} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Answer progress (classic / h2h / hl) */}
-          {game.command === 'answering' && gameMode !== 'career' && (
-            <div className="flex items-center gap-3">
-              <div className="h-2 bg-game-card-dark rounded-full w-56 overflow-hidden">
-                <motion.div
-                  className="h-full bg-ice-blue rounded-full"
-                  animate={{
-                    width: `${(answeredCount / Math.max(connectedCount, 1)) * 100}%`,
-                  }}
+        {/* ── Reveal: correct answer ── */}
+        <AnimatePresence>
+          {game.command === 'revealing' && currentQuestion && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="card-puffy bg-white text-center"
+              style={{ padding: '32px 48px', maxWidth: 520, alignSelf: 'center' }}
+            >
+              {gameMode === 'classic' || gameMode === 'career' ? (
+                <>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono), monospace',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: '0.22em',
+                      color: '#6b7ea0',
+                      textTransform: 'uppercase',
+                      marginBottom: 10,
+                    }}
+                  >
+                    The answer was
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                      fontSize: 52,
+                      lineHeight: 0.9,
+                      color: '#0a1535',
+                      margin: 0,
+                    }}
+                  >
+                    {currentQuestion.firstName} {currentQuestion.lastName}
+                  </h2>
+                  {gameMode === 'classic' && (
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-jetbrains-mono), monospace',
+                        fontSize: 12,
+                        color: '#6b7ea0',
+                        marginTop: 10,
+                      }}
+                    >
+                      {currentQuestion.season} · {currentQuestion.teamNames}
+                    </p>
+                  )}
+                </>
+              ) : gameMode === 'h2h' && h2hCurrentPair ? (
+                <>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono), monospace',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: '0.22em',
+                      color: '#6b7ea0',
+                      textTransform: 'uppercase',
+                      marginBottom: 10,
+                    }}
+                  >
+                    Correct answer
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                      fontSize: 36,
+                      color: '#0a1535',
+                      margin: 0,
+                    }}
+                  >
+                    Player {h2hCurrentPair.correctSide === 'left' ? 'A (Left)' : 'B (Right)'}
+                  </h2>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono), monospace',
+                      fontSize: 13,
+                      color: '#6b7ea0',
+                      marginTop: 8,
+                    }}
+                  >
+                    {h2hCurrentPair.targetName}
+                  </p>
+                </>
+              ) : gameMode === 'higher-lower' && hlCurrentPair ? (
+                <>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono), monospace',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: '0.22em',
+                      color: '#6b7ea0',
+                      textTransform: 'uppercase',
+                      marginBottom: 10,
+                    }}
+                  >
+                    The answer was
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                      fontSize: 52,
+                      lineHeight: 0.9,
+                      color: '#0a1535',
+                      textTransform: 'capitalize',
+                      margin: 0,
+                    }}
+                  >
+                    {hlCurrentPair.correctAnswer}
+                  </h2>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono), monospace',
+                      fontSize: 12,
+                      color: '#6b7ea0',
+                      marginTop: 10,
+                    }}
+                  >
+                    {hlCurrentPair.challengeValue} vs {hlCurrentPair.referenceValue} {hlCurrentPair.field}
+                  </p>
+                </>
+              ) : null}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Game over ── */}
+        <AnimatePresence>
+          {game.command === 'finished' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 24,
+                width: '100%',
+              }}
+            >
+              <div style={{ fontSize: 80 }}>🏆</div>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+                  fontSize: 72,
+                  lineHeight: 0.9,
+                  color: '#e32437',
+                  margin: 0,
+                  textShadow: '0 6px 0 rgba(227,36,55,0.25)',
+                }}
+              >
+                GAME OVER!
+              </h2>
+              <div className="card-puffy bg-white" style={{ padding: 24, maxWidth: 480, width: '100%' }}>
+                <Scoreboard
+                  players={players}
+                  variant="final"
+                  myId={myId}
                 />
               </div>
-              <span className="text-sm text-game-text-muted">
-                {answeredCount}/{connectedCount} answered
-              </span>
-            </div>
+            </motion.div>
           )}
-
-          {/* Reveal: correct answer display */}
-          <AnimatePresence>
-            {game.command === 'revealing' && currentQuestion && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="text-center bg-game-card border border-ice-blue/30 rounded-2xl p-8"
-              >
-                {gameMode === 'classic' || gameMode === 'career' ? (
-                  <>
-                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">
-                      The answer was
-                    </p>
-                    <h2 className="text-5xl font-bold text-ice-blue">
-                      {currentQuestion.firstName} {currentQuestion.lastName}
-                    </h2>
-                    {gameMode === 'classic' && (
-                      <p className="text-game-text-muted mt-2">
-                        {currentQuestion.season} · {currentQuestion.teamNames}
-                      </p>
-                    )}
-                  </>
-                ) : gameMode === 'h2h' && h2hCurrentPair ? (
-                  <>
-                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">
-                      Correct answer
-                    </p>
-                    <h2 className="text-3xl font-bold text-ice-blue">
-                      Player {h2hCurrentPair.correctSide === 'left' ? 'A (Left)' : 'B (Right)'}
-                    </h2>
-                    <p className="text-game-text-muted mt-1">{h2hCurrentPair.targetName}</p>
-                  </>
-                ) : gameMode === 'higher-lower' && hlCurrentPair ? (
-                  <>
-                    <p className="text-game-text-muted text-sm uppercase tracking-widest mb-2">
-                      The answer was
-                    </p>
-                    <h2 className="text-5xl font-bold text-ice-blue capitalize">
-                      {hlCurrentPair.correctAnswer}
-                    </h2>
-                    <p className="text-game-text-muted mt-2">
-                      {hlCurrentPair.challengeValue} vs {hlCurrentPair.referenceValue}{' '}
-                      {hlCurrentPair.field}
-                    </p>
-                  </>
-                ) : null}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Game over */}
-          <AnimatePresence>
-            {game.command === 'finished' && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center"
-              >
-                <div className="text-7xl mb-4">🏆</div>
-                <h2 className="text-5xl font-bold uppercase tracking-widest text-game-gold">
-                  Game Over!
-                </h2>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Sidebar scoreboard */}
-        <aside className="w-72 bg-white border-4 border-black shadow-[12px_12px_0_#000] p-5 overflow-y-auto">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-black mb-4 border-b-4 border-black pb-2">
-            Scoreboard
-          </h3>
-          <Scoreboard players={players} variant={game.command === 'finished' ? 'final' : 'live'} />
-        </aside>
+        </AnimatePresence>
       </div>
 
-      {/* ── Controller Dock (only visible when viewing as host/boss) ── */}
+      {/* ── Controller Dock ── */}
       {isController && (
         <GamePageDock
           game={game as unknown as import('@/types/game').GameState}
@@ -362,7 +725,7 @@ function GamePageDock({
 }) {
   if (!game) return null
 
-  const command = game.command as string
+  const command   = game.command as string
   const nextLabel = gameMode === 'classic' ? 'Next Question' : 'Next Round'
 
   type Item = {
@@ -378,13 +741,13 @@ function GamePageDock({
       icon: <Eye size={24} />,
       label: 'Reveal',
       onClick: onReveal,
-      className: 'bg-game-red border-2 border-black text-white',
+      className: 'bg-c-red border-2 border-c-ink text-white',
     })
     items.push({
       icon: <SkipForward size={24} />,
       label: 'Skip',
       onClick: onSkip,
-      className: 'bg-yellow border-2 border-black text-black',
+      className: 'bg-c-yellow border-2 border-c-ink text-c-ink',
     })
   }
 
@@ -393,7 +756,7 @@ function GamePageDock({
       icon: <ChevronRight size={24} />,
       label: nextLabel,
       onClick: onNext,
-      className: 'bg-cyan border-2 border-black text-black',
+      className: 'bg-c-navy border-2 border-c-ink text-white',
     })
   }
 
@@ -402,13 +765,13 @@ function GamePageDock({
       icon: <RotateCcw size={24} />,
       label: 'Play Again',
       onClick: onRematch,
-      className: 'bg-magenta border-2 border-black text-white',
+      className: 'bg-c-red border-2 border-c-ink text-white',
     })
     items.push({
       icon: <Settings size={24} />,
       label: 'Settings',
       onClick: onSettings,
-      className: 'bg-white border-2 border-black text-black',
+      className: 'bg-white border-2 border-c-ink text-c-ink',
     })
   }
 
