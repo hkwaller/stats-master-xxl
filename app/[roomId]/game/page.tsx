@@ -27,6 +27,7 @@ import {
 } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
+import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
 import Dock from '@/components/ui/Dock'
 import { StatsCard } from '@/components/game/StatsCard'
 import { Scoreboard } from '@/components/game/Scoreboard'
@@ -43,10 +44,10 @@ interface GamePageProps {
 }
 
 const MODE_LABELS: Record<string, string> = {
-  classic:       'Classic',
-  career:        'Career',
-  h2h:           'Head-to-Head',
-  'higher-lower':'Higher or Lower',
+  classic: 'Classic',
+  career: 'Career',
+  h2h: 'Head-to-Head',
+  'higher-lower': 'Higher or Lower',
 }
 
 export default function GamePage({ params: paramsPromise }: GamePageProps) {
@@ -55,19 +56,19 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const [myId, setMyId] = useState('')
   const game = useStorage((root) => root.game)
 
-  const tickCountdown         = useTickCountdown()
-  const nextQuestion          = useNextQuestion()
-  const nextCareerRound       = useNextCareerRound()
+  const tickCountdown = useTickCountdown()
+  const nextQuestion = useNextQuestion()
+  const nextCareerRound = useNextCareerRound()
   const revealNextCareerSeason = useRevealNextCareerSeason()
-  const revealCareerAnswer    = useRevealCareerAnswer()
-  const nextH2HRound          = useNextH2HRound()
-  const nextHLRound           = useNextHLRound()
-  const revealAnswers         = useRevealAnswers()
-  const revealH2HAnswers      = useRevealH2HAnswers()
-  const revealHLAnswers       = useRevealHLAnswers()
-  const advanceToNext         = useAdvanceToNext()
-  const skipQuestion          = useSkipQuestion()
-  const rematch               = useRematch()
+  const revealCareerAnswer = useRevealCareerAnswer()
+  const nextH2HRound = useNextH2HRound()
+  const nextHLRound = useNextHLRound()
+  const revealAnswers = useRevealAnswers()
+  const revealH2HAnswers = useRevealH2HAnswers()
+  const revealHLAnswers = useRevealHLAnswers()
+  const advanceToNext = useAdvanceToNext()
+  const skipQuestion = useSkipQuestion()
+  const rematch = useRematch()
 
   useEffect(() => {
     paramsPromise.then(({ roomId }) => setRoomId(roomId))
@@ -75,8 +76,8 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
     setMyId(guest.id)
   }, [paramsPromise])
 
-  const isHost       = game?.hostId === myId
-  const isBoss       = game?.bossId === myId
+  const isHost = game?.hostId === myId
+  const isBoss = game?.bossId === myId
   const isController = isHost || isBoss
 
   useHostStateMachine(isHost, myId, game as unknown as import('@/types/game').GameState | null, {
@@ -97,30 +98,31 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
     router.push(`/${roomId}/lobby`)
   }, [game?.command])
 
+  const timeLeft = useQuestionTimeLeft(game?.questionStartsAt, game?.command === 'answering')
+
   if (!game) return null
 
-  const players        = (game.players as unknown as Player[]) ?? []
-  const topPlayer      = players.length
+  const players = (game.players as unknown as Player[]) ?? []
+  const topPlayer = players.length
     ? players.reduce((top, p) => ((p.score ?? 0) > (top.score ?? 0) ? p : top), players[0])
     : null
-  const leaderId       = topPlayer && (topPlayer.score ?? 0) > 0 ? topPlayer.id : ''
-  const choices        = (game.choices as unknown as string[]) ?? []
-  const answeredCount  = Object.keys(game.answers ?? {}).length
+  const leaderId = topPlayer && (topPlayer.score ?? 0) > 0 ? topPlayer.id : ''
+  const choices = (game.choices as unknown as string[]) ?? []
+  const answeredCount = Object.keys(game.answers ?? {}).length
   const connectedCount = players.filter((p) => p.isConnected).length
   const currentQuestion = game.currentQuestion as unknown as Question | null
-  const gameMode       = game.gameMode ?? 'classic'
-  const isActive       = game.command === 'answering' || game.command === 'revealing'
+  const gameMode = game.gameMode ?? 'classic'
+  const isActive = game.command === 'answering' || game.command === 'revealing'
 
-  const careerSeasons      = (game.careerSeasons as unknown as Question[]) ?? []
+  const careerSeasons = (game.careerSeasons as unknown as Question[]) ?? []
   const revealedSeasonCount = game.revealedSeasonCount ?? 0
-  const buzzedInPlayerId   = game.buzzedInPlayerId ?? ''
-  const lockedOutPlayers   = (game.lockedOutPlayers as unknown as string[]) ?? []
-  const buzzedInPlayer     = players.find((p) => p.id === buzzedInPlayerId)
+  const buzzedInPlayerId = game.buzzedInPlayerId ?? ''
+  const lockedOutPlayers = (game.lockedOutPlayers as unknown as string[]) ?? []
+  const buzzedInPlayer = players.find((p) => p.id === buzzedInPlayerId)
 
   const h2hCurrentPair = game.h2hCurrentPair as unknown as H2HPair | null
-  const hlCurrentPair  = game.hlCurrentPair as unknown as HLPair | null
+  const hlCurrentPair = game.hlCurrentPair as unknown as HLPair | null
 
-  const timeLeft = game.countdownTime ?? 30
 
   return (
     <main
@@ -188,7 +190,13 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                   }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.avatarUrl} alt={p.name} width={20} height={20} className="w-full h-full object-cover" />
+                  <img
+                    src={p.avatarUrl}
+                    alt={p.name}
+                    width={20}
+                    height={20}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <span
                   style={{
@@ -252,6 +260,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
 
       {/* ── Main content ── */}
       <div
+        className="max-w-full md:max-w-5xl mx-auto"
         style={{
           position: 'relative',
           zIndex: 10,
@@ -261,8 +270,6 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           alignItems: 'center',
           padding: '14px 22px 22px',
           gap: 14,
-          maxWidth: 1180,
-          margin: '0 auto',
           width: '100%',
         }}
       >
@@ -366,10 +373,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
               </div>
 
               {/* Stat tiles */}
-              <StatsCard
-                question={currentQuestion}
-                revealedColumns={game.revealedColumns ?? 0}
-              />
+              <StatsCard question={currentQuestion} revealedColumns={game.revealedColumns ?? 0} />
 
               {/* Answer grid (multiple choice) */}
               {game.answerMode === 'multiplechoice' && choices.length > 0 && (
@@ -387,7 +391,9 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                     const isCorrect =
                       game.command === 'revealing' &&
                       choice.trim().toLowerCase() ===
-                        `${currentQuestion.firstName} ${currentQuestion.lastName}`.trim().toLowerCase()
+                        `${currentQuestion.firstName} ${currentQuestion.lastName}`
+                          .trim()
+                          .toLowerCase()
                     return (
                       <div
                         key={`${choice}-${i}`}
@@ -632,7 +638,8 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                       marginTop: 10,
                     }}
                   >
-                    {hlCurrentPair.challengeValue} vs {hlCurrentPair.referenceValue} {hlCurrentPair.field}
+                    {hlCurrentPair.challengeValue} vs {hlCurrentPair.referenceValue}{' '}
+                    {hlCurrentPair.field}
                   </p>
                 </>
               ) : null}
@@ -668,12 +675,11 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
               >
                 GAME OVER!
               </h2>
-              <div className="card-puffy bg-white" style={{ padding: 24, maxWidth: 480, width: '100%' }}>
-                <Scoreboard
-                  players={players}
-                  variant="final"
-                  myId={myId}
-                />
+              <div
+                className="card-puffy bg-white"
+                style={{ padding: 24, maxWidth: 480, width: '100%' }}
+              >
+                <Scoreboard players={players} variant="final" myId={myId} />
               </div>
             </motion.div>
           )}
@@ -725,7 +731,7 @@ function GamePageDock({
 }) {
   if (!game) return null
 
-  const command   = game.command as string
+  const command = game.command as string
   const nextLabel = gameMode === 'classic' ? 'Next Question' : 'Next Round'
 
   type Item = {

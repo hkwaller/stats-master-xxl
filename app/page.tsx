@@ -32,7 +32,7 @@ const FEATURES = [
   {
     emoji: '🚫',
     title: 'Penalty Box',
-    desc: "Wrong answer in boss mode? Sit two rounds out.",
+    desc: 'Wrong answer in boss mode? Sit two rounds out.',
     color: '#0a1535',
   },
 ]
@@ -59,12 +59,8 @@ export default function LandingPage() {
 
   return (
     <main className="ice-bg min-h-screen flex flex-col pb-16">
-
       {/* ── Top nav ── */}
-      <nav
-        style={{ padding: '18px 36px' }}
-        className="flex items-center justify-between"
-      >
+      <nav style={{ padding: '18px 36px' }} className="flex items-center justify-between">
         <CBrand />
         <div className="flex items-center gap-3">
           <div
@@ -118,10 +114,7 @@ export default function LandingPage() {
         style={{ padding: '40px 40px 60px', position: 'relative', flex: 1 }}
         className="max-w-6xl mx-auto w-full"
       >
-        <div
-          className="grid items-center gap-10"
-          style={{ gridTemplateColumns: '1.2fr 1fr' }}
-        >
+        <div className="grid items-center gap-10" style={{ gridTemplateColumns: '1.2fr 1fr' }}>
           {/* Left: hero copy + actions */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -189,11 +182,11 @@ export default function LandingPage() {
                 color: '#0a1535',
                 opacity: 0.8,
                 maxWidth: 460,
-                margin: 0,
+                margin: '2em 0',
               }}
             >
-              The couch-co-op hockey trivia game your group chat has been begging for.
-              Buzz in, build streaks, dodge the penalty box.
+              The couch-co-op hockey trivia game your group chat has been begging for. Buzz in,
+              build streaks, dodge the penalty box.
             </p>
 
             {/* Create button */}
@@ -232,9 +225,7 @@ export default function LandingPage() {
                 JOIN
               </Button>
             </div>
-            {error && (
-              <p style={{ color: '#e32437', fontSize: 14, fontWeight: 700 }}>{error}</p>
-            )}
+            {error && <p style={{ color: '#e32437', fontSize: 14, fontWeight: 700 }}>{error}</p>}
           </motion.div>
 
           {/* Right: DailyChallenge */}

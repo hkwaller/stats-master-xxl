@@ -8,6 +8,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useStorage } from '@/lib/liveblocks/client'
 import { useAssignBoss, useJoinGame, useStartGame } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
+import { useAdFree } from '@/hooks/useAdFree'
 import { Button } from '@/components/design-system'
 import { CBrand } from '@/components/arcade'
 import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
@@ -28,6 +29,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   const [pendingBossId, setPendingBossId] = useState('')
 
   const game = useStorage((root) => root.game)
+  const { adFree } = useAdFree()
   const joinGame = useJoinGame()
   const startGame = useStartGame()
   const assignBoss = useAssignBoss()
@@ -153,7 +155,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
         hlPairs = data.pairs
       }
 
-      startGame({ requesterId: myId, questionSequence, bossToken, gameMode, careerData, h2hPairs, hlPairs })
+      startGame({ requesterId: myId, questionSequence, bossToken, gameMode, careerData, h2hPairs, hlPairs, hostAdFree: adFree })
 
       const hostPlays = game?.hostPlays !== false
       if (hostPlays) {

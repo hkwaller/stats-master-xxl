@@ -100,6 +100,10 @@ export type GameState = {
   countdownTime: number
   reveal: boolean
 
+  // Monetization: true when the host is ad-free at game start — suppresses
+  // in-game ads for everyone in the room (host's Pro perk). Reset on rematch.
+  hostAdFree: boolean
+
   // ─── Game Mode ─────────────────────────────────────────────────────────────
   gameMode: GameMode
 
@@ -231,6 +235,8 @@ export const SCORE_BASE_BY_TIER: Record<DifficultyTier, number> = {
 }
 export const SCORE_SPEED_MAX = 50
 export const SCORE_SPEED_WINDOW_MS = 40_000
+// Length of the on-screen per-question answer timer (matches the CountdownRing total).
+export const QUESTION_DURATION_MS = 30_000
 export const SCORE_DOUBLEDOWN_WRONG = -50
 
 // Career mode scoring tiers (based on fraction of seasons revealed when buzzing)

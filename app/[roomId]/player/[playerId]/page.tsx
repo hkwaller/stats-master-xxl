@@ -26,6 +26,10 @@ import {
 } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
+import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
+import { useInGameAdsSuppressed } from '@/hooks/useInGameAdsSuppressed'
+import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
+import { AdsterraPopunder } from '@/components/ads/AdsterraPopunder'
 import Dock from '@/components/ui/Dock'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
 import { BuzzInButton } from '@/components/game/BuzzInButton'
@@ -125,6 +129,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const [confirmingPowerup, setConfirmingPowerup] = useState<PowerupType | null>(null)
 
   const game = useStorage((root) => root.game)
+  const { suppressed: adsSuppressed } = useInGameAdsSuppressed()
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const submitAnswer = useSubmitAnswer()
@@ -209,6 +214,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     revealH2HAnswers,
     revealHLAnswers,
   })
+
+  // Per-question answer timer (resets each question via questionStartsAt)
+  const questionTimeLeft = useQuestionTimeLeft(game?.questionStartsAt, game?.command === 'answering')
 
   // Redirect everyone to lobby on rematch
   useEffect(() => {
@@ -429,7 +437,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {formatClock(game.countdownTime ?? 0)}
+                      {formatClock(questionTimeLeft)}
                     </span>
                   </div>
 
@@ -447,7 +455,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                     <div
                       style={{
                         height: '100%',
-                        width: `${Math.max(0, Math.min(100, ((game.countdownTime ?? 0) / 30) * 100))}%`,
+                        width: `${Math.max(0, Math.min(100, (questionTimeLeft / 30) * 100))}%`,
                         background: RED,
                         borderRadius: 9999,
                         transition: 'width 0.4s linear',
@@ -1062,6 +1070,10 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                     Waiting for host to restart…
                   </p>
                 )}
+
+                {/* Monetization: end-screen banner + popunder (player device only). */}
+                <AdsterraBanner slot="player-finished" suppressed={adsSuppressed} />
+                <AdsterraPopunder suppressed={adsSuppressed} />
               </motion.div>
             )}
           </AnimatePresence>

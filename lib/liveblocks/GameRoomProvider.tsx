@@ -18,6 +18,7 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     command: 'idle',
     countdownTime: 3,
     reveal: false,
+    hostAdFree: false,
     // Mode
     gameMode: 'classic',
     // Setup

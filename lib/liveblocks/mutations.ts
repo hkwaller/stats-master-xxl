@@ -217,6 +217,7 @@ export function useStartGame() {
         careerData,
         h2hPairs,
         hlPairs,
+        hostAdFree,
       }: {
         requesterId: string
         questionSequence: Question[]
@@ -225,6 +226,7 @@ export function useStartGame() {
         careerData?: CareerQuestion[]
         h2hPairs?: H2HPair[]
         hlPairs?: HLPair[]
+        hostAdFree?: boolean
       },
     ) => {
       const game = getGame(storage)
@@ -253,6 +255,9 @@ export function useStartGame() {
       game.set('playerPowerups', playerPowerups as unknown as Record<string, Record<string, number>>)
       game.set('playedQuestions', new LiveList([]) as unknown as Question[])
       game.set('reveal', false)
+      // Stamp the host's ad-free perk into the room so it covers all players
+      // for this game (captured at start; a mid-game purchase applies next game).
+      game.set('hostAdFree', hostAdFree ?? false)
 
       if (gameMode) game.set('gameMode', gameMode as unknown as GameMode)
 
@@ -646,6 +651,7 @@ export function useRematch() {
     game.set('reveal', false)
     game.set('revealedColumns', 0)
     game.set('questionHistory', [] as unknown as QuestionResult[])
+    game.set('hostAdFree', false)
     // Mode-specific sequences
     game.set('careerData', [] as unknown as CareerQuestion[])
     game.set('h2hPairs', [] as unknown as H2HPair[])
