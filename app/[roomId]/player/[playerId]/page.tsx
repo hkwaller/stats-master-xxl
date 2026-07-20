@@ -638,7 +638,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                       return (
                         <div className="space-y-3">
                           {game.answerMode === 'multiplechoice' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {choices.map((choice, i) => {
                                 const isEliminated = myEliminated.includes(choice)
                                 const isSelected = mySelected === choice
