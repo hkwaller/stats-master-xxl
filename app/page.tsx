@@ -58,18 +58,18 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="ice-bg min-h-screen flex flex-col pb-16">
+    <main className="ice-bg min-h-screen flex flex-col pb-16 overflow-x-hidden">
       {/* ── Top nav ── */}
-      <nav style={{ padding: '18px 36px' }} className="flex items-center justify-between">
+      <nav className="flex items-center justify-between px-5 py-4 md:px-9 md:py-[18px]">
         <CBrand />
         <div className="flex items-center gap-3">
           <div
+            className="hidden md:inline-flex"
             style={{
               background: '#fff',
               border: '2px solid #0a1535',
               borderRadius: 9999,
               padding: '6px 14px',
-              display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
               boxShadow: '0 3px 0 rgba(10,21,53,0.15)',
@@ -111,10 +111,10 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section
-        style={{ padding: '40px 40px 60px', position: 'relative', flex: 1 }}
-        className="max-w-6xl mx-auto w-full"
+        style={{ position: 'relative', flex: 1 }}
+        className="max-w-6xl mx-auto w-full px-5 pt-8 pb-12 md:px-10 md:pt-10 md:pb-[60px]"
       >
-        <div className="grid items-center gap-10" style={{ gridTemplateColumns: '1.2fr 1fr' }}>
+        <div className="grid items-center gap-8 md:gap-10 grid-cols-1 md:grid-cols-[1.2fr_1fr]">
           {/* Left: hero copy + actions */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -147,7 +147,7 @@ export default function LandingPage() {
             <h1
               style={{
                 fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                fontSize: 'clamp(44px, 6vw, 72px)',
+                fontSize: 'clamp(40px, 11vw, 72px)',
                 lineHeight: 0.9,
                 color: '#0a1535',
                 letterSpacing: '-0.01em',
@@ -207,6 +207,7 @@ export default function LandingPage() {
                 maxLength={8}
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   border: '3px solid #0a1535',
                   borderRadius: 12,
                   padding: '14px 16px',
@@ -230,9 +231,10 @@ export default function LandingPage() {
 
           {/* Right: DailyChallenge */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+            className="min-w-0"
           >
             <DailyChallenge />
           </motion.div>
@@ -241,15 +243,10 @@ export default function LandingPage() {
 
       {/* ── Features strip ── */}
       <section
-        style={{
-          borderTop: '2px dashed rgba(10,21,53,0.15)',
-          padding: '36px 40px 8px',
-        }}
+        style={{ borderTop: '2px dashed rgba(10,21,53,0.15)' }}
+        className="px-5 pt-8 pb-2 md:px-10 md:pt-9"
       >
-        <div
-          className="max-w-6xl mx-auto grid gap-5"
-          style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}
-        >
+        <div className="max-w-6xl mx-auto grid gap-4 md:gap-5 grid-cols-2 md:grid-cols-4">
           {FEATURES.map((f) => (
             <motion.div
               key={f.title}

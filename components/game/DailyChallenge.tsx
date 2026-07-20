@@ -231,7 +231,12 @@ export function DailyChallenge() {
       <ChallengeHeader question={question} />
       <div className="p-5 space-y-4">
         <StatsCard question={question} revealedColumns={5} />
-        <ResultBanner result={result} question={question} isSignedIn={!!isSignedIn} isLoaded={isLoaded} />
+        <ResultBanner
+          result={result}
+          question={question}
+          isSignedIn={!!isSignedIn}
+          isLoaded={isLoaded}
+        />
       </div>
     </div>
   )
@@ -240,9 +245,7 @@ export function DailyChallenge() {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function shortDateLabel(): string {
-  return new Date()
-    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    .toUpperCase()
+  return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
 }
 
 function ChallengeHeader({ question }: { question: Question }) {

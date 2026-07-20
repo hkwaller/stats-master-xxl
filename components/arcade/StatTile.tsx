@@ -13,19 +13,52 @@ interface StatTileProps {
   className?: string
 }
 
-const SIZES: Record<TileSize, {
-  outerRadius: number
-  outerPad: number
-  innerRadius: number
-  innerPadV: number
-  labelSize: number
-  digitSize: number
-  minHeight: number
-  gap: number
-}> = {
-  lg: { outerRadius: 14, outerPad: 6, innerRadius: 9, innerPadV: 12, labelSize: 10, digitSize: 40, minHeight: 92, gap: 8 },
-  md: { outerRadius: 12, outerPad: 5, innerRadius: 8, innerPadV: 9,  labelSize: 9,  digitSize: 20, minHeight: 58, gap: 6 },
-  sm: { outerRadius: 10, outerPad: 4, innerRadius: 7, innerPadV: 6,  labelSize: 7,  digitSize: 16, minHeight: 46, gap: 4 },
+const OUTER_SHELL: Record<TileSize, string> = {
+  lg: 'rounded-[10px] p-1 shadow-[0_3px_0_#0a1535] sm:rounded-[12px] sm:p-[5px] sm:shadow-[0_4px_0_#0a1535] md:rounded-[14px] md:p-1.5',
+  md: 'rounded-xl p-[5px] shadow-[0_4px_0_#0a1535]',
+  sm: 'rounded-[10px] p-1 shadow-[0_3px_0_#0a1535]',
+}
+
+const INNER_PANEL: Record<TileSize, string> = {
+  lg: 'min-h-[46px] gap-1 rounded-[7px] px-1.5 py-1.5 sm:min-h-[58px] sm:gap-1.5 sm:rounded-lg sm:py-2 md:min-h-[72px] md:gap-2 md:rounded-[9px] md:py-2.5 lg:min-h-[92px] lg:py-3',
+  md: 'min-h-[58px] gap-1.5 rounded-lg px-1.5 py-[9px]',
+  sm: 'min-h-[46px] gap-1 rounded-[7px] px-1.5 py-1.5',
+}
+
+const LABEL_CHIP: Record<TileSize, string> = {
+  lg: 'px-1.5 py-px text-[7px] tracking-[0.2em] sm:px-2 sm:py-0.5 sm:text-[8px] md:text-[9px] lg:text-[10px]',
+  md: 'px-2 py-0.5 text-[9px] tracking-[0.2em]',
+  sm: 'px-1.5 py-px text-[7px] tracking-[0.2em]',
+}
+
+const DIGIT: Record<TileSize, string> = {
+  lg: 'text-base leading-[0.9] sm:text-xl md:text-[32px] lg:text-[40px]',
+  md: 'text-xl leading-[0.9]',
+  sm: 'text-base leading-[0.9]',
+}
+
+const DIGIT_LONG: Record<TileSize, string> = {
+  lg: 'text-[10px] sm:text-xs md:text-xl lg:text-[25px]',
+  md: 'text-xs',
+  sm: 'text-[10px]',
+}
+
+const DIGIT_MEDIUM: Record<TileSize, string> = {
+  lg: 'text-sm sm:text-base md:text-2xl lg:text-[31px]',
+  md: 'text-base',
+  sm: 'text-sm',
+}
+
+const HIDDEN_PLACEHOLDER: Record<TileSize, string> = {
+  lg: 'mt-0.5 h-3 w-7 rounded-md sm:h-3.5 sm:w-8 md:h-5 md:w-9 lg:h-7 lg:w-11',
+  md: 'mt-0.5 h-3.5 w-7 rounded-md',
+  sm: 'mt-0.5 h-3 w-7 rounded-md',
+}
+
+function digitClass(valueLen: number, size: TileSize): string {
+  if (valueLen >= 4) return DIGIT_LONG[size]
+  if (valueLen === 3) return DIGIT_MEDIUM[size]
+  return DIGIT[size]
 }
 
 export function StatTile({
@@ -36,117 +69,34 @@ export function StatTile({
   size = 'lg',
   className = '',
 }: StatTileProps) {
-  const s = SIZES[size]
-
-  const panelGradient = highlight
-    ? 'linear-gradient(180deg, #c0182a 0%, #8f1220 100%)'
-    : 'linear-gradient(180deg, #00266b 0%, #001c50 100%)'
-
-  const labelColor = highlight ? '#ffb9c2' : '#9db9f0'
-
-  // Shrink the digit for longer values so 3–4 char stats never clip the panel.
   const valueLen = String(value).length
-  const digitSize =
-    valueLen >= 4 ? s.digitSize * 0.62 :
-    valueLen === 3 ? s.digitSize * 0.78 :
-    s.digitSize
 
   return (
     <motion.div
       initial={false}
       animate={{ opacity: 1, y: 0 }}
-      className={className}
-      style={{
-        background: '#ffffff',
-        border: '2px solid #0a1535',
-        borderRadius: s.outerRadius,
-        boxShadow: '0 4px 0 #0a1535',
-        padding: s.outerPad,
-        position: 'relative',
-        overflow: 'visible',
-      }}
+      className={`relative overflow-visible border-2 border-c-ink bg-white ${OUTER_SHELL[size]} ${className}`}
     >
-      {/* HOT! badge on the revealed highlight stat */}
-      {highlight && !hidden && (
-        <div
-          style={{
-            position: 'absolute',
-            top: -9,
-            right: -9,
-            zIndex: 3,
-            background: '#ffcf33',
-            border: '2px solid #0a1535',
-            borderRadius: 8,
-            padding: '2px 7px',
-            fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-            fontSize: size === 'sm' ? 8 : 10,
-            fontWeight: 900,
-            color: '#0a1535',
-            transform: 'rotate(10deg)',
-            whiteSpace: 'nowrap',
-            lineHeight: 1.3,
-            letterSpacing: '0.06em',
-          }}
-        >
-          HOT!
-        </div>
-      )}
-
-      {/* Inner jumbotron panel */}
       <div
-        style={{
-          background: panelGradient,
-          border: '1.5px solid #0a1535',
-          borderRadius: s.innerRadius,
-          padding: `${s.innerPadV}px 6px ${Math.max(6, s.innerPadV - 3)}px`,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: s.gap,
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow:
-            'inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -8px 16px rgba(0,0,0,0.3)',
-          minHeight: s.minHeight,
-        }}
+        className={`relative flex flex-col items-center overflow-hidden border-[1.5px] border-c-ink shadow-[inset_0_2px_0_rgba(255,255,255,0.12),inset_0_-8px_16px_rgba(0,0,0,0.3)] ${
+          highlight
+            ? 'bg-linear-to-b from-tile-red-top to-tile-red-bot'
+            : 'bg-linear-to-b from-tile-blue-top to-tile-blue-bot'
+        } ${INNER_PANEL[size]}`}
       >
-        {/* Label chip */}
         <div
-          style={{
-            background: 'rgba(0,0,0,0.35)',
-            color: labelColor,
-            padding: size === 'sm' ? '1px 6px' : '2px 8px',
-            borderRadius: 4,
-            fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-            fontSize: s.labelSize,
-            fontWeight: 900,
-            letterSpacing: '0.2em',
-            lineHeight: 1,
-          }}
+          className={`rounded bg-black/35 font-display-alt leading-none ${LABEL_CHIP[size]} ${
+            highlight ? 'text-tile-label-red' : 'text-tile-label-blue'
+          }`}
         >
           {abbr}
         </div>
 
-        {/* Digit or hidden placeholder */}
         {hidden ? (
-          <div
-            style={{
-              width: size === 'lg' ? 44 : 28,
-              height: s.digitSize * 0.7,
-              background: 'rgba(255,255,255,0.14)',
-              borderRadius: 6,
-              marginTop: 2,
-            }}
-          />
+          <div className={`bg-white/15 ${HIDDEN_PLACEHOLDER[size]}`} />
         ) : (
           <div
-            style={{
-              fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-              fontSize: digitSize,
-              lineHeight: 0.9,
-              color: '#ffffff',
-              fontVariantNumeric: 'tabular-nums',
-            }}
+            className={`font-display tabular-nums text-white ${digitClass(valueLen, size)}`}
           >
             {String(value)}
           </div>

@@ -216,7 +216,10 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   })
 
   // Per-question answer timer (resets each question via questionStartsAt)
-  const questionTimeLeft = useQuestionTimeLeft(game?.questionStartsAt, game?.command === 'answering')
+  const questionTimeLeft = useQuestionTimeLeft(
+    game?.questionStartsAt,
+    game?.command === 'answering',
+  )
 
   // Redirect everyone to lobby on rematch
   useEffect(() => {
@@ -282,7 +285,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     !!currentQuestion
 
   return (
-    <main className="ice-bg min-h-screen flex flex-col">
+    <main className="ice-bg min-h-screen flex flex-col max-w-6xl mx-auto">
       {/* Header */}
       {!classicController && (
         <header
@@ -398,7 +401,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-3"
+                  className="space-y-4"
                 >
                   {/* Controller header row: Q badge · name·score · timer */}
                   <div className="flex items-center gap-2.5">
@@ -464,7 +467,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                   </div>
 
                   {/* Compact stat strip */}
-                  <div className="grid grid-cols-5 gap-1.5">
+                  <div className="grid grid-cols-5 gap-2 pt-2 pb-1 mb-8">
                     {STAT_COLUMNS.map((col, ci) => (
                       <StatTile
                         key={col.key}
@@ -484,11 +487,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                       const myResult = latestResult?.playerAnswers?.[myId]
                       const isCorrect = myResult?.correct ?? false
                       const pointsEarned = myResult?.points ?? 0
-                      const resultBg = hasAnswered
-                        ? isCorrect
-                          ? '#2cc66b'
-                          : RED
-                        : '#ffcf33'
+                      const resultBg = hasAnswered ? (isCorrect ? '#2cc66b' : RED) : '#ffcf33'
                       const resultText = hasAnswered && !isCorrect ? '#fff' : INK
 
                       const prevScores = players.map((p) => {
@@ -632,12 +631,14 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                       const myEliminated =
                         ((game.playerEliminatedChoices as unknown as Record<string, string[]>) ??
                           {})[myId] ?? []
-                      const mySelected = (game.answers as Record<string, string> | undefined)?.[myId]
+                      const mySelected = (game.answers as Record<string, string> | undefined)?.[
+                        myId
+                      ]
 
                       return (
                         <div className="space-y-3">
                           {game.answerMode === 'multiplechoice' ? (
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 gap-4">
                               {choices.map((choice, i) => {
                                 const isEliminated = myEliminated.includes(choice)
                                 const isSelected = mySelected === choice
@@ -670,7 +671,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                                         ? 'none'
                                         : isSelected
                                           ? `0 5px 0 ${INK}`
-                                          : `0 4px 0 ${INK}`,
+                                          : `0 5px 0 ${INK}`,
                                       opacity: isEliminated ? 0.55 : 1,
                                       cursor: disabled ? 'default' : 'pointer',
                                     }}
@@ -751,10 +752,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                             <div className="pt-1 flex gap-2.5 justify-center">
                               {PU_LIST.map((pu) => {
                                 const charge = myPowerupCharges[pu.type] ?? 0
-                                const available = pu.availableIn(
-                                  game.answerMode,
-                                  game.revealMode
-                                )
+                                const available = pu.availableIn(game.answerMode, game.revealMode)
                                 const canUse =
                                   available && charge > 0 && game.command === 'answering'
                                 return (
@@ -800,8 +798,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                                           background: INK,
                                           color: '#fff',
                                           border: '1.5px solid #fff',
-                                          fontFamily:
-                                            'var(--font-jetbrains-mono), monospace',
+                                          fontFamily: 'var(--font-jetbrains-mono), monospace',
                                           fontSize: 9,
                                           fontWeight: 700,
                                           display: 'flex',
@@ -875,7 +872,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                         >
                           {isCorrect ? (
                             <>
-                              <h2 className="font-display text-3xl uppercase mb-1">Nailed It! 🔥</h2>
+                              <h2 className="font-display text-3xl uppercase mb-1">
+                                Nailed It! 🔥
+                              </h2>
                               <p className="font-mono font-bold">+{pts} pts</p>
                             </>
                           ) : (
@@ -1278,13 +1277,13 @@ function ControllerDock({
       icon: <Eye size={24} />,
       label: 'Reveal',
       onClick: onReveal,
-      className: 'bg-game-red border-2 border-game-card-border text-white',
+      className: 'bg-c-red text-white',
     })
     items.push({
       icon: <SkipForward size={24} />,
       label: 'Skip',
       onClick: onSkip,
-      className: 'bg-yellow border-2 border-game-card-border text-white',
+      className: 'bg-c-yellow text-c-ink',
     })
   }
 
@@ -1293,7 +1292,7 @@ function ControllerDock({
       icon: <ChevronRight size={24} />,
       label: nextLabel,
       onClick: onNext,
-      className: 'bg-cyan border-2 border-game-card-border text-black',
+      className: 'bg-c-navy text-white',
     })
   }
 
@@ -1302,13 +1301,13 @@ function ControllerDock({
       icon: <RotateCcw size={24} />,
       label: 'Play Again',
       onClick: onRematch,
-      className: 'bg-magenta border-2 border-game-card-border text-white',
+      className: 'bg-c-red text-white',
     })
     items.push({
       icon: <Settings size={24} />,
       label: 'Settings',
       onClick: onSettings,
-      className: 'bg-white border-2 border-game-card-border text-black',
+      className: 'bg-white text-c-ink',
     })
   }
 
@@ -1317,7 +1316,7 @@ function ControllerDock({
   return (
     <div className="fixed bottom-0 left-0 right-0 flex flex-col items-center pb-4 pointer-events-none z-50">
       <div className="pointer-events-auto">
-        <Dock items={items} baseItemSize={52} magnification={68} panelHeight={68} distance={130} />
+        <Dock items={items} />
       </div>
     </div>
   )

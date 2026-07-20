@@ -23,25 +23,85 @@ import { DEFAULT_SETUP } from '@/types/game'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+type AccentColor = 'green' | 'navy' | 'red' | 'yellow'
+
+const ACCENT_BG: Record<AccentColor, string> = {
+  green: 'bg-c-green',
+  navy: 'bg-c-navy',
+  red: 'bg-c-red',
+  yellow: 'bg-c-yellow',
+}
+
+const ACCENT_FG: Record<AccentColor, string> = {
+  green: 'text-white',
+  navy: 'text-white',
+  red: 'text-white',
+  yellow: 'text-c-ink',
+}
+
+const ACCENT_META: Record<AccentColor, string> = {
+  green: 'text-white/85',
+  navy: 'text-white/85',
+  red: 'text-white/85',
+  yellow: 'text-c-ink/75',
+}
+
 const TIER_OPTIONS: {
   tier: DifficultyTier
   label: string
   range: string
   desc: string
   emoji: string
-  color: string
+  accent: AccentColor
 }[] = [
-  { tier: 'easy',   label: 'Easy',   range: '140+',    desc: 'Legends', emoji: '🥇', color: '#2cc66b' },
-  { tier: 'medium', label: 'Medium', range: '120–139', desc: 'Greats',  emoji: '⭐', color: '#003087' },
-  { tier: 'hard',   label: 'Hard',   range: '100–119', desc: '',        emoji: '🔥', color: '#e32437' },
-  { tier: 'expert', label: 'Expert', range: '70–99',   desc: '',        emoji: '💀', color: '#ffcf33' },
+  { tier: 'easy', label: 'Easy', range: '140+', desc: 'Legends', emoji: '🥇', accent: 'green' },
+  {
+    tier: 'medium',
+    label: 'Medium',
+    range: '120–139',
+    desc: 'Greats',
+    emoji: '⭐',
+    accent: 'navy',
+  },
+  { tier: 'hard', label: 'Hard', range: '100–119', desc: '', emoji: '🔥', accent: 'red' },
+  { tier: 'expert', label: 'Expert', range: '70–99', desc: '', emoji: '💀', accent: 'yellow' },
 ]
 
-const GAME_MODES: { mode: GameMode; label: string; desc: string; emoji: string; color: string }[] = [
-  { mode: 'classic',      label: 'Classic',      desc: 'Guess the player from a single season', emoji: '🏒', color: '#e32437' },
-  { mode: 'career',       label: 'Career',       desc: 'Seasons revealed one by one — buzz in!', emoji: '📈', color: '#003087' },
-  { mode: 'h2h',          label: 'Head-to-Head', desc: 'Which stat line belongs to this player?', emoji: '🤼', color: '#ffcf33' },
-  { mode: 'higher-lower', label: 'Higher / Lower', desc: 'Did they score more or less?',        emoji: '⚖️', color: '#2cc66b' },
+const GAME_MODES: {
+  mode: GameMode
+  label: string
+  desc: string
+  emoji: string
+  accent: AccentColor
+}[] = [
+  {
+    mode: 'classic',
+    label: 'Classic',
+    desc: 'Guess the player from a single season',
+    emoji: '🏒',
+    accent: 'red',
+  },
+  {
+    mode: 'career',
+    label: 'Career',
+    desc: 'Seasons revealed one by one — buzz in!',
+    emoji: '📈',
+    accent: 'navy',
+  },
+  {
+    mode: 'h2h',
+    label: 'Head-to-Head',
+    desc: 'Which stat line belongs to this player?',
+    emoji: '🤼',
+    accent: 'yellow',
+  },
+  {
+    mode: 'higher-lower',
+    label: 'Higher / Lower',
+    desc: 'Did they score more or less?',
+    emoji: '⚖️',
+    accent: 'green',
+  },
 ]
 
 const HL_FIELDS: { value: HLComparisonField; label: string }[] = [
@@ -53,32 +113,17 @@ const HL_FIELDS: { value: HLComparisonField; label: string }[] = [
 ]
 
 const CAREER_REVEAL_ORDERS: { value: CareerRevealOrder; label: string }[] = [
-  { value: 'best-first',    label: 'Best First' },
-  { value: 'worst-first',   label: 'Worst First' },
+  { value: 'best-first', label: 'Best First' },
+  { value: 'worst-first', label: 'Worst First' },
   { value: 'chronological', label: 'Chronological' },
-  { value: 'random',        label: 'Random' },
+  { value: 'random', label: 'Random' },
 ]
-
-const BUNGEE = 'var(--font-bungee), "Bungee", sans-serif'
-const BODY = 'var(--font-body), "Space Grotesk", sans-serif'
-const MONO = 'var(--font-jetbrains-mono), "JetBrains Mono", monospace'
-const ARCHIVO = 'var(--font-archivo-black), "Archivo Black", sans-serif'
 
 // ─── Small section label (muted Archivo) ──────────────────────────────────────
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p
-      style={{
-        fontFamily: ARCHIVO,
-        fontSize: 10,
-        fontWeight: 900,
-        letterSpacing: '0.22em',
-        color: '#6b7ea0',
-        textTransform: 'uppercase',
-        margin: 0,
-      }}
-    >
+    <p className="m-0 font-display-alt text-[10px] font-black tracking-[0.22em] text-c-muted uppercase">
       {children}
     </p>
   )
@@ -100,32 +145,14 @@ function Toggle({
       disabled={disabled}
       onClick={onClick}
       aria-pressed={on}
-      style={{
-        width: 44,
-        height: 24,
-        borderRadius: 9999,
-        border: '2px solid #0a1535',
-        background: on ? '#2cc66b' : '#eef1f8',
-        position: 'relative',
-        padding: 0,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'background 0.1s',
-        opacity: disabled ? 0.6 : 1,
-        flexShrink: 0,
-      }}
+      className={`relative h-6 w-11 shrink-0 rounded-full border-2 border-c-ink p-0 transition-colors ${
+        on ? 'bg-c-green' : 'bg-c-disabled-fill'
+      } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
     >
       <span
-        style={{
-          position: 'absolute',
-          top: 1,
-          left: on ? 21 : 1,
-          width: 18,
-          height: 18,
-          borderRadius: '50%',
-          background: '#fff',
-          border: '2px solid #0a1535',
-          transition: 'left 0.1s',
-        }}
+        className={`absolute top-px size-[18px] rounded-full border-2 border-c-ink bg-white transition-[left] ${
+          on ? 'left-[21px]' : 'left-px'
+        }`}
       />
     </button>
   )
@@ -150,20 +177,13 @@ function SegBtn({
     <button
       disabled={disabled}
       onClick={onClick}
-      style={{
-        background: on ? '#003087' : '#fff',
-        color: on ? '#fff' : '#0a1535',
-        border: '2px solid #0a1535',
-        borderRadius: 9,
-        padding: small ? '6px 9px' : '8px 14px',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        boxShadow: on ? '0 3px 0 #0a1535' : '0 2px 0 rgba(10,21,53,0.25)',
-        fontFamily: BUNGEE,
-        fontSize: small ? 11 : 13,
-        lineHeight: 1,
-        transition: 'all 0.1s',
-        opacity: disabled ? 0.6 : 1,
-      }}
+      className={`rounded-[9px] border-2 border-c-ink font-display leading-none transition-all ${
+        small ? 'px-2.5 py-1.5 text-[11px]' : 'px-3.5 py-2 text-[13px]'
+      } ${
+        on
+          ? 'bg-c-navy text-white shadow-[0_3px_0_#0a1535]'
+          : 'bg-white text-c-ink shadow-[0_2px_0_rgba(10,21,53,0.25)]'
+      } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
     >
       {children}
     </button>
@@ -174,11 +194,9 @@ function SegBtn({
 
 function FormatRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-      <span style={{ fontFamily: BODY, fontWeight: 700, fontSize: 13, color: '#0a1535' }}>{label}</span>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-        {children}
-      </div>
+    <div className="flex items-center justify-between gap-3">
+      <span className="font-body text-[13px] font-bold text-c-ink">{label}</span>
+      <div className="flex flex-wrap items-center justify-end gap-1.5">{children}</div>
     </div>
   )
 }
@@ -235,8 +253,16 @@ export default function SetupPage({ params }: SetupPageProps) {
       }
     }
     fetchCount()
-    return () => { active = false }
-  }, [config.gameMode, config.difficultyTiers, config.eras, config.rookiesOnly, config.careerMinSeasons])
+    return () => {
+      active = false
+    }
+  }, [
+    config.gameMode,
+    config.difficultyTiers,
+    config.eras,
+    config.rookiesOnly,
+    config.careerMinSeasons,
+  ])
 
   const isHost = game?.hostId === myId || game?.hostId === ''
 
@@ -254,9 +280,9 @@ export default function SetupPage({ params }: SetupPageProps) {
   }
 
   const isClassic = config.gameMode === 'classic'
-  const isCareer  = config.gameMode === 'career'
-  const isH2H     = config.gameMode === 'h2h'
-  const isHL      = config.gameMode === 'higher-lower'
+  const isCareer = config.gameMode === 'career'
+  const isH2H = config.gameMode === 'h2h'
+  const isHL = config.gameMode === 'higher-lower'
 
   const needsTiers = isClassic || isH2H || isHL || isCareer
   const canStart =
@@ -274,36 +300,17 @@ export default function SetupPage({ params }: SetupPageProps) {
   const configSummary = `${modeLabel} · ${tiersLabel} · ${config.eras.length} ERA${config.eras.length === 1 ? '' : 'S'} · ${config.questionCount} Q`
 
   return (
-    <main className="ice-bg min-h-screen" style={{ padding: 22 }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-
+    <main className="ice-bg min-h-screen p-4 sm:p-5 md:p-[22px]">
+      <div className="mx-auto flex max-w-[1100px] flex-col gap-4">
         {/* ── Header ── */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <CBrand small />
-          <div className="flex items-center" style={{ gap: 10 }}>
+          <div className="flex flex-wrap items-center gap-2.5">
             <Button variant="ghost" size="sm" onClick={() => router.back()}>
               ◁ BACK
             </Button>
-            <div
-              style={{
-                background: '#fff',
-                border: '2px solid #0a1535',
-                borderRadius: 9999,
-                padding: '6px 14px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                boxShadow: '0 2px 0 rgba(10,21,53,0.25)',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: MONO,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  color: '#0a1535',
-                }}
-              >
+            <div className="inline-flex items-center rounded-full border-2 border-c-ink bg-white px-3.5 py-1.5 shadow-[0_2px_0_rgba(10,21,53,0.25)]">
+              <span className="font-mono text-xs font-bold tracking-[0.18em] text-c-ink">
                 ROOM · {roomId}
               </span>
             </div>
@@ -311,33 +318,11 @@ export default function SetupPage({ params }: SetupPageProps) {
         </div>
 
         {/* ── Title row ── */}
-        <div className="flex items-center" style={{ gap: 14 }}>
-          <span
-            style={{
-              display: 'inline-block',
-              background: '#ffcf33',
-              border: '2px solid #0a1535',
-              borderRadius: 9999,
-              padding: '4px 12px',
-              fontFamily: ARCHIVO,
-              fontSize: 10,
-              fontWeight: 900,
-              letterSpacing: '0.22em',
-              color: '#0a1535',
-              boxShadow: '0 2px 0 rgba(10,21,53,0.25)',
-            }}
-          >
+        <div className="flex flex-wrap items-center gap-3 sm:gap-3.5">
+          <span className="inline-block rounded-full border-2 border-c-ink bg-c-yellow px-3 py-1 font-display-alt text-[10px] font-black tracking-[0.22em] text-c-ink shadow-[0_2px_0_rgba(10,21,53,0.25)]">
             STEP 1 OF 2
           </span>
-          <h2
-            style={{
-              fontFamily: BUNGEE,
-              fontSize: 30,
-              lineHeight: 1,
-              color: '#0a1535',
-              margin: 0,
-            }}
-          >
+          <h2 className="m-0 font-display text-2xl leading-none text-c-ink sm:text-[26px] md:text-[30px]">
             SET UP YOUR GAME
           </h2>
         </div>
@@ -345,42 +330,27 @@ export default function SetupPage({ params }: SetupPageProps) {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+          className="flex flex-col gap-4"
         >
-          {/* ── Game-mode grid (4 cols) ── */}
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          {/* ── Game-mode grid ── */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {GAME_MODES.map((m) => {
               const on = config.gameMode === m.mode
-              const fg = on ? (m.color === '#ffcf33' ? '#0a1535' : '#fff') : '#0a1535'
               return (
                 <button
                   key={m.mode}
                   disabled={!isHost}
                   onClick={() => setConfig((c) => ({ ...c, gameMode: m.mode }))}
-                  style={{
-                    background: on ? m.color : '#fff',
-                    color: fg,
-                    border: '2px solid #0a1535',
-                    borderRadius: 14,
-                    padding: 16,
-                    cursor: isHost ? 'pointer' : 'not-allowed',
-                    boxShadow: on ? '0 5px 0 #0a1535' : '0 2px 0 rgba(10,21,53,0.25)',
-                    textAlign: 'left',
-                    transition: 'all 0.1s',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 6,
-                  }}
+                  className={`flex flex-col gap-1.5 rounded-[14px] border-2 border-c-ink p-4 text-left transition-all ${
+                    on
+                      ? `${ACCENT_BG[m.accent]} ${ACCENT_FG[m.accent]} shadow-[0_5px_0_#0a1535]`
+                      : 'bg-white text-c-ink shadow-[0_2px_0_rgba(10,21,53,0.25)]'
+                  } ${isHost ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                 >
-                  <span style={{ fontSize: 20, lineHeight: 1 }}>{m.emoji}</span>
-                  <div style={{ fontFamily: BUNGEE, fontSize: 15, lineHeight: 1 }}>{m.label}</div>
+                  <span className="text-xl leading-none">{m.emoji}</span>
+                  <div className="font-display text-[15px] leading-none">{m.label}</div>
                   <div
-                    style={{
-                      fontFamily: BODY,
-                      fontSize: 12,
-                      lineHeight: 1.35,
-                      opacity: on ? 0.9 : 0.7,
-                    }}
+                    className={`font-body text-xs leading-snug ${on ? 'opacity-90' : 'opacity-70'}`}
                   >
                     {m.desc}
                   </div>
@@ -390,65 +360,40 @@ export default function SetupPage({ params }: SetupPageProps) {
           </div>
 
           {/* ── Two-column area ── */}
-          <div className="grid gap-4" style={{ gridTemplateColumns: '1.1fr 0.9fr', alignItems: 'start' }}>
-
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.1fr_0.9fr]">
             {/* ── LEFT: Difficulty + Eras ── */}
-            <div
-              style={{
-                background: '#fff',
-                border: '2px solid #0a1535',
-                borderRadius: 16,
-                padding: 20,
-                boxShadow: '0 4px 0 #0a1535',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 18,
-              }}
-            >
+            <div className="card-puffy flex flex-col gap-4 bg-white p-4 sm:gap-[18px] sm:p-5">
               {/* Difficulty */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="flex flex-col gap-3">
                 <SectionLabel>Difficulty · Pick Any</SectionLabel>
-                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  {TIER_OPTIONS.map(({ tier, label, range, desc, emoji, color }) => {
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                  {TIER_OPTIONS.map(({ tier, label, range, desc, emoji, accent }) => {
                     const on = config.difficultyTiers.includes(tier)
-                    const fg = on ? (color === '#ffcf33' ? '#0a1535' : '#fff') : '#0a1535'
-                    const metaColor = on ? (color === '#ffcf33' ? 'rgba(10,21,53,0.75)' : 'rgba(255,255,255,0.85)') : '#6b7ea0'
                     const line = desc ? `${range} · ${desc.toUpperCase()}` : range
                     return (
                       <button
                         key={tier}
                         disabled={!isHost}
                         onClick={() =>
-                          setConfig((c) => ({ ...c, difficultyTiers: toggle(c.difficultyTiers, tier) }))
+                          setConfig((c) => ({
+                            ...c,
+                            difficultyTiers: toggle(c.difficultyTiers, tier),
+                          }))
                         }
-                        style={{
-                          background: on ? color : '#fff',
-                          color: fg,
-                          border: '2px solid #0a1535',
-                          borderRadius: 12,
-                          padding: '10px 9px',
-                          cursor: isHost ? 'pointer' : 'not-allowed',
-                          boxShadow: on ? '0 3px 0 #0a1535' : '0 2px 0 rgba(10,21,53,0.25)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 5,
-                          alignItems: 'flex-start',
-                          textAlign: 'left',
-                          transition: 'all 0.1s',
-                        }}
+                        className={`flex flex-col items-start gap-1.5 rounded-xl border-2 border-c-ink px-2 py-2.5 text-left transition-all sm:px-[9px] ${
+                          on
+                            ? `${ACCENT_BG[accent]} ${ACCENT_FG[accent]} shadow-px_0_#0a1535]`
+                            : 'bg-white text-c-ink shadow-[0_2px_0_rgba(10,21,53,0.25)]'
+                        } ${isHost ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                       >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <span style={{ fontSize: 14 }}>{emoji}</span>
-                          <span style={{ fontFamily: BUNGEE, fontSize: 12, lineHeight: 1 }}>{label}</span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-sm">{emoji}</span>
+                          <span className="font-display text-xs leading-none">{label}</span>
                         </span>
                         <span
-                          style={{
-                            fontFamily: MONO,
-                            fontSize: 9,
-                            fontWeight: 700,
-                            letterSpacing: '0.08em',
-                            color: metaColor,
-                          }}
+                          className={`font-mono text-[9px] font-bold tracking-[0.08em] ${
+                            on ? ACCENT_META[accent] : 'text-c-muted'
+                          }`}
                         >
                           {line}
                         </span>
@@ -457,16 +402,16 @@ export default function SetupPage({ params }: SetupPageProps) {
                   })}
                 </div>
                 {config.difficultyTiers.length === 0 && (
-                  <p style={{ color: '#e32437', fontSize: 12, margin: 0, fontFamily: BODY }}>
+                  <p className="m-0 font-body text-xs text-c-red">
                     Select at least one difficulty tier
                   </p>
                 )}
               </div>
 
               {/* Eras */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="flex flex-col gap-2.5">
                 <SectionLabel>Eras</SectionLabel>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <div className="flex flex-wrap gap-2">
                   {['1970s', '1980s', '1990s', '2000s', '2010s', '2020s'].map((era) => {
                     const on = config.eras.includes(era)
                     return (
@@ -474,47 +419,26 @@ export default function SetupPage({ params }: SetupPageProps) {
                         key={era}
                         disabled={!isHost}
                         onClick={() => setConfig((c) => ({ ...c, eras: toggle(c.eras, era) }))}
-                        style={{
-                          background: on ? '#003087' : '#eef1f8',
-                          color: on ? '#fff' : '#6b7ea0',
-                          border: `2px solid ${on ? '#0a1535' : '#9aa2bd'}`,
-                          borderRadius: 9999,
-                          padding: '6px 13px',
-                          cursor: isHost ? 'pointer' : 'not-allowed',
-                          boxShadow: on ? '0 2px 0 #0a1535' : 'none',
-                          fontFamily: MONO,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          letterSpacing: '0.08em',
-                          transition: 'all 0.1s',
-                        }}
+                        className={`rounded-full border-2 px-3 py-1.5 font-mono text-xs font-bold tracking-[0.08em] transition-all ${
+                          on
+                            ? 'border-c-ink bg-c-navy text-white shadow-[0_2px_0_#0a1535]'
+                            : 'border-c-disabled-border bg-c-disabled-fill text-c-muted'
+                        } ${isHost ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                       >
-                        {era}{on ? ' ✓' : ''}
+                        {era}
+                        {on ? ' ✓' : ''}
                       </button>
                     )
                   })}
                 </div>
                 {config.eras.length === 0 && (
-                  <p style={{ color: '#e32437', fontSize: 12, margin: 0, fontFamily: BODY }}>
-                    Select at least one era
-                  </p>
+                  <p className="m-0 font-body text-xs text-c-red">Select at least one era</p>
                 )}
               </div>
             </div>
 
             {/* ── RIGHT: Format ── */}
-            <div
-              style={{
-                background: '#fff',
-                border: '2px solid #0a1535',
-                borderRadius: 16,
-                padding: 20,
-                boxShadow: '0 4px 0 #0a1535',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-              }}
-            >
+            <div className="card-puffy flex flex-col gap-4 bg-white p-4 sm:p-5">
               <SectionLabel>Format</SectionLabel>
 
               {/* Questions */}
@@ -533,10 +457,12 @@ export default function SetupPage({ params }: SetupPageProps) {
 
               {/* Answers */}
               <FormatRow label="Answers">
-                {([
-                  { value: 'multiplechoice', label: 'MULTIPLE CHOICE' },
-                  { value: 'freetext',        label: 'TYPE IT' },
-                ] as { value: AnswerMode; label: string }[]).map(({ value, label }) => (
+                {(
+                  [
+                    { value: 'multiplechoice', label: 'MULTIPLE CHOICE' },
+                    { value: 'freetext', label: 'TYPE IT' },
+                  ] as { value: AnswerMode; label: string }[]
+                ).map(({ value, label }) => (
                   <SegBtn
                     key={value}
                     on={config.answerMode === value}
@@ -553,10 +479,12 @@ export default function SetupPage({ params }: SetupPageProps) {
               {isClassic && (
                 <>
                   <FormatRow label="Stats reveal">
-                    {([
-                      { value: 'instant', label: 'ALL AT ONCE' },
-                      { value: 'timed',   label: 'TIMED' },
-                    ] as { value: RevealMode; label: string }[]).map(({ value, label }) => (
+                    {(
+                      [
+                        { value: 'instant', label: 'ALL AT ONCE' },
+                        { value: 'timed', label: 'TIMED' },
+                      ] as { value: RevealMode; label: string }[]
+                    ).map(({ value, label }) => (
                       <SegBtn
                         key={value}
                         on={config.revealMode === value}
@@ -569,13 +497,13 @@ export default function SetupPage({ params }: SetupPageProps) {
                     ))}
                   </FormatRow>
 
-                  <FormatRow label="Rookies only">
+                  {/* <FormatRow label="Rookies only">
                     <Toggle
                       on={config.rookiesOnly}
                       onClick={() => setConfig((c) => ({ ...c, rookiesOnly: !c.rookiesOnly }))}
                       disabled={!isHost}
                     />
-                  </FormatRow>
+                  </FormatRow> */}
 
                   <FormatRow label="Hints">
                     <Toggle
@@ -672,55 +600,23 @@ export default function SetupPage({ params }: SetupPageProps) {
           </div>
 
           {/* ── Start bar ── */}
-          <div
-            style={{
-              background: '#0a1535',
-              borderRadius: 14,
-              padding: '14px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
-              flexWrap: 'wrap',
-              boxShadow: '0 2px 0 rgba(10,21,53,0.25)',
-            }}
-          >
+          <div className="fixed bottom-4 left-4 right-4 flex flex-wrap items-center gap-3 rounded-[14px] bg-c-ink px-4 py-3.5 shadow-[0_2px_0_rgba(10,21,53,0.25)] sm:gap-4 sm:px-[18px] sm:py-3.5">
             {availableCount !== null && (
-              <span
-                style={{
-                  background: '#2cc66b',
-                  color: '#0a1535',
-                  border: '2px solid #0a1535',
-                  borderRadius: 9999,
-                  padding: '5px 12px',
-                  fontFamily: ARCHIVO,
-                  fontSize: 10,
-                  fontWeight: 900,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                }}
-              >
+              <span className="rounded-full border-2 border-c-ink bg-c-green px-3 py-1.5 font-display-alt text-[10px] font-black tracking-[0.14em] text-c-ink uppercase">
                 ✓ {availableCount} PLAYERS IN POOL
               </span>
             )}
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                color: '#9fb3d9',
-              }}
-            >
+            <span className="font-mono text-xs font-bold tracking-[0.12em] text-[#9fb3d9]">
               {configSummary}
             </span>
-            <div style={{ marginLeft: 'auto' }}>
+            <div className="w-full sm:ml-auto sm:w-auto">
               {isHost ? (
                 <Button
                   variant="primary"
                   size="md"
                   onClick={handleStart}
                   disabled={!canStart || starting}
-                  style={{ border: '2px solid #fff' }}
+                  className="w-full border-2 border-white sm:w-auto"
                 >
                   {starting
                     ? 'STARTING…'
@@ -729,15 +625,7 @@ export default function SetupPage({ params }: SetupPageProps) {
                       : 'CONTINUE TO LOBBY →'}
                 </Button>
               ) : (
-                <span
-                  style={{
-                    fontFamily: MONO,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    letterSpacing: '0.16em',
-                    color: '#9fb3d9',
-                  }}
-                >
+                <span className="block text-center font-mono text-xs font-bold tracking-[0.16em] text-[#9fb3d9] sm:text-left">
                   WAITING FOR HOST…
                 </span>
               )}

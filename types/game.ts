@@ -28,8 +28,8 @@ export type Question = {
   firstName: string
   lastName: string
   seasonId: number
-  season: string         // "1985-86"
-  era: string            // "1980s"
+  season: string // "1985-86"
+  era: string // "1980s"
   positionCode: string
   teamAbbrevs: string
   teamNames: string
@@ -39,7 +39,7 @@ export type Question = {
   assists: number
   penaltyMinutes: number
   difficulty: DifficultyTier
-  choices?: string[]  // pre-generated multiple choice options (embedded at question generation)
+  choices?: string[] // pre-generated multiple choice options (embedded at question generation)
 }
 
 // ─── Career Question (grouped player seasons) ─────────────────────────────────
@@ -49,7 +49,7 @@ export type CareerQuestion = {
   firstName: string
   lastName: string
   totalCareerPoints: number
-  seasons: Question[]  // ordered per careerRevealOrder setting
+  seasons: Question[] // ordered per careerRevealOrder setting
 }
 
 // ─── Head-to-Head Pair ────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ export type CareerQuestion = {
 export type H2HPair = {
   left: Question
   right: Question
-  targetName: string          // the name revealed to players ("Which is [targetName]?")
+  targetName: string // the name revealed to players ("Which is [targetName]?")
   correctSide: 'left' | 'right'
 }
 
@@ -89,9 +89,9 @@ export type Player = {
 export type GameState = {
   roomId: string
   hostId: string
-  bossId: string        // '' if no boss set
-  bossToken: string     // random token for boss claim URL
-  hostPlays: boolean    // whether the host also joins as a scoring player
+  bossId: string // '' if no boss set
+  bossToken: string // random token for boss claim URL
+  hostPlays: boolean // whether the host also joins as a scoring player
 
   // Players — stored as LiveList<Player> in Liveblocks
   players: Player[]
@@ -131,8 +131,8 @@ export type GameState = {
   questionSequence: Question[]
   currentQuestion: Question | null
   currentQuestionIndex: number
-  revealedColumns: number   // 0–5
-  questionStartsAt: string  // ISO timestamp or ''
+  revealedColumns: number // 0–5
+  questionStartsAt: string // ISO timestamp or ''
 
   // Multiple choice options (4 player name strings, shuffled)
   choices: string[]
@@ -142,12 +142,12 @@ export type GameState = {
   answeredAt: Record<string, number> // playerId → elapsed ms from questionStartsAt
 
   // Hints revealed this round (shared across all players)
-  hintsUsed: string[]  // HintType[]
+  hintsUsed: string[] // HintType[]
 
   // Powerups
-  playerPowerups: Record<string, Record<string, number>>  // playerId → PowerupType → charges
+  playerPowerups: Record<string, Record<string, number>> // playerId → PowerupType → charges
   activePowerup: { type: PowerupType; playerId: string } | null
-  playerEliminatedChoices: Record<string, string[]>  // playerId → player names removed from choices
+  playerEliminatedChoices: Record<string, string[]> // playerId → player names removed from choices
   freezeActive: boolean
 
   // Played questions (for history/rematch)
@@ -157,20 +157,20 @@ export type GameState = {
   questionHistory: QuestionResult[]
 
   // ─── Career Mode ───────────────────────────────────────────────────────────
-  careerData: CareerQuestion[]     // parallel to questionSequence (one entry per round)
-  careerSeasons: Question[]        // current round's ordered seasons
-  revealedSeasonCount: number      // how many seasons revealed so far this round
-  buzzedInPlayerId: string         // '' if nobody has buzzed in
-  buzzedInSeasonCount: number      // revealedSeasonCount at time of buzz-in (for scoring)
-  lockedOutPlayers: string[]       // players who guessed wrong this round
+  careerData: CareerQuestion[] // parallel to questionSequence (one entry per round)
+  careerSeasons: Question[] // current round's ordered seasons
+  revealedSeasonCount: number // how many seasons revealed so far this round
+  buzzedInPlayerId: string // '' if nobody has buzzed in
+  buzzedInSeasonCount: number // revealedSeasonCount at time of buzz-in (for scoring)
+  lockedOutPlayers: string[] // players who guessed wrong this round
 
   // ─── Head-to-Head Mode ────────────────────────────────────────────────────
-  h2hPairs: H2HPair[]              // parallel to questionSequence
-  h2hCurrentPair: H2HPair | null   // current round's pair
+  h2hPairs: H2HPair[] // parallel to questionSequence
+  h2hCurrentPair: H2HPair | null // current round's pair
 
   // ─── Higher/Lower Mode ────────────────────────────────────────────────────
-  hlPairs: HLPair[]                // parallel to questionSequence
-  hlCurrentPair: HLPair | null     // current round's pair
+  hlPairs: HLPair[] // parallel to questionSequence
+  hlCurrentPair: HLPair | null // current round's pair
 }
 
 // ─── Question Result ─────────────────────────────────────────────────────────
@@ -184,7 +184,7 @@ export type QuestionResult = {
 
 export type UserPresence = {
   isConnected: boolean
-  lastSeen: string  // ISO timestamp
+  lastSeen: string // ISO timestamp
 }
 
 // ─── Setup Config (subset used in the setup form) ────────────────────────────
@@ -221,16 +221,16 @@ export const DEFAULT_SETUP: GameSetupConfig = {
   careerMinSeasons: 5,
   careerMaxReveals: 8,
   hlComparisonField: 'points',
-  hostPlays: true,
+  hostPlays: false,
 }
 
 // ─── Scoring ─────────────────────────────────────────────────────────────────
 
 // Base points by tier — harder questions earn more (Classic mode)
 export const SCORE_BASE_BY_TIER: Record<DifficultyTier, number> = {
-  easy:   80,
+  easy: 80,
   medium: 100,
-  hard:   130,
+  hard: 130,
   expert: 160,
 }
 export const SCORE_SPEED_MAX = 50
@@ -241,10 +241,10 @@ export const SCORE_DOUBLEDOWN_WRONG = -50
 
 // Career mode scoring tiers (based on fraction of seasons revealed when buzzing)
 export const CAREER_SCORE_TIERS = {
-  tier1: 150,  // first 25% of reveals
-  tier2: 100,  // 25–50%
-  tier3: 75,   // 50–75%
-  tier4: 50,   // last 25%
+  tier1: 150, // first 25% of reveals
+  tier2: 100, // 25–50%
+  tier3: 75, // 50–75%
+  tier4: 50, // last 25%
 }
 export const CAREER_REVEAL_INTERVAL_MS = 8_000
 

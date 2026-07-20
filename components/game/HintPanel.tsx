@@ -47,9 +47,9 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint }: 
   if (!hintsEnabled) return null
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 mt-8">
       <p className="text-xs font-bold uppercase tracking-widest text-game-text-muted flex items-center gap-1.5">
-        <span>💡</span> Hints
+        Hints
         {usedHints.length > 0 && <span className="text-game-gold">({usedHints.length} used)</span>}
       </p>
 

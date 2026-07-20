@@ -747,13 +747,13 @@ function GamePageDock({
       icon: <Eye size={24} />,
       label: 'Reveal',
       onClick: onReveal,
-      className: 'bg-c-red border-2 border-c-ink text-white',
+      className: 'bg-c-red text-white',
     })
     items.push({
       icon: <SkipForward size={24} />,
       label: 'Skip',
       onClick: onSkip,
-      className: 'bg-c-yellow border-2 border-c-ink text-c-ink',
+      className: 'bg-c-yellow text-c-ink',
     })
   }
 
@@ -762,7 +762,7 @@ function GamePageDock({
       icon: <ChevronRight size={24} />,
       label: nextLabel,
       onClick: onNext,
-      className: 'bg-c-navy border-2 border-c-ink text-white',
+      className: 'bg-c-navy text-white',
     })
   }
 
@@ -771,13 +771,13 @@ function GamePageDock({
       icon: <RotateCcw size={24} />,
       label: 'Play Again',
       onClick: onRematch,
-      className: 'bg-c-red border-2 border-c-ink text-white',
+      className: 'bg-c-red text-white',
     })
     items.push({
       icon: <Settings size={24} />,
       label: 'Settings',
       onClick: onSettings,
-      className: 'bg-white border-2 border-c-ink text-c-ink',
+      className: 'bg-white text-c-ink',
     })
   }
 
@@ -786,7 +786,7 @@ function GamePageDock({
   return (
     <div className="fixed bottom-0 left-0 right-0 flex flex-col items-center pb-4 pointer-events-none z-50">
       <div className="pointer-events-auto">
-        <Dock items={items} baseItemSize={52} magnification={68} panelHeight={68} distance={130} />
+        <Dock items={items} />
       </div>
     </div>
   )

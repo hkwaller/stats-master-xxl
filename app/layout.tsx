@@ -39,6 +39,9 @@ export const metadata: Metadata = {
     title: 'Stats Master',
     description: 'Multiplayer NHL statistics trivia — guess the player from their stats',
   },
+  icons: {
+    icon: '/favicon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
