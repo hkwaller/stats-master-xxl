@@ -43,7 +43,7 @@ const TIERS: {
     name: 'Yearly',
     price: '299 kr',
     cadence: 'per year',
-    blurb: 'Best value — over a third off the monthly price.',
+    blurb: 'Best value - over a third off the monthly price.',
     accent: '#ffcf33',
   },
 ]
@@ -164,8 +164,8 @@ function GoAdFreeInner() {
               maxWidth: 460,
             }}
           >
-            Ditch the banners and popups. Host a game ad-free and your whole room
-            plays clean — the perk covers everyone you invite.
+            Ditch the banners and popups. Host a game ad-free and your whole room plays clean - the
+            perk covers everyone you invite.
           </p>
         </div>
 
@@ -219,12 +219,10 @@ function GoAdFreeInner() {
           <>
             {status === 'cancelled' && (
               <p className="text-center text-sm text-[#e32437] font-bold mb-4">
-                Checkout cancelled — no charge was made.
+                Checkout cancelled - no charge was made.
               </p>
             )}
-            {error && (
-              <p className="text-center text-sm text-[#e32437] font-bold mb-4">{error}</p>
-            )}
+            {error && <p className="text-center text-sm text-[#e32437] font-bold mb-4">{error}</p>}
 
             <div className="grid gap-5 md:grid-cols-3">
               {TIERS.map((tier) => (
@@ -291,7 +289,10 @@ function GoAdFreeInner() {
                   <div className="mt-5">
                     {!isSignedIn ? (
                       <SignInButton mode="modal">
-                        <Button variant={tier.featured ? 'primary' : 'secondary'} className="w-full">
+                        <Button
+                          variant={tier.featured ? 'primary' : 'secondary'}
+                          className="w-full"
+                        >
                           Sign in to buy
                         </Button>
                       </SignInButton>
@@ -316,7 +317,7 @@ function GoAdFreeInner() {
 
             {!isSignedIn && (
               <p className="text-center text-xs text-[#6b7ea0] mt-6">
-                Sign-in is required to purchase — it links the ad-free perk to your account.
+                Sign-in is required to purchase - it links the ad-free perk to your account.
               </p>
             )}
           </>

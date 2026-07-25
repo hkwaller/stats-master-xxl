@@ -35,12 +35,12 @@ const jetbrainsMono = JetBrains_Mono({
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.statsmaster.site'
 
 const DESCRIPTION =
-  'Free multiplayer NHL trivia. Five stats, four names, twelve seconds — guess the hockey legend before your friends do. Play 2–8 players from any device.'
+  'Free multiplayer NHL trivia. Five stats, four names, twelve seconds - guess the hockey legend before your friends do. Play 2–8 players from any device.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Stats Master — Multiplayer NHL Stats Trivia',
+    default: 'Stats Master - Multiplayer NHL Stats Trivia',
     template: '%s | Stats Master',
   },
   description: DESCRIPTION,
@@ -53,12 +53,12 @@ export const metadata: Metadata = {
     siteName: 'Stats Master',
     locale: 'en_US',
     url: '/',
-    title: 'Stats Master — Multiplayer NHL Stats Trivia',
+    title: 'Stats Master - Multiplayer NHL Stats Trivia',
     description: DESCRIPTION,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Stats Master — Multiplayer NHL Stats Trivia',
+    title: 'Stats Master - Multiplayer NHL Stats Trivia',
     description: DESCRIPTION,
   },
   robots: {

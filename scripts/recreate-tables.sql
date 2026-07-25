@@ -3,7 +3,7 @@
 -- Safe to re-run: uses IF NOT EXISTS.
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 1. nhl_player_seasons — the full NHL player-season dataset (~46,704 rows)
+-- 1. nhl_player_seasons - the full NHL player-season dataset (~46,704 rows)
 --    Reload data afterwards with: node scripts/load-to-supabase.mjs
 -- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists public.nhl_player_seasons (
@@ -34,7 +34,7 @@ create index if not exists idx_nps_player_id  on public.nhl_player_seasons (play
 create index if not exists idx_nps_rookie     on public.nhl_player_seasons (rookie_flag);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 2. nhl_stats_master_daily_challenge_scores — one row per user per day
+-- 2. nhl_stats_master_daily_challenge_scores - one row per user per day
 --    Written/read by app/actions/daily-challenge-actions.ts
 -- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists public.nhl_stats_master_daily_challenge_scores (

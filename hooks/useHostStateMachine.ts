@@ -62,7 +62,7 @@ export function useHostStateMachine(
     if (nextIndex >= sequence.length) return
     const nextQ = sequence[nextIndex]
     nextQuestion({ requesterId: myId, choices: nextQ.choices ?? [] })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, game?.command, gameMode])
 
   // Career: launch next career round
@@ -70,10 +70,10 @@ export function useHostStateMachine(
     if (!isHost || !game || gameMode !== 'career') return
     if (game.command !== 'question' && game.command !== 'next') return
     nextCareerRound({ requesterId: myId })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, game?.command, gameMode])
 
-  // Career: reveal timer — reveals one season every CAREER_REVEAL_INTERVAL_MS
+  // Career: reveal timer - reveals one season every CAREER_REVEAL_INTERVAL_MS
   useEffect(() => {
     if (!isHost || !game || gameMode !== 'career') return
     if (game.command !== 'answering') return
@@ -89,7 +89,7 @@ export function useHostStateMachine(
     }, CAREER_REVEAL_INTERVAL_MS)
 
     return () => clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, game?.command, gameMode, revealedSeasonCount, careerSeasons.length])
 
   // H2H: launch next round
@@ -97,7 +97,7 @@ export function useHostStateMachine(
     if (!isHost || !game || gameMode !== 'h2h') return
     if (game.command !== 'question' && game.command !== 'next') return
     nextH2HRound({ requesterId: myId })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, game?.command, gameMode])
 
   // HL: launch next round
@@ -105,7 +105,7 @@ export function useHostStateMachine(
     if (!isHost || !game || gameMode !== 'higher-lower') return
     if (game.command !== 'question' && game.command !== 'next') return
     nextHLRound({ requesterId: myId })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, game?.command, gameMode])
 
   // Auto-reveal when all connected players have answered (non-career)
@@ -124,6 +124,6 @@ export function useHostStateMachine(
         revealAnswers(myId)
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, game?.command, answeredCount, gameMode, myId])
 }

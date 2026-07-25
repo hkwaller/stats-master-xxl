@@ -6,7 +6,7 @@
  * Usage: node scripts/scrape-nhl.mjs
  * Takes ~5-10 minutes. Output: scores.js in project root.
  *
- * Safe to interrupt and resume — state is checkpointed every 5 seasons.
+ * Safe to interrupt and resume - state is checkpointed every 5 seasons.
  */
 
 import { writeFileSync, existsSync, readFileSync, renameSync } from 'fs'
@@ -93,7 +93,7 @@ function resolveTeamNames(abbrevs) {
 function allSeasonIds() {
   const ids = []
   for (let y = 1917; y <= 2025; y++) {
-    if (y === 2004) continue // lockout — no season
+    if (y === 2004) continue // lockout - no season
     ids.push(y * 10000 + (y + 1))
   }
   return ids
@@ -165,7 +165,7 @@ async function main() {
   // Graceful shutdown
   process.on('SIGINT', () => {
     saveCheckpoint()
-    console.log('\nInterrupted — checkpoint saved.')
+    console.log('\nInterrupted - checkpoint saved.')
     process.exit(0)
   })
   process.on('SIGTERM', () => {
@@ -179,7 +179,7 @@ async function main() {
 
     if (completedSeasons[key] !== undefined) {
       process.stdout.write(
-        `  [${i + 1}/${seasons.length}] ${seasonId} — skipped (${completedSeasons[key]} records)\n`,
+        `  [${i + 1}/${seasons.length}] ${seasonId} - skipped (${completedSeasons[key]} records)\n`,
       )
       continue
     }
@@ -232,7 +232,7 @@ async function main() {
 
       if ((i + 1) % 5 === 0) saveCheckpoint()
     } catch (e) {
-      process.stdout.write(`ERROR — ${e.message}\n`)
+      process.stdout.write(`ERROR - ${e.message}\n`)
     }
 
     await sleep(200) // ~200ms between seasons
@@ -243,7 +243,7 @@ async function main() {
   // ─── Sanity check ──────────────────────────────────────────────────────────
   if (allRecords.length < 5000) {
     console.error(
-      `\nAborted: only ${allRecords.length} records — looks incomplete. Check errors above.`,
+      `\nAborted: only ${allRecords.length} records - looks incomplete. Check errors above.`,
     )
     process.exit(1)
   }
@@ -291,7 +291,7 @@ async function main() {
   console.log(`  70+ point seasons: ${seasons70plus.toLocaleString()}`)
   console.log(`  Active players   : ${activePlayers.size}`)
   if (missedSeasons.length) {
-    console.log(`  ⚠ Failed seasons : ${missedSeasons.length} — ${missedSeasons.join(', ')}`)
+    console.log(`  ⚠ Failed seasons : ${missedSeasons.length} - ${missedSeasons.join(', ')}`)
   }
   console.log(`  Output           : scores.js`)
   console.log(`\nCheckpoint saved at scripts/.scrape-checkpoint.json (delete when done)\n`)

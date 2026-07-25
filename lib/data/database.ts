@@ -101,7 +101,7 @@ function mapRecord(r: RawStatsRecord): Question {
   }
 }
 
-// ─── Public API — Classic ─────────────────────────────────────────────────────
+// ─── Public API - Classic ─────────────────────────────────────────────────────
 
 export async function getQuestionsByTiers(
   tiers: DifficultyTier[],
@@ -146,7 +146,7 @@ export async function getQuestionById(id: string): Promise<Question | undefined>
   return mapRecord(dbToRaw(data as DbRow))
 }
 
-/** Unique player names for typeahead search — filtered by difficulty tier */
+/** Unique player names for typeahead search - filtered by difficulty tier */
 export async function getPlayerNamesByTiers(tiers: DifficultyTier[]): Promise<string[]> {
   if (tiers.length === 0) return []
 

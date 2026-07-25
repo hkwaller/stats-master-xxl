@@ -8,7 +8,7 @@ const players = rawPlayers as PlayerEntry[]
 
 // Normalise career points to [0, 1] so they can be blended with Fuse scores.
 // Fuse score: 0 = perfect match, 1 = no match.
-// pointsScore: 0 = most career points, 1 = fewest — same direction.
+// pointsScore: 0 = most career points, 1 = fewest - same direction.
 const maxPts = Math.max(...players.map((p) => p.pts))
 const playersWithRank = players.map((p) => ({
   ...p,
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     .search(query)
     .map((r) => ({
       name: r.item.name,
-      // 60% fuzzy relevance, 40% career points — keeps exact matches first
+      // 60% fuzzy relevance, 40% career points - keeps exact matches first
       // but bubbles up famous players when scores are close
       combined: (r.score ?? 0) * 0.6 + r.item.pointsScore * 0.4,
     }))

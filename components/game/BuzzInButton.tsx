@@ -75,7 +75,7 @@ export function BuzzInButton({
     return (
       <div className="bg-game-red/10 border-4 border-game-red text-center py-6 px-4">
         <p className="text-game-red font-bold text-lg uppercase tracking-widest">Locked Out</p>
-        <p className="text-game-red/70 text-sm mt-1">Wrong guess — watch the remaining reveals</p>
+        <p className="text-game-red/70 text-sm mt-1">Wrong guess - watch the remaining reveals</p>
       </div>
     )
   }
@@ -165,9 +165,11 @@ export function BuzzInButton({
     )
   }
 
-  // Default: buzz-in button — fixed to bottom of screen
+  // Default: buzz-in button - fixed to bottom of screen
   return (
-    <div className={`fixed left-0 right-0 z-40 p-3 pb-safe bg-game-bg/90 backdrop-blur-sm border-t-4 border-black ${offsetForDock ? 'bottom-20' : 'bottom-0'}`}>
+    <div
+      className={`fixed left-0 right-0 z-40 p-3 pb-safe bg-game-bg/90 backdrop-blur-sm border-t-4 border-black ${offsetForDock ? 'bottom-20' : 'bottom-0'}`}
+    >
       <motion.button
         onClick={onBuzzIn}
         whileTap={{ scale: 0.95 }}

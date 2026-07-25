@@ -67,7 +67,7 @@ body {
   background: linear-gradient(180deg, #f4f8ff 0%, #eaf2ff 60%, #e0ebff 100%);
 }
 
-/* ── Card treatments — one hard offset shadow per element class, no blur ───── */
+/* ── Card treatments - one hard offset shadow per element class, no blur ───── */
 .card-puffy {
   border: 2px solid #0a1535;
   box-shadow: 0 4px 0 #0a1535;

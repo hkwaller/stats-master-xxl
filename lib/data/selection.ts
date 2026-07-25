@@ -14,7 +14,7 @@ export class QuestionSelector {
     this.usedIds = new Set(excludeIds)
   }
 
-  /** Factory — use instead of `new QuestionSelector(...)` */
+  /** Factory - use instead of `new QuestionSelector(...)` */
   static async create(
     tiers: DifficultyTier[],
     eras?: string[],

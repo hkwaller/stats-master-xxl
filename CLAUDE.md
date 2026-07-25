@@ -4,24 +4,24 @@ Multiplayer trivia game where players guess NHL players from revealed statistics
 
 ## Data Source
 
-Player-season data lives in the **Supabase `nhl_player_seasons` table** — 46,704 records covering the complete NHL history (1917-18 → 2024-25, all scoring levels).
+Player-season data lives in the **Supabase `nhl_player_seasons` table** - 46,704 records covering the complete NHL history (1917-18 → 2024-25, all scoring levels).
+
 - All data access goes through `lib/data/database.ts` (server-only, async functions)
 - Classic mode queries rows with `points >= 70` (2,182 records)
 - Career mode queries all seasons per player (full careers)
 - To refresh data: `node scripts/scrape-nhl.mjs` then `node scripts/load-to-supabase.mjs` then `node scripts/generate-player-names.mjs`
-- Player autocomplete uses `lib/data/player-names.json` (7,745 unique players) — regenerate with the script above after a data refresh
+- Player autocomplete uses `lib/data/player-names.json` (7,745 unique players) - regenerate with the script above after a data refresh
 
-`lib/data/database.ts` is marked `server-only` — never import it in client components.
-Client-side player search uses the API route `/api/players/search`.
+`lib/data/database.ts` is marked `server-only` - never import it in client components. Client-side player search uses the API route `/api/players/search`.
 
 ## Difficulty Tiers
 
-| Tier   | Points |
-|--------|--------|
-| easy   | 140+   |
-| medium | 120–139|
-| hard   | 100–119|
-| expert | 70–99  |
+| Tier   | Points  |
+| ------ | ------- |
+| easy   | 140+    |
+| medium | 120–139 |
+| hard   | 100–119 |
+| expert | 70–99   |
 
 ## Game State Machine
 
@@ -32,12 +32,12 @@ idle → starting → question → answering → revealing → next → (loop or
 ## Liveblocks Storage
 
 Storage key is `game` (not `gameState`). Access in mutations:
+
 ```ts
 const game = storage.get('game') as unknown as LiveObject<GameState>
 ```
 
-`players` is a `LiveList<Player>` — always use the self-healing pattern before operating on it.
-`questionSequence`, `answers`, `answeredAt`, `hintsUsed`, `playerPowerups` are plain objects/arrays.
+`players` is a `LiveList<Player>` - always use the self-healing pattern before operating on it. `questionSequence`, `answers`, `answeredAt`, `hintsUsed`, `playerPowerups` are plain objects/arrays.
 
 ## Scoring
 
@@ -54,7 +54,7 @@ Normalize: lowercase + trim + collapse spaces. Accept full name OR last name onl
 ## Route Structure
 
 ```
-/                             Landing — create or join room
+/                             Landing - create or join room
 /[roomId]/setup               Host configures game
 /[roomId]/lobby               Players wait + QR code
 /[roomId]/connect             Mobile join page (no ads)

@@ -84,7 +84,7 @@ const GAME_MODES: {
   {
     mode: 'career',
     label: 'Career',
-    desc: 'Seasons revealed one by one — buzz in!',
+    desc: 'Seasons revealed one by one - buzz in!',
     emoji: '📈',
     accent: 'navy',
   },
@@ -224,7 +224,7 @@ export default function SetupPage({ params }: SetupPageProps) {
     setMyId(guest.id)
   }, [params])
 
-  // Live pool count — mode-aware
+  // Live pool count - mode-aware
   useEffect(() => {
     let active = true
     async function fetchCount() {
@@ -296,7 +296,7 @@ export default function SetupPage({ params }: SetupPageProps) {
   const tiersLabel =
     config.difficultyTiers.length > 0
       ? config.difficultyTiers.map((t) => t.toUpperCase()).join(' + ')
-      : '—'
+      : '-'
   const configSummary = `${modeLabel} · ${tiersLabel} · ${config.eras.length} ERA${config.eras.length === 1 ? '' : 'S'} · ${config.questionCount} Q`
 
   return (

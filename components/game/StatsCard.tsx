@@ -14,10 +14,10 @@ const COLUMNS: {
   abbr: string
   highlight: boolean
 }[] = [
-  { key: 'gamesPlayed',    abbr: 'GP',  highlight: false },
-  { key: 'goals',          abbr: 'G',   highlight: false },
-  { key: 'assists',        abbr: 'A',   highlight: false },
-  { key: 'points',         abbr: 'PTS', highlight: true  },
+  { key: 'gamesPlayed', abbr: 'GP', highlight: false },
+  { key: 'goals', abbr: 'G', highlight: false },
+  { key: 'assists', abbr: 'A', highlight: false },
+  { key: 'points', abbr: 'PTS', highlight: true },
   { key: 'penaltyMinutes', abbr: 'PIM', highlight: false },
 ]
 
@@ -45,12 +45,7 @@ export function StatsCard({ question, revealedColumns }: StatsCardProps) {
                 </motion.div>
               ) : (
                 <motion.div key="hidden">
-                  <StatTile
-                    abbr={col.abbr}
-                    value="—"
-                    highlight={col.highlight}
-                    hidden
-                  />
+                  <StatTile abbr={col.abbr} value="-" highlight={col.highlight} hidden />
                 </motion.div>
               )}
             </AnimatePresence>

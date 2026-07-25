@@ -93,14 +93,14 @@ export type GameState = {
   bossToken: string // random token for boss claim URL
   hostPlays: boolean // whether the host also joins as a scoring player
 
-  // Players — stored as LiveList<Player> in Liveblocks
+  // Players - stored as LiveList<Player> in Liveblocks
   players: Player[]
 
   command: GameCommand
   countdownTime: number
   reveal: boolean
 
-  // Monetization: true when the host is ad-free at game start — suppresses
+  // Monetization: true when the host is ad-free at game start - suppresses
   // in-game ads for everyone in the room (host's Pro perk). Reset on rematch.
   hostAdFree: boolean
 
@@ -137,7 +137,7 @@ export type GameState = {
   // Multiple choice options (4 player name strings, shuffled)
   choices: string[]
 
-  // Answers (simultaneous model — playerId → answer text)
+  // Answers (simultaneous model - playerId → answer text)
   answers: Record<string, string>
   answeredAt: Record<string, number> // playerId → elapsed ms from questionStartsAt
 
@@ -226,7 +226,7 @@ export const DEFAULT_SETUP: GameSetupConfig = {
 
 // ─── Scoring ─────────────────────────────────────────────────────────────────
 
-// Base points by tier — harder questions earn more (Classic mode)
+// Base points by tier - harder questions earn more (Classic mode)
 export const SCORE_BASE_BY_TIER: Record<DifficultyTier, number> = {
   easy: 80,
   medium: 100,

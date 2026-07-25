@@ -31,14 +31,14 @@ const POWERUPS: {
     type: 'doubledown',
     emoji: '💰',
     label: 'Double Down',
-    description: '2× points if correct — lose 50 if wrong',
+    description: '2× points if correct - lose 50 if wrong',
     availableIn: () => true,
   },
   {
     type: 'freeze',
     emoji: '🧊',
     label: 'Freeze',
-    description: 'Stop the reveal timer — lock the columns',
+    description: 'Stop the reveal timer - lock the columns',
     availableIn: (_, revealMode) => revealMode === 'timed',
   },
   {

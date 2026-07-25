@@ -13,11 +13,7 @@ interface PanelProps {
 }
 
 export function Panel({ children, className = '' }: PanelProps) {
-  return (
-    <div className={`bg-white card-puffy ${className}`}>
-      {children}
-    </div>
-  )
+  return <div className={`bg-white card-puffy ${className}`}>{children}</div>
 }
 
 // ─── Button ───────────────────────────────────────────────────────────────────
@@ -29,10 +25,10 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
 }
 
 const variantStyles: Record<string, { bg: string; fg: string }> = {
-  primary:   { bg: '#e32437', fg: '#ffffff' },
+  primary: { bg: '#e32437', fg: '#ffffff' },
   secondary: { bg: '#003087', fg: '#ffffff' },
-  danger:    { bg: '#e32437', fg: '#ffffff' },
-  ghost:     { bg: '#ffffff', fg: '#0a1535' },
+  danger: { bg: '#e32437', fg: '#ffffff' },
+  ghost: { bg: '#ffffff', fg: '#0a1535' },
 }
 
 const sizeStyles = {
@@ -59,21 +55,23 @@ export function Button({
       whileTap={!disabled ? { y: 2, boxShadow: `0 2px 0 #0a1535` } : undefined}
       transition={{ duration: 0.1 }}
       disabled={disabled}
-      style={{
-        backgroundColor: v.bg,
-        color: v.fg,
-        border: '2px solid #0a1535',
-        borderRadius: s.borderRadius,
-        padding: s.padding,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-        fontSize: s.fontSize,
-        lineHeight: 1,
-        letterSpacing: '0.01em',
-        boxShadow: `0 ${s.shadow}px 0 #0a1535`,
-        opacity: disabled ? 0.4 : 1,
-        ...style,
-      } as React.CSSProperties}
+      style={
+        {
+          backgroundColor: v.bg,
+          color: v.fg,
+          border: '2px solid #0a1535',
+          borderRadius: s.borderRadius,
+          padding: s.padding,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+          fontSize: s.fontSize,
+          lineHeight: 1,
+          letterSpacing: '0.01em',
+          boxShadow: `0 ${s.shadow}px 0 #0a1535`,
+          opacity: disabled ? 0.4 : 1,
+          ...style,
+        } as React.CSSProperties
+      }
       className={`btn-puffy ${className}`}
       {...props}
     >
@@ -90,9 +88,9 @@ interface BadgeProps {
 }
 
 const tierConfig: Record<DifficultyTier, { label: string; bg: string; fg: string }> = {
-  easy:   { label: 'Easy',   bg: '#2cc66b', fg: '#ffffff' },
+  easy: { label: 'Easy', bg: '#2cc66b', fg: '#ffffff' },
   medium: { label: 'Medium', bg: '#003087', fg: '#ffffff' },
-  hard:   { label: 'Hard',   bg: '#e32437', fg: '#ffffff' },
+  hard: { label: 'Hard', bg: '#e32437', fg: '#ffffff' },
   expert: { label: 'Expert', bg: '#ffcf33', fg: '#0a1535' },
 }
 
@@ -193,7 +191,13 @@ export function PlayerChip({
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={avatarUrl} alt={name} width={avatarSize} height={avatarSize} className="w-full h-full object-cover" />
+        <img
+          src={avatarUrl}
+          alt={name}
+          width={avatarSize}
+          height={avatarSize}
+          className="w-full h-full object-cover"
+        />
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -281,10 +285,7 @@ export function CountdownRing({ seconds, total, size = 76, className = '' }: Cou
   const fontSize = size >= 100 ? 38 : 26
 
   return (
-    <div
-      className={`relative flex-shrink-0 ${className}`}
-      style={{ width: size, height: size }}
-    >
+    <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         {/* Track */}
         <circle
@@ -308,7 +309,7 @@ export function CountdownRing({ seconds, total, size = 76, className = '' }: Cou
           strokeDashoffset={dashOffset}
           transition={{ duration: 1, ease: 'linear' }}
         />
-        {/* Center number — rendered in SVG space so it rotates back correctly */}
+        {/* Center number - rendered in SVG space so it rotates back correctly */}
         <text
           x={cx}
           y={cy}
@@ -317,7 +318,11 @@ export function CountdownRing({ seconds, total, size = 76, className = '' }: Cou
           fill="#e32437"
           fontFamily='var(--font-bungee), "Bungee", sans-serif'
           fontSize={fontSize}
-          style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px`, fontWeight: 400 }}
+          style={{
+            transform: `rotate(90deg)`,
+            transformOrigin: `${cx}px ${cy}px`,
+            fontWeight: 400,
+          }}
         >
           {Math.ceil(seconds)}
         </text>

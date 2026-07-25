@@ -1,16 +1,16 @@
-# Handoff: Stats Master — "Arcade" UI Redesign (Direction C)
+# Handoff: Stats Master - "Arcade" UI Redesign (Direction C)
 
 ## Overview
 
-Complete visual redesign of Stats Master moving from the current brutalist aesthetic to a bright, playful **"Ice-Rink Arcade"** direction. Affects the Landing page, Setup page, Lobby, and in-game screen. Keeps the existing ice-hockey colour DNA (red, navy, ice-blue, off-white, black) but replaces the current black-border / hard-shadow treatment with chunky puffy 3-D cards, rink-line backgrounds, a puck mascot, and — in-game — a jumbotron LED treatment for the season stat tiles.
+Complete visual redesign of Stats Master moving from the current brutalist aesthetic to a bright, playful **"Ice-Rink Arcade"** direction. Affects the Landing page, Setup page, Lobby, and in-game screen. Keeps the existing ice-hockey colour DNA (red, navy, ice-blue, off-white, black) but replaces the current black-border / hard-shadow treatment with chunky puffy 3-D cards, rink-line backgrounds, a puck mascot, and - in-game - a jumbotron LED treatment for the season stat tiles.
 
 ## About the Design Files
 
-The files under `reference/` are **design references created in HTML/React (Babel in-browser)** — prototypes showing intended look and behaviour, not production code to copy directly.
+The files under `reference/` are **design references created in HTML/React (Babel in-browser)** - prototypes showing intended look and behaviour, not production code to copy directly.
 
-The task is to **recreate these designs in the existing Stats Master codebase** (Next.js 15 App Router + React 19 + Tailwind v4, Liveblocks for realtime, Supabase for data — see `stats-master/CLAUDE.md` and `package.json`). Replace the current brutalist design-system (`components/design-system.tsx`) and the token block in `app/globals.css` with the tokens and components described below. Keep all existing business logic, hooks, state machines and Liveblocks wiring intact — this is a pure visual / component refresh.
+The task is to **recreate these designs in the existing Stats Master codebase** (Next.js 15 App Router + React 19 + Tailwind v4, Liveblocks for realtime, Supabase for data - see `stats-master/CLAUDE.md` and `package.json`). Replace the current brutalist design-system (`components/design-system.tsx`) and the token block in `app/globals.css` with the tokens and components described below. Keep all existing business logic, hooks, state machines and Liveblocks wiring intact - this is a pure visual / component refresh.
 
-Only **Direction C — "Arcade"** should be implemented. Directions A and B are present in the reference files for context; ignore them.
+Only **Direction C - "Arcade"** should be implemented. Directions A and B are present in the reference files for context; ignore them.
 
 ## Fidelity
 
@@ -78,7 +78,7 @@ All borders are **2–3 px solid `--c-ink`**. The lift comes from a hard, zero-b
 
 `--c-btn-shadow` is 20% darker than the button fill (e.g. red button → `#a21726`, navy → `#001e55`, yellow → `#c89a14`). Buttons use a `linear-gradient(180deg, fill 0%, fill 60%, darker 100%)` fill for depth.
 
-On press/hover: `transform: translateY(2px)` and reduce drop shadow by same amount — gives the button-pop feel.
+On press/hover: `transform: translateY(2px)` and reduce drop shadow by same amount - gives the button-pop feel.
 
 ### Spacing
 
@@ -110,7 +110,7 @@ background:
 
 Create these as React components in `components/arcade/` (or replace the existing `components/design-system.tsx` primitives):
 
-### `<Brand>` — wordmark + puck mascot
+### `<Brand>` - wordmark + puck mascot
 
 - Mascot: inline SVG puck with a face (eyes, blush dots, smile). See `CMascot` in reference. Two moods: `happy` / `sad` (flipped smile).
 - Wordmark: `STATS!MASTER` in Bungee; `!` in red; all in `--c-ink`.
@@ -118,17 +118,17 @@ Create these as React components in `components/arcade/` (or replace the existin
 
 ### `<Btn variant size>`
 
-Variants: `red | navy | white | yellow` — all with the puffy treatment above. Sizes: `sm (8/14 pad, 11px)` / `md (14/20, 14px)` / `lg (18/28, 17px)`. Radius by size: `10 / 12 / 14`.
+Variants: `red | navy | white | yellow` - all with the puffy treatment above. Sizes: `sm (8/14 pad, 11px)` / `md (14/20, 14px)` / `lg (18/28, 17px)`. Radius by size: `10 / 12 / 14`.
 
-### `<Card>` — generic puffy card
+### `<Card>` - generic puffy card
 
 `bg: white; border: 3px solid ink; radius: 16–18; box-shadow: 0 8px 0 ink;`. Accent variants swap the drop-shadow colour for `--c-red` or `--c-navy`.
 
-### `<Pill>` — status pills
+### `<Pill>` - status pills
 
 Rounded 9999, 2 px ink border, `0 3px 0 var(--c-ink)` shadow, bold 11 px Archivo Black, 0.2em tracking.
 
-### `<StatTile>` — **JUMBOTRON LED** (in-game only, replaces current stat column)
+### `<StatTile>` - **JUMBOTRON LED** (in-game only, replaces current stat column)
 
 The most distinctive component. Replaces the current white-tile stats.
 
@@ -151,7 +151,7 @@ Structure:
 - Inner shadow for "screen" depth: `inset 0 2px 0 rgba(255,255,255,0.18), inset 0 -10px 20px rgba(0,0,0,0.25)`
 - **Dot-matrix overlay** (absolute inset:0, `mix-blend-mode: screen`, `opacity: 0.55`): 8×8 SVG of a 1.1 r circle at centre, fill `--led-dot-blue` on navy / `--led-dot-pink` on red, opacity 0.38.
 
-**LED key chip** (stat abbreviation — GP, G, A, PTS, PIM):
+**LED key chip** (stat abbreviation - GP, G, A, PTS, PIM):
 
 - `background: rgba(0,0,0,0.28); color: var(--led-ice-glow)` (or `--led-red-glow` on red panel)
 - `font: 900 11px/1 "Archivo Black"; letter-spacing: 0.28em;`
@@ -168,7 +168,7 @@ Structure:
 
 Reference: `reference/direction-c-arcade.jsx` lines ~530–580 (search `jumbotron LED inside puffy arcade shell`).
 
-### `<MatchCode>` — large room code display
+### `<MatchCode>` - large room code display
 
 `DQK·VDS` in Bungee 32–56 px, letter-spacing 0.08em. Dot in red.
 
@@ -214,17 +214,17 @@ All screens use the `iceBg` page background and `Space Grotesk` as the default b
     - Buttons: red lg "🎮 CREATE GAME" + white lg "JOIN WITH CODE".
   - Right (440 px tall, relative): floating preview cluster.
     - Mini stat card (rotated -4°, 300 px wide) showing the jumbotron treatment in miniature (20 px LED digits instead of 54).
-    - Mini scoreboard card (ink bg, rotated +4°, bottom-right) — top 3 players.
+    - Mini scoreboard card (ink bg, rotated +4°, bottom-right) - top 3 players.
     - Yellow power-play puck (120 px circle, radial gradient yellow→#f0b512, 4 px ink border, "2×" Bungee 30 + "POWER PLAY" label).
 
 **Features strip** (white, 4 px ink top+bottom borders): 4-column grid of cream puffy cards. Each card has a 46 px coloured square icon (red/yellow/navy/ink) with emoji (🏒 🔥 ⚡ 🚫), a Bungee 22 title, and a Space Grotesk 13 description. Copy:
 
-- Stat blitz — "Five stats, four names, twelve seconds. Go."
-- Streak combos — "Answer fast, rack up a combo, earn foil bonuses."
-- Power plays — "Random 2× windows that flip the leaderboard."
-- Penalty box — "Wrong answer in boss mode? Sit two rounds out."
+- Stat blitz - "Five stats, four names, twelve seconds. Go."
+- Streak combos - "Answer fast, rack up a combo, earn foil bonuses."
+- Power plays - "Random 2× windows that flip the leaderboard."
+- Penalty box - "Wrong answer in boss mode? Sit two rounds out."
 
-### 2. Setup (`app/[roomId]/setup/page.tsx` — or wherever current setup lives)
+### 2. Setup (`app/[roomId]/setup/page.tsx` - or wherever current setup lives)
 
 Header: brand small + white room-code pill with green dot.
 
@@ -236,10 +236,10 @@ Section heading row:
 
 Two-column (1.1 / 0.9):
 
-- **Game Mode** card — 2×2 grid of mode buttons. Each mode: 36 px coloured square icon (red/navy/yellow/green + emoji 🏒 📈 🤼 ⚖️), Bungee 18 title, Space Grotesk 12 description, radio indicator. Selected state = filled with its colour + 0 5px 0 ink shadow.
+- **Game Mode** card - 2×2 grid of mode buttons. Each mode: 36 px coloured square icon (red/navy/yellow/green + emoji 🏒 📈 🤼 ⚖️), Bungee 18 title, Space Grotesk 12 description, radio indicator. Selected state = filled with its colour + 0 5px 0 ink shadow.
 - **Answer Mode** sub-section: 2-column puffy toggle ("● MULTIPLE CHOICE" red / "○ FREE TEXT" white).
-- **Questions** card — 4-column grid of big Bungee 34 numbers (5/10/15/20); selected = navy fill.
-- **Difficulty** card — stacked list of 4 rows (Easy/Medium/Hard/Expert). Each row: 38 px coloured chip with point range (green/navy/red/ink + emoji 🏆 ⭐ 🔥 💀), Bungee 16 label, description, 26 px square checkbox at right.
+- **Questions** card - 4-column grid of big Bungee 34 numbers (5/10/15/20); selected = navy fill.
+- **Difficulty** card - stacked list of 4 rows (Easy/Medium/Hard/Expert). Each row: 38 px coloured chip with point range (green/navy/red/ink + emoji 🏆 ⭐ 🔥 💀), Bungee 16 label, description, 26 px square checkbox at right.
 
 Difficulty copy:
 
@@ -260,13 +260,13 @@ Two-column (0.8 / 1.2):
   - Ice-tinted inner card containing a 170 px QR (white bg, 2 px ink border, 10 px padding). Render a real QR in production (e.g. `qrcode.react`).
   - Below QR: code in Bungee 32 (`DQKVDS` with 0.08em tracking); small URL in JetBrains Mono under it.
   - 2-col button row: navy sm `⎘ COPY LINK` + white sm `SHARE`.
-  - Cream settings summary card — navy 900-11 "⚙ MATCH SETTINGS" header then rows for Mode / Questions / Difficulty / Reveal.
+  - Cream settings summary card - navy 900-11 "⚙ MATCH SETTINGS" header then rows for Mode / Questions / Difficulty / Reveal.
 - **Players** grid (2-column):
   - Host player chip: navy bg / white text / red avatar / red "HOST" chip / yellow "👑 BOSS" chip if boss.
   - Other players: white bg / ink text.
   - Empty slots: 3 px dashed ink-44 border, no shadow, "+ WAITING…" Bungee 14, min-height 86.
 
-### 4. Game (`app/[roomId]/page.tsx` playing state) — **highest priority screen**
+### 4. Game (`app/[roomId]/page.tsx` playing state) - **highest priority screen**
 
 **Top scoreboard strip** (ink bg, 4 px red bottom border, padding 14/24, relative):
 
@@ -280,7 +280,7 @@ Two-column (0.8 / 1.2):
 - Centre: combo meter pill.
 - Right: 100 px countdown ring.
 
-**Stat tiles row** — the 5 `<StatTile>` jumbotron components. Each 20% of the width, 14 px gap. See component spec above. The highlight stat (e.g. PTS) gets the red panel + HOT! badge.
+**Stat tiles row** - the 5 `<StatTile>` jumbotron components. Each 20% of the width, 14 px gap. See component spec above. The highlight stat (e.g. PTS) gets the red panel + HOT! badge.
 
 **Answer choices** (2×2 grid, 12 px gap): puffy 16-radius cards. Each has a 48 px coloured letter chip (A red / B navy / C green / D yellow) + Bungee 22 name + JetBrains Mono 11 detail line ("EDM · C · 1997–"). States:
 
@@ -291,9 +291,9 @@ Two-column (0.8 / 1.2):
 
 **Bottom row** (1.2 / 1 / 1):
 
-- **Powerups** card — 4 puffy 48 px buttons (✂ Eliminate / ×2 Double / ❄ Freeze / ⚡ Rush). Active button gets variant fill. Count badge top-right.
-- **Penalty box** card — ink bg, `0 5px 0 red` shadow. Red "🚫 PENALTY BOX" chip + yellow Bungee 12 countdown. Inner caged panel (see component spec) contains offender's avatar + name + "WRONG ANSWER · 2 ROUNDS".
-- **Hints** card — white puffy. "💡 Hints · SHARED" title, then ice pill buttons ("+ ERA", "+ TEAM", "+ POSITION"). Below: a yellow toast "🚜 ZAMBONI INCOMING · NEXT Q IN 0:08" — this is the between-question transition.
+- **Powerups** card - 4 puffy 48 px buttons (✂ Eliminate / ×2 Double / ❄ Freeze / ⚡ Rush). Active button gets variant fill. Count badge top-right.
+- **Penalty box** card - ink bg, `0 5px 0 red` shadow. Red "🚫 PENALTY BOX" chip + yellow Bungee 12 countdown. Inner caged panel (see component spec) contains offender's avatar + name + "WRONG ANSWER · 2 ROUNDS".
+- **Hints** card - white puffy. "💡 Hints · SHARED" title, then ice pill buttons ("+ ERA", "+ TEAM", "+ POSITION"). Below: a yellow toast "🚜 ZAMBONI INCOMING · NEXT Q IN 0:08" - this is the between-question transition.
 
 ---
 
@@ -324,7 +324,7 @@ The only new visual state is the Zamboni transition flag, which can be local to 
 
 ## Assets
 
-- **No bitmap assets needed.** All iconography is emoji or inline SVG (mascot, rink lines, QR, countdown ring, Zamboni — draw the Zamboni as a simple SVG with a rectangular body + yellow top + wheels).
+- **No bitmap assets needed.** All iconography is emoji or inline SVG (mascot, rink lines, QR, countdown ring, Zamboni - draw the Zamboni as a simple SVG with a rectangular body + yellow top + wheels).
 - Replace `GameLogo` in `components/design-system.tsx` with the new `<Brand>`.
 - Remove the `halftone` / `stat-shimmer` / `brutalist` utilities from `app/globals.css`.
 
@@ -339,30 +339,30 @@ design_handoff_arcade_ui/
    ├─ index.html                       ← entrypoint; ignore the 3-direction navigation
    ├─ app.jsx                          ← just wires up the 3 directions
    ├─ shared.jsx                       ← MOCK data (players, stats, powerups) you can reuse
-   └─ direction-c-arcade.jsx           ← ★ THE DESIGN ★ — CLanding / CSetup / CLobby / CGame
+   └─ direction-c-arcade.jsx           ← ★ THE DESIGN ★ - CLanding / CSetup / CLobby / CGame
 ```
 
 **Read order:**
 
-1. `reference/direction-c-arcade.jsx` — everything lives here. Search for `CLanding`, `CSetup`, `CLobby`, `CGame`.
-2. `reference/shared.jsx` — mock data shapes for quick reference.
+1. `reference/direction-c-arcade.jsx` - everything lives here. Search for `CLanding`, `CSetup`, `CLobby`, `CGame`.
+2. `reference/shared.jsx` - mock data shapes for quick reference.
 3. This README for the parts that matter (tokens, StatTile spec, behaviour).
 
 ---
 
 ## Existing codebase references
 
-- `stats-master/components/design-system.tsx` — current primitives to replace (Panel, Button, TierBadge, Avatar, PlayerChip, CountdownRing, Modal, GameHeading, GameLogo, GameDivider, StatLabel).
-- `stats-master/app/globals.css` — replace the `@theme` block.
-- `stats-master/app/layout.tsx` — add the Google Font imports (or use `next/font`).
-- `stats-master/app/page.tsx` — landing.
-- `stats-master/app/[roomId]/` — setup/lobby/game pages (follow existing routing).
-- `stats-master/components/game/` — game-specific subcomponents to refresh.
-- `framer-motion` is already in `package.json` — use it for all the motion above.
+- `stats-master/components/design-system.tsx` - current primitives to replace (Panel, Button, TierBadge, Avatar, PlayerChip, CountdownRing, Modal, GameHeading, GameLogo, GameDivider, StatLabel).
+- `stats-master/app/globals.css` - replace the `@theme` block.
+- `stats-master/app/layout.tsx` - add the Google Font imports (or use `next/font`).
+- `stats-master/app/page.tsx` - landing.
+- `stats-master/app/[roomId]/` - setup/lobby/game pages (follow existing routing).
+- `stats-master/components/game/` - game-specific subcomponents to refresh.
+- `framer-motion` is already in `package.json` - use it for all the motion above.
 
 ## Out of scope
 
 - The NHL wordmark in the current logo is replaced with "STATS!MASTER" (trademark safety).
 - No backend changes.
-- No new powerups — spec matches existing set (Eliminate, Double, Freeze, Rush).
-- No changes to difficulty logic — only the visual labels.
+- No new powerups - spec matches existing set (Eliminate, Double, Freeze, Rush).
+- No changes to difficulty logic - only the visual labels.

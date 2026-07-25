@@ -77,7 +77,9 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, idx)}
-      <span style={{ color: '#e32437', fontWeight: 700 }}>{text.slice(idx, idx + query.length)}</span>
+      <span style={{ color: '#e32437', fontWeight: 700 }}>
+        {text.slice(idx, idx + query.length)}
+      </span>
       {text.slice(idx + query.length)}
     </>
   )
@@ -194,10 +196,13 @@ export function PlayerGuessInput({
           >
             <div className="text-4xl">🏒</div>
             <p className="text-game-text-muted text-sm tracking-wide uppercase">
-              Answer submitted — waiting for others
+              Answer submitted - waiting for others
             </p>
             <div className="flex items-center gap-2">
-              <div className="h-1.5 bg-c-ice-2 rounded-full w-32 overflow-hidden" style={{ border: '1px solid #0a1535' }}>
+              <div
+                className="h-1.5 bg-c-ice-2 rounded-full w-32 overflow-hidden"
+                style={{ border: '1px solid #0a1535' }}
+              >
                 <motion.div
                   className="h-full bg-c-red rounded-full"
                   initial={{ width: 0 }}

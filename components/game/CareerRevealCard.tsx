@@ -76,10 +76,10 @@ function SeasonTable({ rows, revealedIds }: { rows: Question[]; revealedIds: Set
                         className={isRevealed ? '' : 'opacity-30'}
                       />
                     ) : (
-                      <span className="text-black/30">—</span>
+                      <span className="text-black/30">-</span>
                     )
                   ) : (
-                    String(season[f.key] ?? '—')
+                    String(season[f.key] ?? '-')
                   )}
                 </td>
               ))}

@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Shared "TV screen" view — display-only, no input.
+ * Shared "TV screen" view - display-only, no input.
  * Open this on a projector/laptop while players use /player/[id] on their phones.
  * When host is not playing (hostPlays=false), this page also drives the state machine.
  */
@@ -122,7 +122,6 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
 
   const h2hCurrentPair = game.h2hCurrentPair as unknown as H2HPair | null
   const hlCurrentPair = game.hlCurrentPair as unknown as HLPair | null
-
 
   return (
     <main

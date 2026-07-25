@@ -4,7 +4,7 @@ import type { CareerRevealOrder, DifficultyTier } from '@/types/game'
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as {
+    const body = (await req.json()) as {
       eras?: string[]
       count: number
       minSeasons?: number
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       difficultyTiers: body.difficultyTiers,
     })
 
-    // Anchor questions (one per player) for questionSequence — used by the existing state machine
+    // Anchor questions (one per player) for questionSequence - used by the existing state machine
     const questions = careerData.map((c) => c.seasons[0])
 
     return NextResponse.json({ questions, careerData })

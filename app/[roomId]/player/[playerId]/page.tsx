@@ -91,14 +91,14 @@ const PU_LIST: PowerupMeta[] = [
     type: 'doubledown',
     icon: '×2',
     label: 'Double Down',
-    description: '2× points if correct — lose 50 if wrong',
+    description: '2× points if correct - lose 50 if wrong',
     availableIn: () => true,
   },
   {
     type: 'freeze',
     icon: '❄',
     label: 'Freeze',
-    description: 'Stop the reveal timer — lock the columns',
+    description: 'Stop the reveal timer - lock the columns',
     availableIn: (_am, revealMode) => revealMode === 'timed',
   },
   {
@@ -543,7 +543,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                               >
                                 {isCorrect
                                   ? `You earned +${pointsEarned} pts`
-                                  : 'Tough luck — next round is yours'}
+                                  : 'Tough luck - next round is yours'}
                               </p>
                               {rankMessage && (
                                 <p
@@ -1220,7 +1220,7 @@ function QuestionHistory({
                     </span>
                     <span className="flex-1 font-medium truncate">{player.name}</span>
                     <span className="text-game-text-muted truncate max-w-[120px] text-xs">
-                      {result.answer || '—'}
+                      {result.answer || '-'}
                     </span>
                     <span
                       className={`font-bold tabular-nums ${result.points > 0 ? 'text-tier-easy' : result.points < 0 ? 'text-game-red' : 'text-game-text-muted'}`}

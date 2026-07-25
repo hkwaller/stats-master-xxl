@@ -93,7 +93,7 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint }: 
         })}
       </div>
 
-      <p className="text-xs text-game-text-muted">Hints are shared — everyone sees them</p>
+      <p className="text-xs text-game-text-muted">Hints are shared - everyone sees them</p>
     </div>
   )
 }
