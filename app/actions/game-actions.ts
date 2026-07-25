@@ -1,5 +1,6 @@
 "use server";
 
+import { unstable_cache } from "next/cache";
 import {
   getAvailableQuestionCount,
   getCareerPlayerCount,
@@ -31,19 +32,37 @@ export async function getTodayDateString(): Promise<string> {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Computes the day's challenge for a given UTC date key (e.g. "2026-04-06").
+ *
+ * Wrapped in `unstable_cache` keyed by the date, so the expensive full-pool
+ * query + sort runs at most ONCE per UTC day across every request/user, instead
+ * of on every page load. The result is deterministic, so the cache is safe to
+ * share globally. `revalidate` is a safety net in case the date key ever lags.
+ */
+const getCachedDailyChallenge = unstable_cache(
+  async (dateKey: string): Promise<Question | null> => {
+    const pool = await getQuestionsByTiers(["easy", "medium", "hard", "expert"]);
+    if (pool.length === 0) return null;
+
+    // Sort by numeric ID for a stable, deterministic ordering
+    pool.sort((a, b) => Number(a.id) - Number(b.id));
+
+    const dayIndex = Math.floor(
+      Date.parse(`${dateKey}T00:00:00Z`) / (1000 * 60 * 60 * 24),
+    );
+    const selected = pool[dayIndex % pool.length];
+
+    // Pass dayIndex as seed so choices are identical for every user all day
+    selected.choices = generateChoices(selected, pool, dayIndex);
+
+    return selected;
+  },
+  ["daily-challenge"],
+  { revalidate: 86400 },
+);
+
 /** Returns the same question for every user on the same UTC day. No repeats for 16+ years. */
 export async function getDailyChallenge(): Promise<Question | null> {
-  const pool = await getQuestionsByTiers(["easy", "medium", "hard", "expert"]);
-  if (pool.length === 0) return null;
-
-  // Sort by numeric ID for a stable, deterministic ordering
-  pool.sort((a, b) => Number(a.id) - Number(b.id));
-
-  const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-  const selected = pool[dayIndex % pool.length];
-
-  // Pass dayIndex as seed so choices are identical for every user all day
-  selected.choices = generateChoices(selected, pool, dayIndex);
-
-  return selected;
+  return getCachedDailyChallenge(new Date().toISOString().slice(0, 10));
 }

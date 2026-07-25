@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { SignInButton, useUser } from '@clerk/nextjs'
 import { StatsCard } from './StatsCard'
 import { Button, TierBadge } from '@/components/design-system'
-import { getDailyChallenge, getTodayDateString } from '@/app/actions/game-actions'
+import { getDailyChallenge } from '@/app/actions/game-actions'
 import {
   getMyDailyChallengeScore,
   saveDailyChallengeScore,
@@ -39,6 +39,11 @@ type Phase =
   | { name: 'answered'; result: 'correct' | 'incorrect'; question: Question }
   | { name: 'already_answered'; result: 'correct' | 'incorrect'; question: Question }
 
+/** UTC date string, e.g. "2026-04-06". Computed locally - no server round-trip needed. */
+function getTodayDateString(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 function getLocalAnswer(today: string): StoredAnswer | null {
   try {
     const raw = localStorage.getItem(`daily-challenge-${today}`)
@@ -64,31 +69,32 @@ export function DailyChallenge() {
     if (!isLoaded) return
 
     async function load() {
-      const today = await getTodayDateString()
-
+      const today = getTodayDateString()
       const local = getLocalAnswer(today)
-      if (local) {
-        const q = await getDailyChallenge()
-        if (q) setPhase({ name: 'already_answered', result: local.result, question: q })
-        return
-      }
-
-      if (isSignedIn) {
-        const record = await getMyDailyChallengeScore()
-        if (record) {
-          const q = await getDailyChallenge()
-          if (q) {
-            const result = record.is_correct ? 'correct' : 'incorrect'
-            setLocalAnswer(today, { result, questionId: record.question_id })
-            setPhase({ name: 'already_answered', result, question: q })
-          }
-          return
-        }
-      }
 
       try {
-        const q = await getDailyChallenge()
-        if (q) setPhase({ name: 'playing', question: q })
+        // The question is identical for everyone all day (and cached server-side),
+        // so fetch it once. When signed in and not already answered locally, fetch
+        // the saved score in parallel rather than in a second round-trip.
+        const [q, record] = await Promise.all([
+          getDailyChallenge(),
+          !local && isSignedIn ? getMyDailyChallengeScore() : Promise.resolve(null),
+        ])
+        if (!q) return
+
+        if (local) {
+          setPhase({ name: 'already_answered', result: local.result, question: q })
+          return
+        }
+
+        if (record) {
+          const result = record.is_correct ? 'correct' : 'incorrect'
+          setLocalAnswer(today, { result, questionId: record.question_id })
+          setPhase({ name: 'already_answered', result, question: q })
+          return
+        }
+
+        setPhase({ name: 'playing', question: q })
       } catch (err) {
         console.error(err)
       }
@@ -103,7 +109,7 @@ export function DailyChallenge() {
     if (phase.name !== 'playing') return
 
     async function checkAfterSignIn() {
-      const today = await getTodayDateString()
+      const today = getTodayDateString()
       const record = await getMyDailyChallengeScore()
       if (record && phase.name === 'playing') {
         const result = record.is_correct ? 'correct' : 'incorrect'
@@ -122,7 +128,7 @@ export function DailyChallenge() {
   async function handleGuess(choice: string) {
     if (phase.name !== 'playing') return
     const { question } = phase
-    const today = await getTodayDateString()
+    const today = getTodayDateString()
 
     const isCorrect =
       choice.toLowerCase() === `${question.firstName} ${question.lastName}`.toLowerCase()
