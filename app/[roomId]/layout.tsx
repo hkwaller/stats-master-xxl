@@ -1,4 +1,10 @@
+import type { Metadata } from 'next'
 import { ClientLayout } from './ClientLayout'
+
+// Game rooms are ephemeral, per-session, and multiplayer-only — keep them out of search.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 interface LayoutProps {
   children: React.ReactNode

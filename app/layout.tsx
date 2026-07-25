@@ -32,16 +32,71 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 })
 
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.statsmaster.site'
+
+const DESCRIPTION =
+  'Free multiplayer NHL trivia. Five stats, four names, twelve seconds — guess the hockey legend before your friends do. Play 2–8 players from any device.'
+
 export const metadata: Metadata = {
-  title: 'Stats Master',
-  description: 'Multiplayer NHL statistics trivia — guess the player from their stats',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Stats Master — Multiplayer NHL Stats Trivia',
+    template: '%s | Stats Master',
+  },
+  description: DESCRIPTION,
+  applicationName: 'Stats Master',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
-    title: 'Stats Master',
-    description: 'Multiplayer NHL statistics trivia — guess the player from their stats',
+    type: 'website',
+    siteName: 'Stats Master',
+    locale: 'en_US',
+    url: '/',
+    title: 'Stats Master — Multiplayer NHL Stats Trivia',
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Stats Master — Multiplayer NHL Stats Trivia',
+    description: DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
   icons: {
     icon: '/favicon.png',
   },
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: 'Stats Master',
+      description: DESCRIPTION,
+    },
+    {
+      '@type': 'VideoGame',
+      '@id': `${SITE_URL}/#game`,
+      name: 'Stats Master',
+      url: SITE_URL,
+      description: DESCRIPTION,
+      applicationCategory: 'GameApplication',
+      genre: 'Trivia',
+      gamePlatform: 'Web browser',
+      operatingSystem: 'Any',
+      playMode: 'MultiPlayer',
+      numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 8 },
+      inLanguage: 'en',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      publisher: { '@type': 'Organization', name: 'Amalies Utviklingsfabrikk' },
+    },
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -52,6 +107,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${bungee.variable} ${archivoBLack.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
       >
         <body>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
           <Providers>{children}</Providers>
         </body>
       </html>
