@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SignInButton, useUser } from '@clerk/nextjs'
 import { StatsCard } from './StatsCard'
-import { Button, TierBadge } from '@/components/design-system'
+import { AnswerRow } from './AnswerRow'
+import { Button, Kickplate, MonoLabel, TierBadge } from '@/components/design-system'
 import { getDailyChallenge } from '@/app/actions/game-actions'
 import {
   getMyDailyChallengeScore,
@@ -15,21 +16,12 @@ import {
 } from '@/app/actions/daily-challenge-actions'
 import type { Question } from '@/types/game'
 
-// ─── Fresh Ice palette ─────────────────────────────────────────────────────────
-const INK = '#0a1535'
-const ROYAL = '#003087'
-const RED = '#e32437'
-const YELLOW = '#ffcf33'
-const GREEN = '#2cc66b'
-const MUTED = '#6b7ea0'
-const FILL = '#eef1f8'
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
+const DEAD = '#b3c0cf'
+const AMBER = '#f2b21c'
 
-const cardStyle: React.CSSProperties = {
-  background: '#ffffff',
-  border: `2px solid ${INK}`,
-  borderRadius: 16,
-  boxShadow: `0 6px 0 ${INK}`,
-}
+const ANSWER_LETTERS = ['A', 'B', 'C', 'D']
 
 type StoredAnswer = { result: 'correct' | 'incorrect'; questionId: string }
 
@@ -148,22 +140,10 @@ export function DailyChallenge() {
 
   if (phase.name === 'loading') {
     return (
-      <div
-        style={{ ...cardStyle, minHeight: 300 }}
-        className="p-6 text-center flex items-center justify-center"
-      >
-        <p
-          className="animate-pulse"
-          style={{
-            fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-            fontSize: 11,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color: MUTED,
-          }}
-        >
-          Loading Daily Challenge…
-        </p>
+      <div className="on-ice flex min-h-[320px] items-center justify-center p-6">
+        <span className="animate-pulse">
+          <MonoLabel size={10} tracking="0.24em">Loading today&apos;s skater</MonoLabel>
+        </span>
       </div>
     )
   }
@@ -177,49 +157,21 @@ export function DailyChallenge() {
     const choices = question.choices ?? []
 
     return (
-      <div style={cardStyle} className="overflow-hidden">
+      <div className="on-ice overflow-hidden">
         <ChallengeHeader question={question} />
-        <div className="p-5 space-y-4">
-          <div>
-            <h3
-              style={{
-                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                fontSize: 20,
-                lineHeight: 1.05,
-                color: INK,
-                margin: 0,
-              }}
-            >
-              Today&apos;s Mystery Skater
-            </h3>
-            <p
-              style={{
-                fontFamily: 'var(--font-space-grotesk), sans-serif',
-                fontSize: 13,
-                color: MUTED,
-                marginTop: 4,
-              }}
-            >
-              Can you guess the player from these stats?
-            </p>
-          </div>
 
-          <StatsCard question={question} revealedColumns={5} />
+        <div className="flex flex-col gap-5 p-5">
+          <StatsCard question={question} revealedColumns={5} size="hero" />
 
-          <div
-            className="grid grid-cols-2 gap-3 pt-4"
-            style={{ borderTop: `1px solid ${FILL}`, marginTop: 4 }}
-          >
-            {choices.map((choice) => (
-              <Button
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {choices.map((choice, i) => (
+              <AnswerRow
                 key={choice}
-                variant="secondary"
-                size="md"
-                className="text-sm"
+                letter={ANSWER_LETTERS[i] ?? '?'}
+                name={choice}
+                variant="phone"
                 onClick={() => handleGuess(choice)}
-              >
-                {choice}
-              </Button>
+              />
             ))}
           </div>
         </div>
@@ -232,17 +184,20 @@ export function DailyChallenge() {
     result: 'correct' | 'incorrect'
     question: Question
   }
+
   return (
-    <div style={cardStyle} className="overflow-hidden">
+    <div className="on-ice overflow-hidden">
       <ChallengeHeader question={question} />
-      <div className="p-5 space-y-4">
-        <StatsCard question={question} revealedColumns={5} />
-        <ResultBanner
+      <div className="flex flex-col gap-5 p-5">
+        <StatsCard question={question} revealedColumns={5} size="hero" />
+        <ResultPlane
           result={result}
           question={question}
+          note="New challenge drops at midnight UTC."
           isSignedIn={!!isSignedIn}
           isLoaded={isLoaded}
         />
+        <LeaderboardPanel />
       </div>
     </div>
   )
@@ -254,148 +209,112 @@ function shortDateLabel(): string {
   return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
 }
 
+/** A navy strip closed by the amber kickplate — the boards, in miniature. */
 function ChallengeHeader({ question }: { question: Question }) {
   return (
-    <div
-      style={{
-        background: INK,
-        borderBottom: `2px solid ${INK}`,
-        padding: '10px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 10,
-      }}
-    >
-      <span
-        style={{
-          color: YELLOW,
-          fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-          fontSize: 10,
-          fontWeight: 900,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          lineHeight: 1.1,
-        }}
+    <>
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+        style={{ background: INK }}
       >
-        ⭐ Daily Challenge
-      </span>
-      <div className="flex items-center gap-3">
-        <TierBadge tier={question.difficulty} />
         <span
+          className="font-mono"
           style={{
-            color: '#ffffff',
-            fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.12em',
+            fontSize: 9,
+            letterSpacing: '0.24em',
+            textTransform: 'uppercase',
+            color: AMBER,
           }}
         >
-          {shortDateLabel()}
+          Daily challenge
         </span>
+        <div className="flex items-center gap-3">
+          <TierBadge tier={question.difficulty} />
+          <span
+            className="font-mono"
+            style={{ fontSize: 9, letterSpacing: '0.16em', color: '#8d9cb0' }}
+          >
+            {shortDateLabel()}
+          </span>
+        </div>
       </div>
-    </div>
+      <Kickplate height={4} />
+    </>
   )
 }
 
-function ResultBanner({
+/**
+ * The outcome. Stated in words with the answer always spelled out, so nothing
+ * depends on reading a colour.
+ */
+function ResultPlane({
   result,
   question,
+  note,
   isSignedIn,
   isLoaded,
 }: {
   result: 'correct' | 'incorrect'
   question: Question
-  isSignedIn: boolean
-  isLoaded: boolean
+  note: string
+  isSignedIn?: boolean
+  isLoaded?: boolean
 }) {
   const correct = result === 'correct'
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="flex flex-col gap-4 p-5"
       style={{
-        background: correct ? GREEN : RED,
-        color: correct ? INK : '#ffffff',
-        border: `2px solid ${INK}`,
-        borderRadius: 12,
-        boxShadow: `0 4px 0 ${INK}`,
-        padding: 16,
-        textAlign: 'center',
-        marginTop: 8,
+        background: correct ? 'rgba(207,10,44,0.06)' : '#ffffff',
+        borderLeft: `5px solid ${correct ? RED : DEAD}`,
+        boxShadow: '0 2px 10px rgba(13,27,42,0.07)',
       }}
     >
-      <h2
+      <span
+        className="font-display"
         style={{
-          fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-          fontSize: 24,
+          fontWeight: 800,
+          fontSize: 36,
           lineHeight: 1,
-          marginBottom: 8,
+          textTransform: 'uppercase',
+          color: correct ? RED : INK,
         }}
       >
-        {correct ? 'Nailed It! 🔥' : 'Incorrect! 🧊'}
-      </h2>
+        {correct ? 'Nailed it' : 'Missed it'}
+      </span>
+
       <div
-        style={{
-          fontFamily: 'var(--font-space-grotesk), sans-serif',
-          fontSize: 14,
-          fontWeight: 700,
-          marginBottom: 12,
-        }}
+        className="flex flex-col gap-1.5 pt-3"
+        style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
       >
-        It was{' '}
+        <MonoLabel size={9}>The answer was</MonoLabel>
         <span
-          style={{
-            display: 'inline-block',
-            background: INK,
-            color: '#ffffff',
-            padding: '3px 10px',
-            margin: '0 4px',
-            borderRadius: 8,
-            fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-            fontSize: 13,
-          }}
+          className="font-display"
+          style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
         >
           {question.firstName} {question.lastName}
         </span>
+        <MonoLabel size={9} tracking="0.14em">
+          {question.season} · {question.teamAbbrevs} · {question.points} PTS
+        </MonoLabel>
       </div>
 
       {isLoaded && !isSignedIn && (
-        <div
-          style={{
-            marginBottom: 12,
-            border: `2px solid ${INK}`,
-            background: '#ffffff',
-            color: INK,
-            borderRadius: 10,
-            boxShadow: `0 2px 0 rgba(10,21,53,0.25)`,
-            padding: '10px 12px',
-            fontFamily: 'var(--font-space-grotesk), sans-serif',
-            fontSize: 12,
-            fontWeight: 600,
-          }}
-        >
+        <div className="flex flex-col items-start gap-2 pt-1">
           <SignInButton mode="modal">
-            <Button variant="secondary" size="sm" className="cursor-pointer">
+            <Button variant="secondary" size="sm">
               Sign in to save your score
             </Button>
           </SignInButton>
-          <span style={{ display: 'block', marginTop: 8 }}>and appear on the leaderboard.</span>
+          <MonoLabel size={9} tracking="0.14em">And appear on the leaderboard</MonoLabel>
         </div>
       )}
 
-      <p
-        style={{
-          fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-          fontSize: 11,
-          opacity: 0.7,
-          marginTop: 4,
-        }}
-      >
-        New challenge drops at midnight UTC.
-      </p>
-
-      <LeaderboardPanel />
+      <MonoLabel size={9} tracking="0.14em">{note}</MonoLabel>
     </motion.div>
   )
 }
@@ -407,73 +326,17 @@ function AlreadyAnswered({
   result: 'correct' | 'incorrect'
   question: Question
 }) {
-  const correct = result === 'correct'
   return (
-    <div style={cardStyle} className="overflow-hidden">
+    <div className="on-ice overflow-hidden">
       <ChallengeHeader question={question} />
-
-      <div className="p-5 space-y-4">
-        <StatsCard question={question} revealedColumns={5} />
-
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{
-            background: correct ? GREEN : RED,
-            color: correct ? INK : '#ffffff',
-            border: `2px solid ${INK}`,
-            borderRadius: 12,
-            boxShadow: `0 4px 0 ${INK}`,
-            padding: 16,
-            textAlign: 'center',
-          }}
-        >
-          <h2
-            style={{
-              fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-              fontSize: 20,
-              lineHeight: 1,
-              marginBottom: 6,
-            }}
-          >
-            {correct ? 'You got it! 🔥' : 'Better luck tomorrow 🧊'}
-          </h2>
-          <div
-            style={{
-              fontFamily: 'var(--font-space-grotesk), sans-serif',
-              fontSize: 14,
-              fontWeight: 700,
-              marginBottom: 8,
-            }}
-          >
-            It was{' '}
-            <span
-              style={{
-                display: 'inline-block',
-                background: INK,
-                color: '#ffffff',
-                padding: '3px 10px',
-                margin: '0 4px',
-                borderRadius: 8,
-                fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-                fontSize: 13,
-              }}
-            >
-              {question.firstName} {question.lastName}
-            </span>
-          </div>
-          <p
-            style={{
-              fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-              fontSize: 11,
-              opacity: 0.7,
-            }}
-          >
-            You already played today&apos;s challenge. New one at midnight UTC.
-          </p>
-
-          <LeaderboardPanel />
-        </motion.div>
+      <div className="flex flex-col gap-5 p-5">
+        <StatsCard question={question} revealedColumns={5} size="hero" />
+        <ResultPlane
+          result={result}
+          question={question}
+          note="You already played today. New one at midnight UTC."
+        />
+        <LeaderboardPanel />
       </div>
     </div>
   )
@@ -486,7 +349,7 @@ const PERIODS: { id: LeaderboardPeriod; label: string }[] = [
   { id: 'week', label: 'Week' },
   { id: 'month', label: 'Month' },
   { id: 'ytd', label: 'YTD' },
-  { id: 'all', label: 'All Time' },
+  { id: 'all', label: 'All time' },
 ]
 
 function LeaderboardPanel() {
@@ -504,43 +367,29 @@ function LeaderboardPanel() {
   }, [period])
 
   return (
-    <div
-      className="text-left"
-      style={{ marginTop: 16, borderTop: `2px solid rgba(10,21,53,0.2)`, paddingTop: 12 }}
-    >
-      <div className="flex items-center justify-between mb-3" style={{ flexWrap: 'wrap', gap: 8 }}>
-        <p
-          style={{
-            fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            opacity: 0.85,
-          }}
-        >
-          Leaderboard
-        </p>
-        <div className="flex gap-1" style={{ flexWrap: 'wrap' }}>
+    <div className="flex flex-col gap-3 pt-4" style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <MonoLabel size={10} tracking="0.22em">Leaderboard</MonoLabel>
+        <div className="flex flex-wrap gap-px" style={{ background: 'rgba(13,27,42,0.12)' }}>
           {PERIODS.map((p) => {
             const selected = period === p.id
             return (
               <button
                 key={p.id}
+                type="button"
                 onClick={() => setPeriod(p.id)}
+                aria-pressed={selected}
+                className="btn-ice font-mono"
                 style={{
-                  fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
+                  border: 'none',
+                  borderRadius: 0,
+                  padding: '5px 9px',
+                  fontSize: 9,
+                  letterSpacing: '0.12em',
                   textTransform: 'uppercase',
-                  padding: '3px 9px',
-                  borderRadius: 8,
-                  border: `2px solid ${INK}`,
-                  background: selected ? ROYAL : FILL,
-                  color: selected ? '#ffffff' : MUTED,
+                  background: selected ? INK : '#ffffff',
+                  color: selected ? '#eef3f9' : '#55677d',
                   cursor: 'pointer',
-                  transition: 'background-color 0.15s, color 0.15s',
                 }}
               >
                 {p.label}
@@ -551,61 +400,47 @@ function LeaderboardPanel() {
       </div>
 
       {loading ? (
-        <p
-          className="animate-pulse"
-          style={{
-            fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-            fontSize: 11,
-            opacity: 0.6,
-            padding: '8px 0',
-          }}
-        >
-          Loading…
-        </p>
+        <span className="animate-pulse py-2">
+          <MonoLabel size={9}>Loading</MonoLabel>
+        </span>
       ) : entries.length === 0 ? (
-        <p
-          style={{
-            fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-            fontSize: 11,
-            opacity: 0.6,
-            padding: '8px 0',
-          }}
-        >
-          No entries yet.
-        </p>
+        <span className="py-2">
+          <MonoLabel size={9}>No entries yet</MonoLabel>
+        </span>
       ) : (
-        <ol className="space-y-1.5">
+        <ol className="flex list-none flex-col p-0">
           {entries.map((entry, i) => (
             <li
               key={entry.userId}
-              className="flex items-center gap-2"
+              className="flex items-center gap-3 px-2 py-2"
               style={{
-                fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-                fontSize: 12,
+                borderBottom: '1px solid rgba(13,27,42,0.07)',
+                background: i === 0 ? 'rgba(207,10,44,0.07)' : 'transparent',
               }}
             >
               <span
-                className="w-5 text-right shrink-0"
-                style={{
-                  fontWeight: 700,
-                  color: i === 0 ? YELLOW : 'inherit',
-                  opacity: i === 0 ? 1 : i === 1 ? 0.6 : i === 2 ? 0.5 : 0.4,
-                }}
+                className="font-mono shrink-0"
+                style={{ fontSize: 10, width: 18, color: i === 0 ? RED : '#55677d' }}
               >
-                {i + 1}.
+                {String(i + 1).padStart(2, '0')}
               </span>
-              <span className="truncate" style={{ fontWeight: 700 }}>
+              <span
+                className="font-display min-w-0 flex-1 truncate"
+                style={{ fontWeight: 700, fontSize: 19, textTransform: 'uppercase', color: INK }}
+              >
                 {entry.displayName}
               </span>
-              <span className="ml-auto shrink-0 tabular-nums" style={{ opacity: 0.55 }}>
-                {period === 'today' && entry.answeredAt
-                  ? new Date(entry.answeredAt).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      timeZone: 'UTC',
-                      timeZoneName: 'short',
-                    })
-                  : `${entry.correctCount} correct`}
+              <span className="ml-auto shrink-0">
+                <MonoLabel size={9} tracking="0.14em">
+                  {period === 'today' && entry.answeredAt
+                    ? new Date(entry.answeredAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'UTC',
+                        timeZoneName: 'short',
+                      })
+                    : `${entry.correctCount} correct`}
+                </MonoLabel>
               </span>
             </li>
           ))}

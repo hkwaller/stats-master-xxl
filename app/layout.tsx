@@ -1,32 +1,36 @@
 import type { Metadata } from 'next'
-import { Bungee, Archivo_Black, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
+import { Big_Shoulders, Archivo, Barlow_Condensed, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Providers } from './providers'
 
-const bungee = Bungee({
-  weight: ['400'],
+/**
+ * "Big Shoulders Display" was folded into the "Big Shoulders" superfamily upstream;
+ * this is the same condensed jersey-numeral face the design references.
+ */
+const bigShoulders = Big_Shoulders({
+  weight: ['600', '700', '800'],
   subsets: ['latin'],
-  variable: '--font-bungee',
+  variable: '--font-big-shoulders',
   display: 'swap',
 })
 
-const archivoBLack = Archivo_Black({
-  weight: ['400'],
-  subsets: ['latin'],
-  variable: '--font-archivo-black',
-  display: 'swap',
-})
-
-const spaceGrotesk = Space_Grotesk({
+const archivo = Archivo({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
-  variable: '--font-space-grotesk',
+  variable: '--font-archivo',
+  display: 'swap',
+})
+
+const barlowCondensed = Barlow_Condensed({
+  weight: ['500', '600', '700'],
+  subsets: ['latin'],
+  variable: '--font-barlow-condensed',
   display: 'swap',
 })
 
 const jetbrainsMono = JetBrains_Mono({
-  weight: ['500', '700'],
+  weight: ['400', '500', '700'],
   subsets: ['latin'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
@@ -104,7 +108,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html
         lang="en"
-        className={`${bungee.variable} ${archivoBLack.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+        className={`${bigShoulders.variable} ${archivo.variable} ${barlowCondensed.variable} ${jetbrainsMono.variable}`}
       >
         <body>
           <script

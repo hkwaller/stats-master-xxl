@@ -7,8 +7,11 @@ import { useStorage } from '@/lib/liveblocks/client'
 import { useClaimBoss, useJoinGame } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest, updateGuestName } from '@/lib/guest'
 import { getAvatarUrl } from '@/lib/avatar'
-import { Button } from '@/components/design-system'
-import { CBrand } from '@/components/arcade'
+import { Button, Kickplate, MonoLabel } from '@/components/design-system'
+import { PuckMark, JumbotronPanel } from '@/components/arcade'
+
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
 
 interface ConnectPageProps {
   params: Promise<{ roomId: string }>
@@ -48,186 +51,165 @@ export default function ConnectPage({ params }: ConnectPageProps) {
 
   const avatarUrl = guestId ? getAvatarUrl(guestId) : ''
 
-  const caption: React.CSSProperties = {
-    fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-    fontSize: 11,
-    letterSpacing: '0.18em',
-    color: '#6b7ea0',
-    textTransform: 'uppercase',
-  }
+  const players = (game?.players ?? []) as { id: string; name: string }[]
 
   return (
-    <main className="ice-bg min-h-screen flex flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-sm space-y-5">
-        {/* Brand + caption */}
-        <div className="flex flex-col items-center text-center gap-2">
-          <CBrand />
-          {roomId && (
-            <p style={caption}>
-              JOINING ROOM · <span style={{ color: '#0a1535' }}>{roomId}</span>
-            </p>
-          )}
+    <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+      <header className="on-ice-header relative z-20">
+        <div className="flex h-[52px] items-center justify-between px-[18px]">
+          <div className="flex items-center gap-2.5">
+            <PuckMark size={22} />
+            <span
+              className="font-display"
+              style={{ fontWeight: 800, fontSize: 16, letterSpacing: '0.02em' }}
+            >
+              STATS MASTER
+            </span>
+          </div>
+          <MonoLabel size={9} tracking="0.2em">Joining</MonoLabel>
         </div>
+        <Kickplate height={4} />
+      </header>
 
-        {/* Boss invite banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="relative z-[2] mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center gap-6 px-[18px] py-10"
+      >
+        {/* Room code on the board — the same object the TV is showing. */}
+        <JumbotronPanel bezel={8} screenPad="16px 18px">
+          <div className="flex flex-col gap-2.5">
+            <span
+              className="font-mono"
+              style={{ fontSize: 9, letterSpacing: '0.3em', color: 'rgba(255,176,31,0.65)' }}
+            >
+              ROOM CODE
+            </span>
+            <span
+              className="led-glow"
+              style={{
+                fontFamily: 'var(--font-led)',
+                fontWeight: 700,
+                fontSize: 54,
+                lineHeight: 0.82,
+                letterSpacing: '0.1em',
+                color: '#ffb01f',
+              }}
+            >
+              {roomId || '—'}
+            </span>
+          </div>
+        </JumbotronPanel>
+
         {bossToken && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-            style={{
-              background: '#ffcf33',
-              border: '2px solid #0a1535',
-              borderRadius: 14,
-              boxShadow: '0 4px 0 #0a1535',
-              padding: '12px 16px',
-            }}
+          <div
+            className="flex flex-col gap-1.5 px-4 py-3"
+            style={{ background: RED, color: '#fff' }}
           >
-            <p
-              style={{
-                fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-                fontSize: 12,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: '#0a1535',
-                margin: 0,
-              }}
+            <span className="font-mono" style={{ fontSize: 9, letterSpacing: '0.22em' }}>
+              BOSS LINK
+            </span>
+            <span
+              className="font-display"
+              style={{ fontWeight: 700, fontSize: 20, lineHeight: 1, textTransform: 'uppercase' }}
             >
-              👑 Boss Invite
-            </p>
-            <p
-              style={{
-                fontFamily: 'var(--font-space-grotesk), "Space Grotesk", sans-serif',
-                fontSize: 13,
-                color: '#0a1535',
-                marginTop: 3,
-              }}
-            >
-              You&apos;ll have host controls after joining.
-            </p>
-          </motion.div>
+              You control the game
+            </span>
+          </div>
         )}
 
-        {/* Main card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          style={{
-            background: '#ffffff',
-            border: '2px solid #0a1535',
-            borderRadius: 16,
-            boxShadow: '0 5px 0 #0a1535',
-            padding: 20,
-          }}
-        >
-          {/* Avatar preview */}
-          <div className="flex flex-col items-center gap-2">
+        {/* Your jersey: avatar and name. */}
+        <div className="on-ice flex flex-col gap-5 p-5" style={{ borderLeft: `5px solid ${INK}` }}>
+          <div className="flex items-center gap-4">
             {avatarUrl && (
-              <div
-                style={{
-                  width: 76,
-                  height: 76,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  border: '3px solid #0a1535',
-                  background: '#eaf2ff',
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={avatarUrl} alt="avatar" width={76} height={76} className="w-full h-full" />
-              </div>
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt=""
+                width={64}
+                height={64}
+                style={{ width: 64, height: 64, borderRadius: 3, background: '#e4ecf5' }}
+              />
             )}
-            <p style={caption}>Your Avatar · Auto-Generated</p>
+            <div className="flex flex-col gap-1.5">
+              <MonoLabel size={9} tracking="0.22em">Your jersey</MonoLabel>
+              <span
+                className="font-display"
+                style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
+              >
+                {name || '—'}
+              </span>
+            </div>
           </div>
 
-          {/* Name input */}
-          <div className="mt-4">
-            <label
-              style={{
-                display: 'block',
-                fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-                fontSize: 11,
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                color: '#0a1535',
-                marginBottom: 6,
-              }}
-            >
-              Your Name
-            </label>
+          <div className="flex flex-col gap-2">
+            <MonoLabel size={9} tracking="0.22em">Name on the board</MonoLabel>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-              placeholder="Enter your name…"
-              maxLength={20}
+              maxLength={14}
+              placeholder="YOUR NAME"
+              aria-label="Your name"
               className="w-full focus:outline-none"
               style={{
-                background: '#eaf2ff',
-                border: '3px solid #0a1535',
-                borderRadius: 12,
-                padding: '0 14px',
-                minHeight: 44,
-                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                fontSize: 17,
-                color: '#0a1535',
-                textAlign: 'center',
+                background: '#ffffff',
+                boxShadow: 'inset 0 0 0 2px rgba(13,27,42,0.14)',
+                border: 'none',
+                borderRadius: 0,
+                padding: '14px 16px',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: 24,
+                lineHeight: 1,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                color: INK,
               }}
             />
           </div>
 
-          {/* Game info */}
-          {game && (
-            <div
-              className="mt-4"
-              style={{ background: '#eef1f8', borderRadius: 12, padding: 14 }}
-            >
-              {[
-                { label: 'Players', value: String(game.players?.length ?? 0) },
-                { label: 'Questions', value: String(game.questionCount) },
-                { label: 'Mode', value: game.gameMode },
-              ].map((row) => (
-                <div
-                  key={row.label}
-                  className="flex justify-between items-center"
-                  style={{ padding: '3px 0' }}
-                >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-space-grotesk), "Space Grotesk", sans-serif',
-                      fontSize: 14,
-                      color: '#6b7ea0',
-                    }}
-                  >
-                    {row.label}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                      fontSize: 14,
-                      color: '#0a1535',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Join button */}
           <Button
             variant="primary"
-            className="w-full mt-4"
+            size="md"
             onClick={handleJoin}
             disabled={!name.trim() || joining}
-            style={{ minHeight: 44, fontSize: 15, boxShadow: '0 5px 0 #0a1535' }}
+            className="w-full"
+            style={{ minHeight: 52 }}
           >
-            {joining ? 'Joining…' : 'LACE UP → JOIN'}
+            {joining ? 'Joining…' : 'Take the ice'}
           </Button>
-        </motion.div>
-      </div>
+        </div>
+
+        {/* Who is already seated. */}
+        {players.length > 0 && (
+          <div className="on-ice flex flex-col">
+            <div className="px-4 pt-4 pb-2">
+              <MonoLabel size={9} tracking="0.22em">
+                Already in · {players.length}
+              </MonoLabel>
+            </div>
+            {players.map((p, i) => (
+              <div
+                key={p.id}
+                className="flex items-baseline gap-3 px-4 py-2.5"
+                style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+              >
+                <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#55677d' }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span
+                  className="font-display flex-1 truncate"
+                  style={{ fontWeight: 700, fontSize: 19, textTransform: 'uppercase', color: INK }}
+                >
+                  {p.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
     </main>
   )
 }

@@ -51,6 +51,43 @@ const game = storage.get('game') as unknown as LiveObject<GameState>
 
 Normalize: lowercase + trim + collapse spaces. Accept full name OR last name only.
 
+## Design System — "On the Ice"
+
+Broadcast-hockey visual system. Tokens live in the `@theme` block in `app/globals.css`;
+never hardcode a colour that has a token.
+
+- **Ice is the page.** `.ice-bg` paints the white-to-pale-blue gradient and lays skate
+  scuffs over it via `::before` (z-index 0), so page content needs `relative z-[2]`.
+  `RinkBg` adds the rink geometry (blue lines, centre line, faceoff circle).
+- **Planes, not boxes.** UI sits *on* the ice as flat white planes: `.on-ice`
+  (ambient shadow) or `.on-ice-header`. Square corners everywhere — no radius, no
+  outlines. Separation comes from hairlines (`rgba(13,27,42,0.10)`) and a 5–6px
+  coloured left edge marker.
+- **Ink and one accent.** Navy `#0d1b2a` is the ink, `#55677d` the lightest
+  permitted secondary on white. Red `#cf0a2c` is the only accent — leader, live,
+  primary action. Amber `#f2b21c` is trim only: the `Kickplate` under header bars.
+- **The jumbotron is the one dark object** and the only place amber LED type appears.
+  Use `Jumbotron` (5-cell stat line) or `JumbotronPanel` (free-form).
+- **Type.** `font-display` (Big Shoulders, 700/800, uppercase) for headings, names and
+  numbers; `font-led` (Barlow Condensed) for LED digits; `font-body` (Archivo) for
+  prose; `font-mono` (JetBrains Mono) for labels — never below 9px, use `MonoLabel`.
+- **Icons** are Lucide at 2–2.4 stroke width. No emoji.
+- **Never encode state in colour alone.** Eliminated answers also carry the
+  `.penalty-hatch` fill and a `PENALTY BOX` label; the leader also carries rank 1;
+  "answered" is a navy bar, not a hue; toggles read ON/OFF.
+- **Motion is flat.** 1px press, no bounce or scale. The one flourish is the
+  jumbotron's left-to-right cell illumination (60ms stagger). Under 5s the clock goes
+  red and the progress track pulses — no shake.
+
+Shared building blocks: `components/design-system.tsx` (Button, MonoLabel, TierBadge,
+Avatar, ProgressTrack, Clock, Kickplate, Ticker, Modal, GameHeading),
+`components/arcade/*` (PuckMark, CBrand, RinkBg, FaceoffCircle, Jumbotron),
+`components/game/*` (Scorebug, AnswerRow, SideRail, Scoreboard/FinalBoard,
+PowerupBar, HintPanel, PlayerNameInput).
+
+The full handoff spec is `~/Downloads/Hockey app design critique.zip`
+(`design_handoff_on_the_ice/`) — section **3a — ON THE ICE** is the approved direction.
+
 ## Route Structure
 
 ```

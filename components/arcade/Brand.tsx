@@ -1,74 +1,72 @@
 'use client'
 
-interface CMascotProps {
+interface PuckMarkProps {
   size?: number
-  /** kept for API compatibility; the mark is a single navy puck disc */
-  mood?: 'happy' | 'sad'
-  /** render for a dark background */
+  /** Render for a dark background (navy bars, the CTA band, the footer). */
   light?: boolean
+  className?: string
 }
 
-/** Puck-disc logo mark (seen edge-on: a filled circle with a light bar). */
-export function CMascot({ size = 34, light = false }: CMascotProps) {
+/** The puck seen edge-on: a navy disc crossed by an ice-coloured bar. */
+export function PuckMark({ size = 28, light = false, className = '' }: PuckMarkProps) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
+    <div
       aria-hidden="true"
-      style={{ flexShrink: 0 }}
+      className={`grid shrink-0 place-items-center rounded-full ${className}`}
+      style={{
+        width: size,
+        height: size,
+        background: light ? '#ffffff' : '#0d1b2a',
+      }}
     >
-      <circle
-        cx="20"
-        cy="20"
-        r="19"
-        fill={light ? '#20305f' : '#0a1535'}
-        stroke={light ? 'rgba(255,255,255,0.35)' : 'none'}
-        strokeWidth={light ? 1.5 : 0}
+      <div
+        style={{
+          width: size * 0.535,
+          height: Math.max(2, Math.round(size * 0.107)),
+          borderRadius: 2,
+          background: light ? '#0d1b2a' : '#eef3f9',
+        }}
       />
-      <rect x="9" y="17.5" width="22" height="5" rx="2.5" fill="#f4f8ff" />
-    </svg>
+    </div>
   )
 }
 
-interface CBrandProps {
+interface BrandProps {
   small?: boolean
+  /** Mono line under the wordmark, e.g. a room code. */
   subtitle?: string
   light?: boolean
   className?: string
 }
 
-export function CBrand({ small = false, subtitle, light = false, className = '' }: CBrandProps) {
-  const wordmarkSize = small ? 15 : 17
-  const logoSize = small ? 30 : 34
+export function CBrand({ small = false, subtitle, light = false, className = '' }: BrandProps) {
+  const markSize = small ? 24 : 28
+  const wordSize = small ? 17 : 20
 
   return (
-    <div
-      className={`inline-flex items-center ${className}`}
-      style={{ gap: small ? 8 : 10 }}
-    >
-      <CMascot size={logoSize} light={light} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <div className={`inline-flex items-center gap-[11px] ${className}`}>
+      <PuckMark size={markSize} light={light} />
+      <div className="flex flex-col gap-[3px]">
         <span
+          className="font-display"
           style={{
-            fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-            fontSize: wordmarkSize,
+            fontWeight: 800,
+            fontSize: wordSize,
             lineHeight: 1,
-            color: light ? '#ffffff' : '#0a1535',
-            letterSpacing: '-0.01em',
+            letterSpacing: '0.02em',
+            color: light ? '#ffffff' : '#0d1b2a',
           }}
         >
-          STATS<span style={{ color: '#e32437' }}>!</span>MASTER
+          STATS MASTER
         </span>
         {subtitle && (
           <span
+            className="font-mono"
             style={{
-              fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
               fontSize: 8,
               lineHeight: 1,
-              color: light ? '#9db9f0' : '#6b7ea0',
-              letterSpacing: '0.24em',
-              marginTop: 1,
+              letterSpacing: '0.22em',
+              color: light ? 'rgba(255,255,255,0.55)' : '#55677d',
             }}
           >
             {subtitle}

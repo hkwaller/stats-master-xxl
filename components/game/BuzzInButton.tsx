@@ -1,8 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { usePlayerSearch } from '@/hooks/usePlayerSearch'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { MonoLabel } from '@/components/design-system'
+import { PlayerNameInput } from './PlayerNameInput'
+
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
 
 interface BuzzInButtonProps {
   playerId: string
@@ -13,16 +17,40 @@ interface BuzzInButtonProps {
   offsetForDock?: boolean
 }
 
-function HighlightMatch({ text, query }: { text: string; query: string }) {
-  if (!query || query.length < 2) return <>{text}</>
-  const idx = text.toLowerCase().indexOf(query.toLowerCase())
-  if (idx === -1) return <>{text}</>
+/** A hairline-bounded status plane — locked out, or someone else has the puck. */
+function StatusPlane({
+  label,
+  detail,
+  tone,
+}: {
+  label: string
+  detail: string
+  tone: 'dead' | 'wait'
+}) {
   return (
-    <>
-      {text.slice(0, idx)}
-      <span className="bg-yellow/60 font-bold">{text.slice(idx, idx + query.length)}</span>
-      {text.slice(idx + query.length)}
-    </>
+    <div
+      className={`on-ice px-5 py-6 text-center ${tone === 'dead' ? 'penalty-hatch' : ''}`}
+      style={{
+        borderLeft: `5px solid ${tone === 'dead' ? '#b3c0cf' : INK}`,
+        boxShadow: tone === 'dead' ? 'none' : undefined,
+      }}
+    >
+      <p
+        className="font-display m-0"
+        style={{
+          fontWeight: 800,
+          fontSize: 28,
+          lineHeight: 1,
+          textTransform: 'uppercase',
+          color: tone === 'dead' ? '#6b7a8c' : INK,
+        }}
+      >
+        {label}
+      </p>
+      <p className="mt-2 mb-0">
+        <MonoLabel size={9}>{detail}</MonoLabel>
+      </p>
+    </div>
   )
 }
 
@@ -39,149 +67,85 @@ export function BuzzInButton({
   const someoneElseBuzzed = buzzedInPlayerId !== '' && buzzedInPlayerId !== playerId
 
   const [answer, setAnswer] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  const {
-    suggestions,
-    showSuggestions,
-    activeIndex,
-    handleChange,
-    handleKeyDown,
-    handleSuggestionPick,
-    handleFocus,
-    handleBlur,
-  } = usePlayerSearch({ value: answer, setValue: setAnswer, onSubmit: onSubmitAnswer })
-
-  // Auto-focus input when this player buzzes in
+  // Clear the field when the buzz state resets between rounds.
   useEffect(() => {
-    if (isBuzzed && inputRef.current) {
-      inputRef.current.focus()
-    }
+    if (!isBuzzed) setAnswer('')
   }, [isBuzzed])
-
-  // Clear answer when buzz state resets
-  useEffect(() => {
-    if (!isBuzzed) {
-      setAnswer('')
-    }
-  }, [isBuzzed])
-
-  function handleSubmit() {
-    if (!answer.trim()) return
-    onSubmitAnswer(answer.trim())
-  }
 
   if (isLockedOut) {
     return (
-      <div className="bg-game-red/10 border-4 border-game-red text-center py-6 px-4">
-        <p className="text-game-red font-bold text-lg uppercase tracking-widest">Locked Out</p>
-        <p className="text-game-red/70 text-sm mt-1">Wrong guess - watch the remaining reveals</p>
-      </div>
+      <StatusPlane
+        label="Penalty box"
+        detail="Wrong guess — watch the remaining reveals"
+        tone="dead"
+      />
     )
   }
 
   if (someoneElseBuzzed) {
-    return (
-      <div className="bg-yellow/20 border-4 border-yellow text-center py-6 px-4">
-        <p className="text-black font-bold text-lg uppercase tracking-widest">
-          Someone else buzzed in
-        </p>
-        <p className="text-black/70 text-sm mt-1">Stand by…</p>
-      </div>
-    )
+    return <StatusPlane label="Someone else buzzed" detail="Stand by" tone="wait" />
   }
 
   if (isBuzzed) {
     return (
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="space-y-3"
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+        className="flex flex-col gap-3"
       >
-        <div className="bg-yellow border-4 border-black text-center py-3 px-4">
-          <p className="font-bold text-black uppercase tracking-widest">
-            You buzzed in! Type the player name:
-          </p>
+        <div
+          className="px-4 py-3 text-center"
+          style={{ background: RED, color: '#fff' }}
+        >
+          <span
+            className="font-display"
+            style={{
+              fontWeight: 700,
+              fontSize: 18,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+            }}
+          >
+            You have the puck — name him
+          </span>
         </div>
 
-        <div className="relative">
-          <div className="flex gap-3">
-            <input
-              ref={inputRef}
-              value={answer}
-              onChange={(e) => handleChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              placeholder="Type a player name…"
-              autoComplete="off"
-              className="
-                flex-1 bg-white border-4 border-black
-                px-4 py-3 text-black font-bold text-lg placeholder-black/40
-                focus:outline-none focus:border-yellow transition-colors
-                shadow-[4px_4px_0_#000]
-              "
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={!answer.trim()}
-              className="
-                bg-black text-white font-bold px-5 py-3 border-4 border-black
-                shadow-[4px_4px_0_#555] uppercase tracking-wide
-                hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed
-                transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
-              "
-            >
-              Submit
-            </button>
-          </div>
-
-          <AnimatePresence>
-            {showSuggestions && suggestions.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                className="absolute top-full left-0 right-0 mt-1 z-20 bg-white border-4 border-black shadow-[4px_4px_0_#000] overflow-hidden"
-              >
-                {suggestions.map((name, i) => (
-                  <button
-                    key={name}
-                    onMouseDown={() => handleSuggestionPick(name)}
-                    className={`
-                      w-full text-left px-4 py-3 font-semibold text-black text-sm
-                      border-b border-black/10 last:border-b-0 transition-colors
-                      ${i === activeIndex ? 'bg-yellow' : 'hover:bg-yellow/50'}
-                    `}
-                  >
-                    <HighlightMatch text={name} query={answer} />
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <PlayerNameInput
+          value={answer}
+          setValue={setAnswer}
+          onSubmit={onSubmitAnswer}
+          autoFocus
+        />
       </motion.div>
     )
   }
 
-  // Default: buzz-in button - fixed to bottom of screen
+  // Default: the buzzer, pinned to the bottom of the phone.
   return (
     <div
-      className={`fixed left-0 right-0 z-40 p-3 pb-safe bg-game-bg/90 backdrop-blur-sm border-t-4 border-black ${offsetForDock ? 'bottom-20' : 'bottom-0'}`}
+      className={`fixed inset-x-0 z-40 ${offsetForDock ? 'bottom-[72px]' : 'bottom-0'}`}
+      style={{ background: '#ffffff', boxShadow: '0 -1px 0 rgba(13,27,42,0.10)' }}
     >
       <motion.button
         onClick={onBuzzIn}
-        whileTap={{ scale: 0.95 }}
-        whileHover={{ scale: 1.02 }}
-        className="
-          w-full py-5 text-center font-bold text-2xl uppercase tracking-widest
-          bg-cyan border-8 border-black shadow-[8px_8px_0_#000]
-          text-black
-          transition-all active:translate-x-[4px] active:translate-y-[4px] active:shadow-none
-        "
+        whileTap={{ y: 1 }}
+        transition={{ duration: 0.1 }}
+        className="btn-ice font-display w-full"
+        style={{
+          background: RED,
+          border: 'none',
+          color: '#fff',
+          padding: '26px 0',
+          fontWeight: 700,
+          fontSize: 26,
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          cursor: 'pointer',
+        }}
       >
-        🚨 Buzz In!
+        Buzz in
       </motion.button>
     </div>
   )

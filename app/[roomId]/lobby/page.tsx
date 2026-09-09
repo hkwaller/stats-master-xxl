@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { nanoid } from 'nanoid'
 import { QRCodeSVG } from 'qrcode.react'
 import { useStorage } from '@/lib/liveblocks/client'
 import { useAssignBoss, useJoinGame, useStartGame } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
 import { useAdFree } from '@/hooks/useAdFree'
-import { Button } from '@/components/design-system'
-import { CBrand } from '@/components/arcade'
+import { Check, Copy, Settings } from 'lucide-react'
+import { Avatar, Button, Kickplate, Modal, MonoLabel } from '@/components/design-system'
+import { PuckMark, JumbotronPanel } from '@/components/arcade'
 import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
 import type { CareerQuestion, H2HPair, HLPair, Question } from '@/types/game'
+
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
+const DEAD = '#b3c0cf'
 
 interface LobbyPageProps {
   params: Promise<{ roomId: string }>
@@ -189,547 +194,339 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     .filter(Boolean)
     .join(' · ')
 
-  return (
-    <main className="ice-bg min-h-screen px-4 py-6">
-      <div className="max-w-5xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+  const openSeats = Math.max(0, maxPlayers - players.length)
 
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between">
-          <CBrand small />
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: '#e32437',
-              color: '#fff',
-              border: '2px solid #0a1535',
-              borderRadius: 9999,
-              padding: '6px 14px',
-              fontFamily: 'var(--font-archivo-black), sans-serif',
-              fontSize: 11,
-              fontWeight: 900,
-              letterSpacing: '0.2em',
-              boxShadow: '0 3px 0 #0a1535',
-            }}
-          >
+  return (
+    <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+      {/* ── Header ── */}
+      <header className="on-ice-header relative z-20">
+        <div className="flex h-[60px] items-center justify-between px-5 md:px-8">
+          <div className="flex items-center gap-[11px]">
+            <PuckMark size={26} />
             <span
-              className="animate-pulse"
-              style={{
-                width: 7,
-                height: 7,
-                background: '#fff',
-                borderRadius: '50%',
-                display: 'inline-block',
-              }}
-            />
-            WAITING TO START
+              className="font-display"
+              style={{ fontWeight: 800, fontSize: 18, letterSpacing: '0.02em' }}
+            >
+              STATS MASTER
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <MonoLabel size={9} tracking="0.22em">
+              {players.length} / {maxPlayers} seated
+            </MonoLabel>
+            <span className="flex items-center gap-[7px]">
+              <span className="size-[7px] animate-pulse rounded-full" style={{ background: RED }} />
+              <MonoLabel size={9} tracking="0.16em">Live</MonoLabel>
+            </span>
           </div>
         </div>
+        <Kickplate />
+      </header>
 
-        {/* ── Heading row ── */}
-        <div className="flex items-end justify-between" style={{ gap: 16, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <span
-              style={{
-                display: 'inline-block',
-                background: '#ffcf33',
-                border: '2px solid #0a1535',
-                borderRadius: 9999,
-                padding: '4px 14px',
-                fontFamily: 'var(--font-archivo-black), sans-serif',
-                fontSize: 11,
-                fontWeight: 900,
-                letterSpacing: '0.22em',
-                color: '#0a1535',
-                boxShadow: '0 3px 0 #0a1535',
-              }}
-            >
-              STEP 2 OF 2
-            </span>
-            <h2
-              style={{
-                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                fontSize: 30,
-                lineHeight: 0.95,
-                color: '#0a1535',
-                margin: 0,
-              }}
-            >
-              GATHER YOUR SQUAD
-            </h2>
-          </div>
-          <div
+      <div className="relative z-[2] mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-5 pt-8 pb-[132px] md:px-8">
+        {/* ── Title ── */}
+        <div className="flex flex-col gap-2">
+          <MonoLabel size={10} tracking="0.3em">Step 2 of 2 · {configSummary}</MonoLabel>
+          <h1
+            className="font-display m-0"
             style={{
-              fontFamily: 'var(--font-jetbrains-mono), monospace',
-              fontSize: 12,
-              letterSpacing: '0.16em',
-              color: '#6b7ea0',
+              fontWeight: 800,
+              fontSize: 'clamp(38px,7vw,60px)',
+              lineHeight: 0.9,
+              letterSpacing: '0.005em',
               textTransform: 'uppercase',
             }}
           >
-            {configSummary}
-          </div>
+            Warm-up
+          </h1>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid gap-5"
-          style={{ gridTemplateColumns: '360px 1fr', alignItems: 'start' }}
-        >
-          {/* ── LEFT: QR / invite card ── */}
-          <div
-            style={{
-              background: '#fff',
-              border: '2px solid #0a1535',
-              borderRadius: 16,
-              padding: 20,
-              boxShadow: '0 5px 0 #0a1535',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 16,
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-archivo-black), sans-serif',
-                fontSize: 11,
-                fontWeight: 900,
-                letterSpacing: '0.22em',
-                color: '#6b7ea0',
-                textTransform: 'uppercase',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              📱 SCAN TO JOIN
-            </div>
-
-            {/* QR box */}
-            {connectUrl && (
-              <div
-                style={{
-                  width: 170,
-                  height: 170,
-                  background: '#fff',
-                  padding: 10,
-                  border: '2px solid #0a1535',
-                  borderRadius: 12,
-                  display: 'grid',
-                  placeItems: 'center',
-                }}
-              >
-                <QRCodeSVG
-                  value={connectUrl}
-                  size={150}
-                  bgColor="#ffffff"
-                  fgColor="#0a1535"
-                />
-              </div>
-            )}
-
-            {/* URL chip */}
-            <div
-              style={{
-                background: '#eef1f8',
-                border: '2px solid #0a1535',
-                borderRadius: 10,
-                padding: '8px 12px',
-                width: '100%',
-                textAlign: 'center',
-                fontFamily: 'var(--font-jetbrains-mono), monospace',
-                fontSize: 12,
-                letterSpacing: '0.06em',
-                color: '#0a1535',
-                wordBreak: 'break-all',
-              }}
-            >
-              {connectUrl}
-            </div>
-
-            {/* Copy link */}
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleCopy}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              {copied ? '✓ COPIED!' : '📋 COPY LINK'}
-            </Button>
-          </div>
-
-          {/* ── RIGHT: Roster card ── */}
-          <div
-            style={{
-              background: '#fff',
-              border: '2px solid #0a1535',
-              borderRadius: 16,
-              padding: 20,
-              boxShadow: '0 5px 0 #0a1535',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div
-                style={{
-                  fontFamily: 'var(--font-archivo-black), sans-serif',
-                  fontSize: 11,
-                  fontWeight: 900,
-                  letterSpacing: '0.22em',
-                  color: '#6b7ea0',
-                  textTransform: 'uppercase',
-                }}
-              >
-                ON THE BENCH
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                  fontSize: 18,
-                  color: '#0a1535',
-                }}
-              >
-                {players.length}/{maxPlayers}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3" style={{ minHeight: 160 }}>
-              {players.map((player) => (
-                <motion.div
-                  key={player.id}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
+        <div className="grid items-start gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+          {/* ── Room code, on the jumbotron ── */}
+          <div className="flex flex-col gap-5">
+            <JumbotronPanel struts screenPad="20px 22px">
+              <div className="flex flex-col gap-3">
+                <span
+                  className="font-mono"
+                  style={{ fontSize: 10, letterSpacing: '0.3em', color: 'rgba(255,176,31,0.65)' }}
+                >
+                  ROOM CODE
+                </span>
+                <span
+                  className="led-glow tabular-nums"
                   style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    background: '#fff',
-                    border: '2px solid #0a1535',
-                    borderRadius: 12,
-                    padding: '10px 12px',
-                    boxShadow: '0 2px 0 rgba(10,21,53,0.25)',
+                    fontFamily: 'var(--font-led)',
+                    fontWeight: 700,
+                    fontSize: 'clamp(52px,11vw,84px)',
+                    lineHeight: 0.82,
+                    letterSpacing: '0.1em',
+                    color: '#ffb01f',
                   }}
                 >
+                  {roomId || '—'}
+                </span>
+              </div>
+            </JumbotronPanel>
+
+            <div className="on-ice flex flex-col gap-4 p-5">
+              <MonoLabel size={10} tracking="0.22em">Scan to join</MonoLabel>
+
+              <div className="flex items-center gap-5">
+                {connectUrl && (
+                  <div className="shrink-0 bg-white p-2" style={{ boxShadow: 'inset 0 0 0 1px rgba(13,27,42,0.14)' }}>
+                    <QRCodeSVG value={connectUrl} size={116} bgColor="#ffffff" fgColor={INK} level="M" />
+                  </div>
+                )}
+                <div className="flex min-w-0 flex-1 flex-col gap-3">
+                  <span
+                    className="font-mono break-all"
+                    style={{ fontSize: 10, letterSpacing: '0.08em', color: '#55677d', lineHeight: 1.6 }}
+                  >
+                    {connectUrl}
+                  </span>
+                  <Button variant="secondary" size="sm" onClick={handleCopy}>
+                    {copied ? <Check size={14} strokeWidth={2.4} /> : <Copy size={14} strokeWidth={2.2} />}
+                    {copied ? 'Copied' : 'Copy link'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Roster + settings ── */}
+          <div className="flex flex-col gap-5">
+            <div className="on-ice flex flex-col">
+              <div className="flex items-baseline justify-between px-5 pt-5 pb-3">
+                <MonoLabel size={10} tracking="0.22em">On the bench</MonoLabel>
+                <MonoLabel size={9} tracking="0.16em">Tap a name to make them boss</MonoLabel>
+              </div>
+
+              {players.map((player, i) => (
                   <div
+                    key={player.id}
+                    className="relative flex items-center gap-3 px-5 py-3"
                     style={{
-                      width: 38,
-                      height: 38,
-                      border: '2px solid #0a1535',
-                      borderRadius: 10,
-                      overflow: 'hidden',
-                      flexShrink: 0,
+                      borderBottom: '1px solid rgba(13,27,42,0.09)',
+                      borderLeft: `5px solid ${player.isBoss ? RED : INK}`,
+                      background: player.isBoss ? 'rgba(207,10,44,0.06)' : 'transparent',
                     }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={player.avatarUrl}
-                      alt={player.name}
-                      width={38}
-                      height={38}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                        fontSize: 13,
-                        lineHeight: 1,
-                        color: '#0a1535',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
+                    <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#55677d' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <Avatar url={player.avatarUrl} name={player.name} size={30} />
+                    <span
+                      className="font-display min-w-0 flex-1 truncate"
+                      style={{ fontWeight: 700, fontSize: 22, textTransform: 'uppercase', color: INK }}
                     >
                       {player.name}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-jetbrains-mono), monospace',
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: '0.16em',
-                        color: '#6b7ea0',
-                        marginTop: 4,
-                      }}
-                    >
-                      READY
-                    </div>
+                    </span>
+
+                    {player.isHost && <MonoLabel size={9} tracking="0.14em">Host</MonoLabel>}
+                    {player.isBoss && (
+                      <span
+                        className="font-mono"
+                        style={{ fontSize: 9, letterSpacing: '0.14em', color: '#fff', background: RED, padding: '3px 7px' }}
+                      >
+                        BOSS
+                      </span>
+                    )}
+                    {player.id === myId && (
+                      <MonoLabel size={9} tracking="0.14em">You</MonoLabel>
+                    )}
+
+                    {isHost && (
+                      <button
+                        type="button"
+                        onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
+                        className="btn-ice font-mono shrink-0"
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          padding: '4px 0',
+                          fontSize: 9,
+                          letterSpacing: '0.14em',
+                          textTransform: 'uppercase',
+                          color: '#55677d',
+                          textDecoration: 'underline',
+                          textUnderlineOffset: 3,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {player.isBoss ? 'Clear' : 'Make boss'}
+                      </button>
+                    )}
                   </div>
-                  {player.isHost && (
-                    <span
-                      style={{
-                        background: '#0a1535',
-                        color: '#ffcf33',
-                        padding: '3px 8px',
-                        fontFamily: 'var(--font-archivo-black), sans-serif',
-                        fontSize: 9,
-                        borderRadius: 6,
-                        border: '2px solid #0a1535',
-                        letterSpacing: '0.14em',
-                        flexShrink: 0,
-                      }}
-                    >
-                      HOST
-                    </span>
-                  )}
-                  {player.isBoss && (
-                    <span
-                      style={{
-                        background: '#e32437',
-                        color: '#fff',
-                        padding: '3px 8px',
-                        fontFamily: 'var(--font-archivo-black), sans-serif',
-                        fontSize: 9,
-                        borderRadius: 6,
-                        border: '2px solid #0a1535',
-                        letterSpacing: '0.14em',
-                        flexShrink: 0,
-                      }}
-                    >
-                      👑 BOSS
-                    </span>
-                  )}
-                  {isHost && (
-                    <button
-                      onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
-                      title={player.isBoss ? 'Remove boss' : 'Make boss'}
-                      style={{
-                        position: 'absolute',
-                        top: -8,
-                        right: -8,
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        border: '2px solid #0a1535',
-                        background: player.isBoss ? '#ffcf33' : '#fff',
-                        cursor: 'pointer',
-                        display: 'grid',
-                        placeItems: 'center',
-                        fontSize: 11,
-                        boxShadow: '0 2px 0 #0a1535',
-                      }}
-                    >
-                      👑
-                    </button>
-                  )}
-                </motion.div>
               ))}
 
-              {/* Empty slot */}
-              {players.length < maxPlayers && (
+              {/* Open seats fill in one by one as phones connect. */}
+              {Array.from({ length: Math.min(openSeats, 4) }).map((_, i) => (
                 <div
+                  key={`open-${i}`}
+                  className="penalty-hatch flex items-center gap-3 px-5 py-3"
                   style={{
-                    gridColumn: players.length % 2 === 0 ? '1 / -1' : 'auto',
-                    border: '2px dashed #9aa2bd',
-                    borderRadius: 12,
-                    padding: 18,
-                    display: 'grid',
-                    placeItems: 'center',
-                    minHeight: 60,
-                    fontFamily: 'var(--font-archivo-black), sans-serif',
-                    fontSize: 11,
-                    fontWeight: 900,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: '#9aa2bd',
+                    borderBottom: '1px solid rgba(13,27,42,0.09)',
+                    borderLeft: `5px solid ${DEAD}`,
                   }}
                 >
-                  WAITING FOR PLAYERS…
+                  <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#7d8b9c' }}>
+                    {String(players.length + i + 1).padStart(2, '0')}
+                  </span>
+                  <span
+                    className="font-display flex-1"
+                    style={{ fontWeight: 700, fontSize: 22, textTransform: 'uppercase', color: '#7d8b9c' }}
+                  >
+                    Open seat
+                  </span>
+                  <MonoLabel size={9} tracking="0.14em" color="#7d8b9c">Scan to join</MonoLabel>
                 </div>
-              )}
+              ))}
+            </div>
+
+            <div className="on-ice flex flex-col gap-3 p-5">
+              <MonoLabel size={10} tracking="0.22em">Settings</MonoLabel>
+              {[
+                { key: 'Mode', value: modeName },
+                { key: 'Questions', value: String(game?.questionCount ?? 10) },
+                {
+                  key: 'Difficulty',
+                  value: configTiers.length
+                    ? configTiers.map((t) => t[0].toUpperCase() + t.slice(1)).join(' + ')
+                    : '—',
+                },
+                {
+                  key: 'Answers',
+                  value: game?.answerMode === 'freetext' ? 'Type it' : 'Multiple choice',
+                },
+                {
+                  key: 'Reveal',
+                  value: game?.revealMode === 'timed' ? 'Column by column' : 'All at once',
+                },
+              ].map((row) => (
+                <div
+                  key={row.key}
+                  className="flex items-baseline justify-between gap-3 pb-2.5"
+                  style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+                >
+                  <MonoLabel size={9} tracking="0.2em">{row.key}</MonoLabel>
+                  <span
+                    className="font-display"
+                    style={{ fontWeight: 700, fontSize: 20, color: INK, textTransform: 'uppercase' }}
+                  >
+                    {row.value}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* ── START BAR ── */}
+        <AdsterraBanner slot="lobby" />
+      </div>
+
+      {/* ── Start bar ── */}
+      <div className="fixed inset-x-0 bottom-0 z-40">
+        <Kickplate height={4} />
         <div
-          style={{
-            background: '#0a1535',
-            borderRadius: 14,
-            padding: '16px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-            flexWrap: 'wrap',
-          }}
+          className="flex flex-wrap items-center gap-4 px-5 py-4 md:px-8"
+          style={{ background: INK }}
         >
-          <div
-            style={{
-              fontFamily: 'var(--font-jetbrains-mono), monospace',
-              fontSize: 12,
-              letterSpacing: '0.14em',
-              color: '#c3d2f0',
-              textTransform: 'uppercase',
-            }}
-          >
-            {isHost ? 'EVERYONE IN? PHONES ARE THE BUZZERS.' : 'WAITING FOR HOST TO START THE GAME…'}
-          </div>
+          <MonoLabel size={10} tracking="0.14em" color="#8d9cb0">
+            {isHost ? 'Everyone in? Phones are the buzzers.' : 'Waiting for the host to start'}
+          </MonoLabel>
+
           {isHost && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Button
-                variant="ghost"
-                size="md"
-                onClick={() => router.push(`/${roomId}/setup`)}
-              >
-                ⚙ BACK TO SETUP
+            <div className="flex w-full items-center gap-2.5 sm:ml-auto sm:w-auto">
+              <Button variant="ghost" size="sm" onClick={() => router.push(`/${roomId}/setup`)}>
+                <Settings size={14} strokeWidth={2.2} />
+                Setup
               </Button>
               <Button
                 variant="primary"
                 size="md"
                 disabled={!canStart || starting}
                 onClick={handleStartGame}
+                className="flex-1 sm:flex-none"
               >
-                {starting ? '⏳ STARTING…' : '🏒 DROP THE PUCK'}
+                {starting ? 'Starting…' : 'Drop the puck'}
               </Button>
             </div>
           )}
         </div>
-
-        <AdsterraBanner slot="lobby" />
       </div>
 
-      {/* ── Boss selection modal ── */}
-      {showBossModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(10,21,53,0.65)', backdropFilter: 'blur(4px)' }}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            style={{
-              background: '#fff',
-              border: '3px solid #0a1535',
-              borderRadius: 18,
-              boxShadow: '0 10px 0 #0a1535',
-              width: '100%',
-              maxWidth: 380,
-              padding: 24,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 20,
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                  fontSize: 24,
-                  color: '#0a1535',
-                  margin: 0,
-                }}
-              >
-                ASSIGN A BOSS
-              </h2>
-              <p
-                style={{
-                  fontFamily: 'var(--font-body), sans-serif',
-                  fontSize: 13,
-                  color: '#6b7ea0',
-                  marginTop: 8,
-                }}
-              >
-                Spectator mode needs a Boss to reveal answers and advance rounds.
-              </p>
-            </div>
+      {/* ── Boss selection ── */}
+      <AnimatePresence>
+        {showBossModal && (
+          <Modal open onClose={() => setShowBossModal(false)}>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <MonoLabel size={9}>Spectator mode</MonoLabel>
+                <h2
+                  className="font-display m-0"
+                  style={{ fontWeight: 800, fontSize: 38, lineHeight: 1, textTransform: 'uppercase' }}
+                >
+                  Assign a boss
+                </h2>
+                <p className="m-0" style={{ fontSize: 13.5, lineHeight: 1.6, color: '#55677d' }}>
+                  This screen is only showing the board, so someone on a phone has to reveal
+                  answers and advance rounds.
+                </p>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {players.map((player) => (
-                <button
-                  key={player.id}
-                  onClick={() => setPendingBossId(player.id)}
-                  style={{
-                    background: pendingBossId === player.id ? '#ffcf33' : '#fff',
-                    border: '2.5px solid #0a1535',
-                    borderRadius: 12,
-                    padding: '12px 14px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    textAlign: 'left',
-                    boxShadow: pendingBossId === player.id ? '0 4px 0 #0a1535' : '0 2px 0 rgba(10,21,53,0.2)',
-                    transition: 'all 0.1s',
+              <div className="flex flex-col">
+                {players.map((player) => {
+                  const picked = pendingBossId === player.id
+                  return (
+                    <button
+                      key={player.id}
+                      type="button"
+                      onClick={() => setPendingBossId(player.id)}
+                      aria-pressed={picked}
+                      className="btn-ice flex items-center gap-3 px-3 py-2.5 text-left"
+                      style={{
+                        border: 'none',
+                        borderLeft: `5px solid ${picked ? RED : 'transparent'}`,
+                        borderBottom: '1px solid rgba(13,27,42,0.09)',
+                        background: picked ? 'rgba(207,10,44,0.06)' : 'transparent',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Avatar url={player.avatarUrl} name={player.name} size={28} />
+                      <span
+                        className="font-display flex-1 truncate"
+                        style={{ fontWeight: 700, fontSize: 20, textTransform: 'uppercase', color: INK }}
+                      >
+                        {player.name}
+                      </span>
+                      {picked && <Check size={15} strokeWidth={2.4} color={RED} />}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="grid grid-cols-2 gap-px" style={{ background: 'rgba(13,27,42,0.12)' }}>
+                <Button variant="ghost" flush onClick={() => setShowBossModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  flush
+                  disabled={!pendingBossId || starting}
+                  onClick={() => {
+                    if (!pendingBossId) return
+                    handleAssignBoss(pendingBossId)
+                    setShowBossModal(false)
+                    doStartGame()
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={player.avatarUrl}
-                    alt={player.name}
-                    width={32}
-                    height={32}
-                    style={{ borderRadius: 10, border: '2px solid #0a1535', flexShrink: 0 }}
-                  />
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                      fontSize: 14,
-                      color: '#0a1535',
-                      flex: 1,
-                    }}
-                  >
-                    {player.name}
-                  </span>
-                  <div
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: '50%',
-                      border: '2px solid #0a1535',
-                      background: pendingBossId === player.id ? '#0a1535' : '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {pendingBossId === player.id && (
-                      <div
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: '#ffcf33',
-                        }}
-                      />
-                    )}
-                  </div>
-                </button>
-              ))}
+                  {starting ? 'Starting…' : 'Assign & start'}
+                </Button>
+              </div>
             </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                style={{ flex: 1 }}
-                onClick={() => setShowBossModal(false)}
-              >
-                CANCEL
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                style={{ flex: 1 }}
-                disabled={!pendingBossId || starting}
-                onClick={() => {
-                  if (!pendingBossId) return
-                  handleAssignBoss(pendingBossId)
-                  setShowBossModal(false)
-                  doStartGame()
-                }}
-              >
-                {starting ? '⏳ STARTING…' : '👑 ASSIGN & START'}
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+          </Modal>
+        )}
+      </AnimatePresence>
     </main>
   )
 }

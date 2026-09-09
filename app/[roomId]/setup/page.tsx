@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { useStorage } from '@/lib/liveblocks/client'
 import { useSaveSettings } from '@/lib/liveblocks/mutations'
 import { checkAvailableCount, checkCareerPlayerCount } from '@/app/actions/game-actions'
 import { getOrCreateGuest } from '@/lib/guest'
-import { Button } from '@/components/design-system'
-import { CBrand } from '@/components/arcade'
+import { Button, Kickplate, MonoLabel } from '@/components/design-system'
+import { PuckMark } from '@/components/arcade'
 import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
 import type {
   AnswerMode,
@@ -21,86 +22,53 @@ import type {
 } from '@/types/game'
 import { DEFAULT_SETUP } from '@/types/game'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
+const BLUE = '#0b53c9'
+const DEAD = '#b3c0cf'
 
-type AccentColor = 'green' | 'navy' | 'red' | 'yellow'
-
-const ACCENT_BG: Record<AccentColor, string> = {
-  green: 'bg-c-green',
-  navy: 'bg-c-navy',
-  red: 'bg-c-red',
-  yellow: 'bg-c-yellow',
-}
-
-const ACCENT_FG: Record<AccentColor, string> = {
-  green: 'text-white',
-  navy: 'text-white',
-  red: 'text-white',
-  yellow: 'text-c-ink',
-}
-
-const ACCENT_META: Record<AccentColor, string> = {
-  green: 'text-white/85',
-  navy: 'text-white/85',
-  red: 'text-white/85',
-  yellow: 'text-c-ink/75',
-}
+// ─── Options ──────────────────────────────────────────────────────────────────
 
 const TIER_OPTIONS: {
   tier: DifficultyTier
   label: string
   range: string
   desc: string
-  emoji: string
-  accent: AccentColor
 }[] = [
-  { tier: 'easy', label: 'Easy', range: '140+', desc: 'Legends', emoji: '🥇', accent: 'green' },
-  {
-    tier: 'medium',
-    label: 'Medium',
-    range: '120–139',
-    desc: 'Greats',
-    emoji: '⭐',
-    accent: 'navy',
-  },
-  { tier: 'hard', label: 'Hard', range: '100–119', desc: '', emoji: '🔥', accent: 'red' },
-  { tier: 'expert', label: 'Expert', range: '70–99', desc: '', emoji: '💀', accent: 'yellow' },
+  { tier: 'easy', label: 'Easy', range: '140+ PTS', desc: 'Legends' },
+  { tier: 'medium', label: 'Medium', range: '120–139', desc: 'All-time greats' },
+  { tier: 'hard', label: 'Hard', range: '100–119', desc: 'Excellent scorers' },
+  { tier: 'expert', label: 'Expert', range: '70–99', desc: 'Solid contributors' },
 ]
 
-const GAME_MODES: {
-  mode: GameMode
-  label: string
-  desc: string
-  emoji: string
-  accent: AccentColor
-}[] = [
+const GAME_MODES: { mode: GameMode; label: string; tag: string; desc: string; edge: string }[] = [
   {
     mode: 'classic',
     label: 'Classic',
-    desc: 'Guess the player from a single season',
-    emoji: '🏒',
-    accent: 'red',
+    tag: 'Most played',
+    desc: 'One season stat line. Four names, or type it blind.',
+    edge: RED,
   },
   {
     mode: 'career',
     label: 'Career',
-    desc: 'Seasons revealed one by one - buzz in!',
-    emoji: '📈',
-    accent: 'navy',
+    tag: 'Buzz in',
+    desc: 'Seasons reveal one by one. First to buzz gets the shot.',
+    edge: BLUE,
   },
   {
     mode: 'h2h',
     label: 'Head-to-Head',
-    desc: 'Which stat line belongs to this player?',
-    emoji: '🤼',
-    accent: 'yellow',
+    tag: 'Two lines',
+    desc: 'Two stat lines, one name. Which column is his?',
+    edge: INK,
   },
   {
     mode: 'higher-lower',
     label: 'Higher / Lower',
-    desc: 'Did they score more or less?',
-    emoji: '⚖️',
-    accent: 'green',
+    tag: 'Fast',
+    desc: 'Above or below the reference line?',
+    edge: '#f2b21c',
   },
 ]
 
@@ -108,100 +76,204 @@ const HL_FIELDS: { value: HLComparisonField; label: string }[] = [
   { value: 'points', label: 'Points' },
   { value: 'goals', label: 'Goals' },
   { value: 'assists', label: 'Assists' },
-  { value: 'penaltyMinutes', label: 'Penalty Minutes' },
-  { value: 'gamesPlayed', label: 'Games Played' },
+  { value: 'penaltyMinutes', label: 'PIM' },
+  { value: 'gamesPlayed', label: 'GP' },
 ]
 
 const CAREER_REVEAL_ORDERS: { value: CareerRevealOrder; label: string }[] = [
-  { value: 'best-first', label: 'Best First' },
-  { value: 'worst-first', label: 'Worst First' },
+  { value: 'best-first', label: 'Best first' },
+  { value: 'worst-first', label: 'Worst first' },
   { value: 'chronological', label: 'Chronological' },
   { value: 'random', label: 'Random' },
 ]
 
-// ─── Small section label (muted Archivo) ──────────────────────────────────────
+const ERAS = ['1970s', '1980s', '1990s', '2000s', '2010s', '2020s']
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="m-0 font-display-alt text-[10px] font-black tracking-[0.22em] text-c-muted uppercase">
-      {children}
-    </p>
-  )
-}
+// ─── Primitives ───────────────────────────────────────────────────────────────
 
-// ─── Pill toggle switch (44×24) ────────────────────────────────────────────────
-
-function Toggle({
-  on,
-  onClick,
-  disabled,
+/** A group of settings on one white plane, opened by a mono label. */
+function Group({
+  label,
+  children,
+  className = '',
 }: {
-  on: boolean
-  onClick: () => void
-  disabled?: boolean
+  label: string
+  children: React.ReactNode
+  className?: string
 }) {
   return (
-    <button
-      disabled={disabled}
-      onClick={onClick}
-      aria-pressed={on}
-      className={`relative h-6 w-11 shrink-0 rounded-full border-2 border-c-ink p-0 transition-colors ${
-        on ? 'bg-c-green' : 'bg-c-disabled-fill'
-      } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-    >
-      <span
-        className={`absolute top-px size-[18px] rounded-full border-2 border-c-ink bg-white transition-[left] ${
-          on ? 'left-[21px]' : 'left-px'
-        }`}
-      />
-    </button>
+    <div className={`on-ice flex flex-col gap-4 p-5 ${className}`}>
+      <MonoLabel size={10} tracking="0.22em">{label}</MonoLabel>
+      {children}
+    </div>
   )
 }
 
-// ─── Segmented chip ────────────────────────────────────────────────────────────
-
+/** Square segmented chip. Selection is carried by fill AND weight, not hue alone. */
 function SegBtn({
   on,
   onClick,
   disabled,
   children,
-  small,
 }: {
   on: boolean
   onClick: () => void
   disabled?: boolean
   children: React.ReactNode
-  small?: boolean
 }) {
   return (
     <button
+      type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`rounded-[9px] border-2 border-c-ink font-display leading-none transition-all ${
-        small ? 'px-2.5 py-1.5 text-[11px]' : 'px-3.5 py-2 text-[13px]'
-      } ${
-        on
-          ? 'bg-c-navy text-white shadow-[0_3px_0_#0a1535]'
-          : 'bg-white text-c-ink shadow-[0_2px_0_rgba(10,21,53,0.25)]'
-      } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+      aria-pressed={on}
+      className="btn-ice font-display"
+      style={{
+        border: 'none',
+        borderRadius: 0,
+        padding: '9px 13px',
+        fontWeight: 700,
+        fontSize: 14,
+        lineHeight: 1,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        background: on ? INK : '#ffffff',
+        color: on ? '#eef3f9' : '#55677d',
+        boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(13,27,42,0.14)',
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
     >
       {children}
     </button>
   )
 }
 
-// ─── Format row (label left, control right) ────────────────────────────────────
+/** Square toggle. Reads ON / OFF in words so the state is never colour-only. */
+function Toggle({
+  label,
+  on,
+  onClick,
+  disabled,
+}: {
+  /** The visible row label, repeated for assistive tech. */
+  label: string
+  on: boolean
+  onClick: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      aria-pressed={on}
+      aria-label={label}
+      className="btn-ice flex items-center gap-2"
+      style={{
+        border: 'none',
+        borderRadius: 0,
+        padding: 0,
+        background: 'transparent',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <span className="font-mono" style={{ fontSize: 9, letterSpacing: '0.16em', color: on ? RED : '#55677d' }}>
+        {on ? 'ON' : 'OFF'}
+      </span>
+      <span
+        className="relative block"
+        style={{ width: 40, height: 20, background: on ? RED : '#f4f7fa', boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(13,27,42,0.14)' }}
+      >
+        <span
+          className="absolute top-[3px] block transition-[left]"
+          style={{ width: 14, height: 14, left: on ? 23 : 3, background: on ? '#ffffff' : INK }}
+        />
+      </span>
+    </button>
+  )
+}
 
+/** Label left, control right, closed by a hairline. */
 function FormatRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="font-body text-[13px] font-bold text-c-ink">{label}</span>
+    <div
+      className="flex flex-wrap items-center justify-between gap-3 pb-3.5"
+      style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+    >
+      <span
+        className="font-display"
+        style={{ fontWeight: 700, fontSize: 19, lineHeight: 1, textTransform: 'uppercase' }}
+      >
+        {label}
+      </span>
       <div className="flex flex-wrap items-center justify-end gap-1.5">{children}</div>
     </div>
   )
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+/** A selectable plane with a left edge marker and an explicit check when on. */
+function OptionPlane({
+  on,
+  disabled,
+  edge,
+  onClick,
+  title,
+  meta,
+  desc,
+  titleSize = 26,
+}: {
+  on: boolean
+  disabled?: boolean
+  edge: string
+  onClick: () => void
+  title: string
+  meta?: string
+  desc?: string
+  titleSize?: number
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      aria-pressed={on}
+      className="btn-ice flex flex-col gap-2 p-4 text-left"
+      style={{
+        border: 'none',
+        borderLeft: `6px solid ${on ? edge : DEAD}`,
+        borderRadius: 0,
+        background: on ? 'rgba(207,10,44,0.05)' : '#ffffff',
+        boxShadow: on ? '0 2px 10px rgba(13,27,42,0.10)' : '0 2px 10px rgba(13,27,42,0.05)',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.55 : 1,
+      }}
+    >
+      <div className="flex w-full items-baseline gap-2">
+        <span
+          className="font-display flex-1"
+          style={{
+            fontWeight: 800,
+            fontSize: titleSize,
+            lineHeight: 1,
+            textTransform: 'uppercase',
+            color: INK,
+          }}
+        >
+          {title}
+        </span>
+        {on && <Check size={15} strokeWidth={2.4} color={RED} />}
+      </div>
+      {meta && <MonoLabel size={9} tracking="0.16em">{meta}</MonoLabel>}
+      {desc && (
+        <span style={{ fontSize: 12.5, lineHeight: 1.55, color: '#55677d' }}>{desc}</span>
+      )}
+    </button>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface SetupPageProps {
   params: Promise<{ roomId: string }>
@@ -291,158 +363,143 @@ export default function SetupPage({ params }: SetupPageProps) {
     (!needsTiers || config.difficultyTiers.length > 0) &&
     (availableCount === null || availableCount >= (isCareer ? 1 : config.questionCount))
 
-  // Config summary line for the start bar
   const modeLabel = GAME_MODES.find((m) => m.mode === config.gameMode)?.label.toUpperCase() ?? ''
   const tiersLabel =
     config.difficultyTiers.length > 0
       ? config.difficultyTiers.map((t) => t.toUpperCase()).join(' + ')
-      : '-'
+      : '—'
   const configSummary = `${modeLabel} · ${tiersLabel} · ${config.eras.length} ERA${config.eras.length === 1 ? '' : 'S'} · ${config.questionCount} Q`
 
+  const startLabel = starting
+    ? 'Starting…'
+    : !canStart && availableCount !== null && availableCount < config.questionCount
+      ? 'Not enough players'
+      : 'Continue to lobby'
+
   return (
-    <main className="ice-bg min-h-screen p-4 sm:p-5 md:p-[22px]">
-      <div className="mx-auto flex max-w-[1100px] flex-col gap-4">
-        {/* ── Header ── */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <CBrand small />
-          <div className="flex flex-wrap items-center gap-2.5">
+    <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+      {/* ── Header ── */}
+      <header className="on-ice-header relative z-20">
+        <div className="flex h-[60px] items-center justify-between px-5 md:px-8">
+          <div className="flex items-center gap-[11px]">
+            <PuckMark size={26} />
+            <span
+              className="font-display"
+              style={{ fontWeight: 800, fontSize: 18, letterSpacing: '0.02em' }}
+            >
+              STATS MASTER
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <MonoLabel size={9} tracking="0.22em">Room {roomId}</MonoLabel>
             <Button variant="ghost" size="sm" onClick={() => router.back()}>
-              ◁ BACK
+              <ArrowLeft size={14} strokeWidth={2.2} />
+              Back
             </Button>
-            <div className="inline-flex items-center rounded-full border-2 border-c-ink bg-white px-3.5 py-1.5 shadow-[0_2px_0_rgba(10,21,53,0.25)]">
-              <span className="font-mono text-xs font-bold tracking-[0.18em] text-c-ink">
-                ROOM · {roomId}
-              </span>
-            </div>
+          </div>
+        </div>
+        <Kickplate />
+      </header>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="relative z-[2] mx-auto flex w-full max-w-[1100px] flex-col gap-5 px-5 pt-8 pb-[132px] md:px-8"
+      >
+        {/* ── Title ── */}
+        <div className="flex flex-col gap-2">
+          <MonoLabel size={10} tracking="0.3em">Step 1 of 2</MonoLabel>
+          <h1
+            className="font-display m-0"
+            style={{
+              fontWeight: 800,
+              fontSize: 'clamp(38px,7vw,60px)',
+              lineHeight: 0.9,
+              letterSpacing: '0.005em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Set up your game
+          </h1>
+        </div>
+
+        {/* ── Mode ── */}
+        <div className="flex flex-col gap-3">
+          <MonoLabel size={10} tracking="0.22em">Mode · pick one</MonoLabel>
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+            {GAME_MODES.map((m) => (
+              <OptionPlane
+                key={m.mode}
+                on={config.gameMode === m.mode}
+                disabled={!isHost}
+                edge={m.edge}
+                onClick={() => setConfig((c) => ({ ...c, gameMode: m.mode }))}
+                title={m.label}
+                meta={m.tag}
+                desc={m.desc}
+                titleSize={24}
+              />
+            ))}
           </div>
         </div>
 
-        {/* ── Title row ── */}
-        <div className="flex flex-wrap items-center gap-3 sm:gap-3.5">
-          <span className="inline-block rounded-full border-2 border-c-ink bg-c-yellow px-3 py-1 font-display-alt text-[10px] font-black tracking-[0.22em] text-c-ink shadow-[0_2px_0_rgba(10,21,53,0.25)]">
-            STEP 1 OF 2
-          </span>
-          <h2 className="m-0 font-display text-2xl leading-none text-c-ink sm:text-[26px] md:text-[30px]">
-            SET UP YOUR GAME
-          </h2>
-        </div>
+        <div className="grid items-start gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          {/* ── Difficulty + eras ── */}
+          <div className="flex flex-col gap-4">
+            <Group label="Difficulty · pick any">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {TIER_OPTIONS.map(({ tier, label, range, desc }) => (
+                  <OptionPlane
+                    key={tier}
+                    on={config.difficultyTiers.includes(tier)}
+                    disabled={!isHost}
+                    edge={INK}
+                    onClick={() =>
+                      setConfig((c) => ({
+                        ...c,
+                        difficultyTiers: toggle(c.difficultyTiers, tier),
+                      }))
+                    }
+                    title={label}
+                    meta={range}
+                    desc={desc}
+                    titleSize={21}
+                  />
+                ))}
+              </div>
+              {config.difficultyTiers.length === 0 && (
+                <p className="m-0" style={{ fontSize: 12.5, color: RED }}>
+                  Select at least one difficulty tier.
+                </p>
+              )}
+            </Group>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-4"
-        >
-          {/* ── Game-mode grid ── */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-            {GAME_MODES.map((m) => {
-              const on = config.gameMode === m.mode
-              return (
-                <button
-                  key={m.mode}
-                  disabled={!isHost}
-                  onClick={() => setConfig((c) => ({ ...c, gameMode: m.mode }))}
-                  className={`flex flex-col gap-1.5 rounded-[14px] border-2 border-c-ink p-4 text-left transition-all ${
-                    on
-                      ? `${ACCENT_BG[m.accent]} ${ACCENT_FG[m.accent]} shadow-[0_5px_0_#0a1535]`
-                      : 'bg-white text-c-ink shadow-[0_2px_0_rgba(10,21,53,0.25)]'
-                  } ${isHost ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                >
-                  <span className="text-xl leading-none">{m.emoji}</span>
-                  <div className="font-display text-[15px] leading-none">{m.label}</div>
-                  <div
-                    className={`font-body text-xs leading-snug ${on ? 'opacity-90' : 'opacity-70'}`}
+            <Group label="Eras">
+              <div className="flex flex-wrap gap-1.5">
+                {ERAS.map((era) => (
+                  <SegBtn
+                    key={era}
+                    on={config.eras.includes(era)}
+                    disabled={!isHost}
+                    onClick={() => setConfig((c) => ({ ...c, eras: toggle(c.eras, era) }))}
                   >
-                    {m.desc}
-                  </div>
-                </button>
-              )
-            })}
+                    {era}
+                  </SegBtn>
+                ))}
+              </div>
+              {config.eras.length === 0 && (
+                <p className="m-0" style={{ fontSize: 12.5, color: RED }}>
+                  Select at least one era.
+                </p>
+              )}
+            </Group>
           </div>
 
-          {/* ── Two-column area ── */}
-          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-            {/* ── LEFT: Difficulty + Eras ── */}
-            <div className="card-puffy flex flex-col gap-4 bg-white p-4 sm:gap-[18px] sm:p-5">
-              {/* Difficulty */}
-              <div className="flex flex-col gap-3">
-                <SectionLabel>Difficulty · Pick Any</SectionLabel>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-                  {TIER_OPTIONS.map(({ tier, label, range, desc, emoji, accent }) => {
-                    const on = config.difficultyTiers.includes(tier)
-                    const line = desc ? `${range} · ${desc.toUpperCase()}` : range
-                    return (
-                      <button
-                        key={tier}
-                        disabled={!isHost}
-                        onClick={() =>
-                          setConfig((c) => ({
-                            ...c,
-                            difficultyTiers: toggle(c.difficultyTiers, tier),
-                          }))
-                        }
-                        className={`flex flex-col items-start gap-1.5 rounded-xl border-2 border-c-ink px-2 py-2.5 text-left transition-all sm:px-[9px] ${
-                          on
-                            ? `${ACCENT_BG[accent]} ${ACCENT_FG[accent]} shadow-px_0_#0a1535]`
-                            : 'bg-white text-c-ink shadow-[0_2px_0_rgba(10,21,53,0.25)]'
-                        } ${isHost ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-sm">{emoji}</span>
-                          <span className="font-display text-xs leading-none">{label}</span>
-                        </span>
-                        <span
-                          className={`font-mono text-[9px] font-bold tracking-[0.08em] ${
-                            on ? ACCENT_META[accent] : 'text-c-muted'
-                          }`}
-                        >
-                          {line}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-                {config.difficultyTiers.length === 0 && (
-                  <p className="m-0 font-body text-xs text-c-red">
-                    Select at least one difficulty tier
-                  </p>
-                )}
-              </div>
-
-              {/* Eras */}
-              <div className="flex flex-col gap-2.5">
-                <SectionLabel>Eras</SectionLabel>
-                <div className="flex flex-wrap gap-2">
-                  {['1970s', '1980s', '1990s', '2000s', '2010s', '2020s'].map((era) => {
-                    const on = config.eras.includes(era)
-                    return (
-                      <button
-                        key={era}
-                        disabled={!isHost}
-                        onClick={() => setConfig((c) => ({ ...c, eras: toggle(c.eras, era) }))}
-                        className={`rounded-full border-2 px-3 py-1.5 font-mono text-xs font-bold tracking-[0.08em] transition-all ${
-                          on
-                            ? 'border-c-ink bg-c-navy text-white shadow-[0_2px_0_#0a1535]'
-                            : 'border-c-disabled-border bg-c-disabled-fill text-c-muted'
-                        } ${isHost ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                      >
-                        {era}
-                        {on ? ' ✓' : ''}
-                      </button>
-                    )
-                  })}
-                </div>
-                {config.eras.length === 0 && (
-                  <p className="m-0 font-body text-xs text-c-red">Select at least one era</p>
-                )}
-              </div>
-            </div>
-
-            {/* ── RIGHT: Format ── */}
-            <div className="card-puffy flex flex-col gap-4 bg-white p-4 sm:p-5">
-              <SectionLabel>Format</SectionLabel>
-
-              {/* Questions */}
-              <FormatRow label={isCareer ? 'Players (rounds)' : 'Questions'}>
+          {/* ── Format ── */}
+          <Group label="Format">
+            <div className="flex flex-col gap-3.5">
+              <FormatRow label={isCareer ? 'Rounds' : 'Questions'}>
                 {[5, 10, 15, 20].map((n) => (
                   <SegBtn
                     key={n}
@@ -455,12 +512,11 @@ export default function SetupPage({ params }: SetupPageProps) {
                 ))}
               </FormatRow>
 
-              {/* Answers */}
               <FormatRow label="Answers">
                 {(
                   [
-                    { value: 'multiplechoice', label: 'MULTIPLE CHOICE' },
-                    { value: 'freetext', label: 'TYPE IT' },
+                    { value: 'multiplechoice', label: 'Multiple choice' },
+                    { value: 'freetext', label: 'Type it' },
                   ] as { value: AnswerMode; label: string }[]
                 ).map(({ value, label }) => (
                   <SegBtn
@@ -468,21 +524,19 @@ export default function SetupPage({ params }: SetupPageProps) {
                     on={config.answerMode === value}
                     onClick={() => setConfig((c) => ({ ...c, answerMode: value }))}
                     disabled={!isHost}
-                    small
                   >
                     {label}
                   </SegBtn>
                 ))}
               </FormatRow>
 
-              {/* Classic-only extras */}
               {isClassic && (
                 <>
                   <FormatRow label="Stats reveal">
                     {(
                       [
-                        { value: 'instant', label: 'ALL AT ONCE' },
-                        { value: 'timed', label: 'TIMED' },
+                        { value: 'instant', label: 'All at once' },
+                        { value: 'timed', label: 'Column by column' },
                       ] as { value: RevealMode; label: string }[]
                     ).map(({ value, label }) => (
                       <SegBtn
@@ -490,23 +544,15 @@ export default function SetupPage({ params }: SetupPageProps) {
                         on={config.revealMode === value}
                         onClick={() => setConfig((c) => ({ ...c, revealMode: value }))}
                         disabled={!isHost}
-                        small
                       >
                         {label}
                       </SegBtn>
                     ))}
                   </FormatRow>
 
-                  {/* <FormatRow label="Rookies only">
-                    <Toggle
-                      on={config.rookiesOnly}
-                      onClick={() => setConfig((c) => ({ ...c, rookiesOnly: !c.rookiesOnly }))}
-                      disabled={!isHost}
-                    />
-                  </FormatRow> */}
-
                   <FormatRow label="Hints">
                     <Toggle
+                      label="Hints"
                       on={config.hintsEnabled}
                       onClick={() => setConfig((c) => ({ ...c, hintsEnabled: !c.hintsEnabled }))}
                       disabled={!isHost}
@@ -515,25 +561,24 @@ export default function SetupPage({ params }: SetupPageProps) {
                 </>
               )}
 
-              {/* Power plays (powerups) */}
               <FormatRow label="Power plays">
                 <Toggle
+                  label="Power plays"
                   on={config.powerupsEnabled}
                   onClick={() => setConfig((c) => ({ ...c, powerupsEnabled: !c.powerupsEnabled }))}
                   disabled={!isHost}
                 />
               </FormatRow>
 
-              {/* This device */}
               <FormatRow label="This device plays">
                 <Toggle
+                  label="This device plays"
                   on={config.hostPlays}
                   onClick={() => setConfig((c) => ({ ...c, hostPlays: !c.hostPlays }))}
                   disabled={!isHost}
                 />
               </FormatRow>
 
-              {/* HL: compare stat */}
               {isHL && (
                 <FormatRow label="Compare stat">
                   {HL_FIELDS.map(({ value, label }) => (
@@ -542,7 +587,6 @@ export default function SetupPage({ params }: SetupPageProps) {
                       on={config.hlComparisonField === value}
                       onClick={() => setConfig((c) => ({ ...c, hlComparisonField: value }))}
                       disabled={!isHost}
-                      small
                     >
                       {label}
                     </SegBtn>
@@ -550,7 +594,6 @@ export default function SetupPage({ params }: SetupPageProps) {
                 </FormatRow>
               )}
 
-              {/* Career-specific options */}
               {isCareer && (
                 <>
                   <FormatRow label="Reveal order">
@@ -560,7 +603,6 @@ export default function SetupPage({ params }: SetupPageProps) {
                         on={config.careerRevealOrder === value}
                         onClick={() => setConfig((c) => ({ ...c, careerRevealOrder: value }))}
                         disabled={!isHost}
-                        small
                       >
                         {label}
                       </SegBtn>
@@ -574,7 +616,6 @@ export default function SetupPage({ params }: SetupPageProps) {
                         on={config.careerMinSeasons === n}
                         onClick={() => setConfig((c) => ({ ...c, careerMinSeasons: n }))}
                         disabled={!isHost}
-                        small
                       >
                         {n}
                       </SegBtn>
@@ -588,7 +629,6 @@ export default function SetupPage({ params }: SetupPageProps) {
                         on={config.careerMaxReveals === n}
                         onClick={() => setConfig((c) => ({ ...c, careerMaxReveals: n }))}
                         disabled={!isHost}
-                        small
                       >
                         {n}
                       </SegBtn>
@@ -597,43 +637,59 @@ export default function SetupPage({ params }: SetupPageProps) {
                 </>
               )}
             </div>
-          </div>
-
-          {/* ── Start bar ── */}
-          <div className="fixed bottom-4 left-4 right-4 flex flex-wrap items-center gap-3 rounded-[14px] bg-c-ink px-4 py-3.5 shadow-[0_2px_0_rgba(10,21,53,0.25)] sm:gap-4 sm:px-[18px] sm:py-3.5">
-            {availableCount !== null && (
-              <span className="rounded-full border-2 border-c-ink bg-c-green px-3 py-1.5 font-display-alt text-[10px] font-black tracking-[0.14em] text-c-ink uppercase">
-                ✓ {availableCount} PLAYERS IN POOL
-              </span>
-            )}
-            <span className="font-mono text-xs font-bold tracking-[0.12em] text-[#9fb3d9]">
-              {configSummary}
-            </span>
-            <div className="w-full sm:ml-auto sm:w-auto">
-              {isHost ? (
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={handleStart}
-                  disabled={!canStart || starting}
-                  className="w-full border-2 border-white sm:w-auto"
-                >
-                  {starting
-                    ? 'STARTING…'
-                    : !canStart && availableCount !== null && availableCount < config.questionCount
-                      ? 'NOT ENOUGH PLAYERS'
-                      : 'CONTINUE TO LOBBY →'}
-                </Button>
-              ) : (
-                <span className="block text-center font-mono text-xs font-bold tracking-[0.16em] text-[#9fb3d9] sm:text-left">
-                  WAITING FOR HOST…
-                </span>
-              )}
-            </div>
-          </div>
-        </motion.div>
+          </Group>
+        </div>
 
         <AdsterraBanner slot="setup" />
+      </motion.div>
+
+      {/* ── Start bar: the boards at the foot of the screen ── */}
+      <div className="fixed inset-x-0 bottom-0 z-40">
+        <Kickplate height={4} />
+        <div
+          className="flex flex-wrap items-center gap-4 px-5 py-4 md:px-8"
+          style={{ background: INK }}
+        >
+          {availableCount !== null && (
+            <span
+              className="font-mono"
+              style={{
+                fontSize: 9,
+                letterSpacing: '0.16em',
+                color: '#fff',
+                background: availableCount > 0 ? RED : 'rgba(255,255,255,0.14)',
+                padding: '5px 9px',
+              }}
+            >
+              {availableCount.toLocaleString()} IN POOL
+            </span>
+          )}
+          <span
+            className="font-mono"
+            style={{ fontSize: 10, letterSpacing: '0.14em', color: '#8d9cb0' }}
+          >
+            {configSummary}
+          </span>
+
+          <div className="w-full sm:ml-auto sm:w-auto">
+            {isHost ? (
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleStart}
+                disabled={!canStart || starting}
+                className="w-full sm:w-auto"
+              >
+                {startLabel}
+                <ArrowRight size={16} strokeWidth={2.2} />
+              </Button>
+            ) : (
+              <MonoLabel size={10} tracking="0.16em" color="#8d9cb0">
+                Waiting for host
+              </MonoLabel>
+            )}
+          </div>
+        </div>
       </div>
     </main>
   )

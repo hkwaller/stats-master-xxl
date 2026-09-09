@@ -1,8 +1,14 @@
 'use client'
 
+/**
+ * The player's phone: a compact scorebug, the jumbotron stat line, an answer
+ * stack, and the power-play bar pinned to the bottom edge.
+ */
+
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronRight, Eye, RotateCcw, Settings, SkipForward } from 'lucide-react'
 import { useStorage } from '@/lib/liveblocks/client'
 import {
   useAdvanceToNext,
@@ -30,20 +36,20 @@ import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
 import { useInGameAdsSuppressed } from '@/hooks/useInGameAdsSuppressed'
 import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
 import { AdsterraPopunder } from '@/components/ads/AdsterraPopunder'
-import Dock from '@/components/ui/Dock'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
 import { BuzzInButton } from '@/components/game/BuzzInButton'
 import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
 import { HigherLowerCard } from '@/components/game/HigherLowerCard'
 import { PlayerGuessInput } from '@/components/game/PlayerGuessInput'
-import { Scoreboard } from '@/components/game/Scoreboard'
+import { PlayerScorebug } from '@/components/game/Scorebug'
+import { PowerupBar } from '@/components/game/PowerupBar'
+import { Scoreboard, FinalBoard } from '@/components/game/Scoreboard'
+import { StatsCard } from '@/components/game/StatsCard'
 import { HintPanel } from '@/components/game/HintPanel'
-import { Avatar, Button, Modal } from '@/components/design-system'
-import { CBrand, StatTile } from '@/components/arcade'
-import { getAvatarUrl } from '@/lib/avatar'
-import { Eye, SkipForward, ChevronRight, RotateCcw, Settings } from 'lucide-react'
+import { Clock, Kickplate, MonoLabel, ProgressTrack } from '@/components/design-system'
+import { CBrand } from '@/components/arcade'
+import { currentStreak } from '@/lib/streaks'
 import type {
-  AnswerMode,
   H2HPair,
   HintType,
   HLPair,
@@ -51,70 +57,18 @@ import type {
   PowerupType,
   Question,
   QuestionResult,
-  RevealMode,
 } from '@/types/game'
 import { POWERUP_INITIAL_CHARGES } from '@/types/game'
 
-// ─── Fresh Ice palette / helpers ──────────────────────────────────────────────
-const INK = '#0a1535'
-const RED = '#e32437'
-const ROYAL = '#003087'
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
+const QUESTION_SECONDS = 30
 
-const STAT_COLUMNS: { key: keyof Question; abbr: string; highlight: boolean }[] = [
-  { key: 'gamesPlayed', abbr: 'GP', highlight: false },
-  { key: 'goals', abbr: 'G', highlight: false },
-  { key: 'assists', abbr: 'A', highlight: false },
-  { key: 'points', abbr: 'PTS', highlight: true },
-  { key: 'penaltyMinutes', abbr: 'PIM', highlight: false },
-]
-
-const ANSWER_LETTERS = ['A', 'B', 'C', 'D']
-const ANSWER_LETTER_BG = [RED, ROYAL, '#2cc66b', '#ffcf33']
-
-type PowerupMeta = {
-  type: PowerupType
-  icon: string
-  label: string
-  description: string
-  availableIn: (answerMode: AnswerMode, revealMode: RevealMode) => boolean
-}
-
-const PU_LIST: PowerupMeta[] = [
-  {
-    type: 'eliminate',
-    icon: '✂',
-    label: 'Eliminate',
-    description: 'Remove 2 wrong choices from the board',
-    availableIn: (answerMode) => answerMode === 'multiplechoice',
-  },
-  {
-    type: 'doubledown',
-    icon: '×2',
-    label: 'Double Down',
-    description: '2× points if correct - lose 50 if wrong',
-    availableIn: () => true,
-  },
-  {
-    type: 'freeze',
-    icon: '❄',
-    label: 'Freeze',
-    description: 'Stop the reveal timer - lock the columns',
-    availableIn: (_am, revealMode) => revealMode === 'timed',
-  },
-  {
-    type: 'extrahint',
-    icon: '⚡',
-    label: 'Rush',
-    description: 'Reveal the next stat column immediately',
-    availableIn: (_am, revealMode) => revealMode === 'timed',
-  },
-]
-
-function formatClock(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds))
-  const m = Math.floor(s / 60)
-  const ss = String(s % 60).padStart(2, '0')
-  return `${m}:${ss}`
+const MODE_TITLES: Record<string, string> = {
+  classic: 'Name the skater',
+  career: 'Name the career',
+  h2h: 'Which line is his?',
+  'higher-lower': 'Higher or lower?',
 }
 
 interface PlayerPageProps {
@@ -124,14 +78,13 @@ interface PlayerPageProps {
 export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const router = useRouter()
   const [roomId, setRoomId] = useState('')
-  const [playerId, setPlayerId] = useState('')
+  const [, setPlayerId] = useState('')
   const [myId, setMyId] = useState('')
-  const [confirmingPowerup, setConfirmingPowerup] = useState<PowerupType | null>(null)
 
   const game = useStorage((root) => root.game)
   const { suppressed: adsSuppressed } = useInGameAdsSuppressed()
 
-  // ── Mutations ────────────────────────────────────────────────────────────────
+  // ── Mutations ──────────────────────────────────────────────────────────────
   const submitAnswer = useSubmitAnswer()
   const requestHint = useRequestHint()
   const activatePowerup = useActivatePowerup()
@@ -141,16 +94,13 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const rematch = useRematch()
   const tickCountdown = useTickCountdown()
   const nextQuestion = useNextQuestion()
-  // Career
   const nextCareerRound = useNextCareerRound()
   const revealNextCareerSeason = useRevealNextCareerSeason()
   const buzzIn = useBuzzIn()
   const submitCareerAnswer = useSubmitCareerAnswer()
   const revealCareerAnswer = useRevealCareerAnswer()
-  // H2H
   const nextH2HRound = useNextH2HRound()
   const revealH2HAnswers = useRevealH2HAnswers()
-  // HL
   const nextHLRound = useNextHLRound()
   const revealHLAnswers = useRevealHLAnswers()
 
@@ -163,7 +113,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     setMyId(guest.id)
   }, [paramsPromise])
 
-  // ── Derived state ─────────────────────────────────────────────────────────────
+  // ── Derived state ──────────────────────────────────────────────────────────
   const isHost = game?.hostId === myId
   const isBoss = game?.bossId === myId
   const isController = isHost || isBoss
@@ -174,7 +124,8 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const me = players.find((p) => p.id === myId)
   const myRank = [...players].sort((a, b) => b.score - a.score).findIndex((p) => p.id === myId) + 1
 
-  const hasAnswered = myId ? !!(game?.answers as Record<string, string> | undefined)?.[myId] : false
+  const mySelected = (game?.answers as Record<string, string> | undefined)?.[myId]
+  const hasAnswered = myId ? Boolean(mySelected) : false
   const connectedPlayers = players.filter((p) => p.isConnected)
 
   const currentQuestion = game?.currentQuestion as unknown as Question | null
@@ -184,6 +135,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const lockedOutPlayers = (game?.lockedOutPlayers as unknown as string[]) ?? []
   const h2hCurrentPair = game?.h2hCurrentPair as unknown as H2HPair | null
   const hlCurrentPair = game?.hlCurrentPair as unknown as HLPair | null
+  const history = (game?.questionHistory as unknown as QuestionResult[]) ?? []
 
   const sharedHints = ((game?.hintsUsed as unknown as string[]) ?? []) as HintType[]
   const myPowerupCharges: Record<PowerupType, number> = {
@@ -201,7 +153,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
       (game?.powerupsEnabled ? POWERUP_INITIAL_CHARGES.extrahint : 0),
   }
 
-  // ── Host-driven state machine ─────────────────────────────────────────────────
   useHostStateMachine(isHost, myId, game as unknown as import('@/types/game').GameState | null, {
     tickCountdown,
     nextQuestion,
@@ -215,19 +166,17 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     revealHLAnswers,
   })
 
-  // Per-question answer timer (resets each question via questionStartsAt)
   const questionTimeLeft = useQuestionTimeLeft(
     game?.questionStartsAt,
     game?.command === 'answering',
   )
 
-  // Redirect everyone to lobby on rematch
   useEffect(() => {
     if (!game || game.command !== 'rematch') return
     router.push(`/${roomId}/lobby`)
   }, [game?.command])
 
-  // Save played question IDs to localStorage when game finishes (classic/career)
+  // Remember what has been played today so the pool does not repeat itself.
   useEffect(() => {
     if (!game || game.command !== 'finished') return
     const today = new Date().toISOString().slice(0, 10)
@@ -249,8 +198,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     }
   }, [game?.command, gameMode])
 
-  // ── Handlers ──────────────────────────────────────────────────────────────────
-
+  // ── Handlers ───────────────────────────────────────────────────────────────
   function handleAnswer(answer: string) {
     if (!myId) return
     submitAnswer({ playerId: myId, answer })
@@ -277,896 +225,580 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
   if (!game) return null
 
-  // In the classic active controller we hide the global brand header so the
-  // Q-badge / timer row sits at the very top (matches the phone-controller design).
-  const classicController =
-    gameMode === 'classic' &&
-    (game.command === 'answering' || game.command === 'revealing') &&
-    !!currentQuestion
+  const isAnswering = game.command === 'answering'
+  const isRevealing = game.command === 'revealing'
+  const isActive = isAnswering || isRevealing
+  const myEliminated =
+    ((game.playerEliminatedChoices as unknown as Record<string, string[]>) ?? {})[myId] ?? []
+  const choices = (game.choices as unknown as string[]) ?? []
+  const myStreak = currentStreak(history, myId)
+  const activePowerup = game.activePowerup as unknown as
+    | { type: PowerupType; playerId: string }
+    | null
+
+  // The power-play bar owns the bottom edge. It is only useful while answering,
+  // so it leaves with the question rather than sitting inert through the reveal.
+  const showPowerupBar = Boolean(game.powerupsEnabled) && isAnswering && gameMode === 'classic'
+
+  const controls = buildControls()
+
+  function buildControls() {
+    if (!isController) return [] as { label: string; icon: React.ReactNode; tone: 'red' | 'navy'; onClick: () => void }[]
+    const out: { label: string; icon: React.ReactNode; tone: 'red' | 'navy'; onClick: () => void }[] = []
+    if (game!.command === 'answering') {
+      out.push({
+        label: 'Reveal',
+        icon: <Eye size={14} strokeWidth={2.2} />,
+        tone: 'red',
+        onClick: () => {
+          if (gameMode === 'career') revealCareerAnswer(myId)
+          else if (gameMode === 'h2h') revealH2HAnswers(myId)
+          else if (gameMode === 'higher-lower') revealHLAnswers(myId)
+          else revealAnswers(myId)
+        },
+      })
+      out.push({
+        label: 'Skip',
+        icon: <SkipForward size={14} strokeWidth={2.2} />,
+        tone: 'navy',
+        onClick: () => skipQuestion(myId),
+      })
+    }
+    if (game!.command === 'revealing') {
+      out.push({
+        label: gameMode === 'classic' ? 'Next question' : 'Next round',
+        icon: <ChevronRight size={14} strokeWidth={2.2} />,
+        tone: 'red',
+        onClick: () => advanceToNext(myId),
+      })
+    }
+    return out
+  }
+
+  // ── Final board ────────────────────────────────────────────────────────────
+  if (game.command === 'finished') {
+    return (
+      <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+        <div className="relative z-[2] mx-auto flex w-full max-w-[860px] flex-1 flex-col pb-10">
+          <FinalBoard
+            players={players}
+            history={history}
+            myId={myId}
+            eyebrow={`Final · ${game.questionCount} questions`}
+            onRematch={isController ? () => rematch(myId) : undefined}
+            onSettings={isController ? () => router.push(`/${roomId}/setup`) : undefined}
+          >
+            <div className="mx-10 mt-10 flex flex-col gap-5">
+              <QuestionHistory
+                history={history}
+                players={players}
+                myId={myId}
+                gameMode={gameMode}
+              />
+              {!isController && (
+                <MonoLabel size={9}>Waiting for the host to restart</MonoLabel>
+              )}
+              <AdsterraBanner slot="player-finished" suppressed={adsSuppressed} />
+              <AdsterraPopunder suppressed={adsSuppressed} />
+            </div>
+          </FinalBoard>
+        </div>
+      </main>
+    )
+  }
 
   return (
-    <main className="ice-bg min-h-screen flex flex-col max-w-6xl mx-auto">
-      {/* Header */}
-      {!classicController && (
-        <header
-          className="flex items-center justify-between px-4 py-3"
-          style={{ background: '#f4f8ff', borderBottom: `2px solid ${INK}` }}
-        >
-          <CBrand small />
-          {me && (
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div
-                  style={{
-                    fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                    fontSize: 15,
-                    color: INK,
-                  }}
-                  className="tabular-nums"
+    <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+      {isActive && me ? (
+        <PlayerScorebug
+          questionLabel={`Q ${String((game.currentQuestionIndex ?? 0) + 1).padStart(2, '0')} / ${String(game.questionCount).padStart(2, '0')}`}
+          name={me.name}
+          score={me.score}
+          rank={myRank}
+        />
+      ) : (
+        <header className="on-ice-header relative z-20">
+          <div className="flex h-[52px] items-center justify-between px-[18px]">
+            <CBrand small />
+            {me && (
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="font-display tabular-nums"
+                  style={{ fontWeight: 800, fontSize: 21, color: INK }}
                 >
                   {me.score}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-                    fontSize: 8,
-                    letterSpacing: '0.16em',
-                    color: '#6b7ea0',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Rank #{myRank}
-                </div>
+                </span>
+                <MonoLabel size={9} tracking="0.16em">#{myRank}</MonoLabel>
               </div>
-              <Avatar url={getAvatarUrl(me.id)} name={me.name} size={36} />
-            </div>
-          )}
+            )}
+          </div>
+          <Kickplate height={4} />
         </header>
       )}
 
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div
-          className={`flex-1 overflow-y-auto px-4 py-6 space-y-5 max-w-lg mx-auto w-full lg:max-w-none lg:mx-0 ${isController && gameMode === 'career' && game.command === 'answering' ? 'pb-48' : isController ? 'pb-28' : gameMode === 'career' && game.command === 'answering' ? 'pb-32' : ''}`}
-        >
-          {/* Idle */}
-          {game.command === 'idle' && (
-            <div className="text-center py-16">
-              <p
-                style={{
-                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                  fontSize: 20,
-                  color: INK,
-                }}
+      {/* Above the scuff overlay, which paints in the z-index-0 layer. */}
+      <ProgressTrack
+        className="relative z-[2]"
+        fraction={isAnswering ? questionTimeLeft / QUESTION_SECONDS : 0}
+        urgent={isAnswering && questionTimeLeft < 5}
+      />
+
+      <div
+        className="relative z-[2] mx-auto flex w-full max-w-[560px] flex-1 flex-col gap-4 px-[18px] pt-[18px]"
+        style={{
+          paddingBottom:
+            (showPowerupBar ? 112 : 0) + (controls.length ? 60 : 0) + 32,
+        }}
+      >
+        {/* Idle */}
+        {game.command === 'idle' && (
+          <div className="flex flex-col items-center gap-3 py-20 text-center">
+            <span
+              className="font-display"
+              style={{ fontWeight: 800, fontSize: 44, lineHeight: 1, textTransform: 'uppercase' }}
+            >
+              Waiting to start
+            </span>
+            <MonoLabel size={9}>Hold tight</MonoLabel>
+          </div>
+        )}
+
+        {/* Puck drop */}
+        <AnimatePresence>
+          {game.command === 'starting' && (
+            <motion.div
+              key="countdown"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-4 py-16"
+            >
+              <span
+                className="font-display tabular-nums"
+                style={{ fontWeight: 800, fontSize: '38vw', lineHeight: 0.8, color: RED }}
               >
-                Waiting to start…
-              </p>
-              <p
-                style={{
-                  fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-                  fontSize: 10,
-                  letterSpacing: '0.18em',
-                  color: '#6b7ea0',
-                  textTransform: 'uppercase',
-                  marginTop: 8,
-                }}
-              >
-                Hold tight
-              </p>
-            </div>
+                {game.countdownTime || '·'}
+              </span>
+              <MonoLabel size={10} tracking="0.3em">Get ready</MonoLabel>
+            </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Countdown */}
-          <AnimatePresence>
-            {game.command === 'starting' && (
-              <motion.div
-                initial={{ scale: 1.2, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className="flex flex-col items-center justify-center py-12 gap-4"
+        {/* ── Classic ── */}
+        {isActive && gameMode === 'classic' && currentQuestion && (
+          <motion.div
+            key={currentQuestion.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex items-end justify-between gap-3">
+              <span
+                className="font-display min-w-0 flex-1 text-[clamp(26px,8vw,38px)]"
+                style={{ fontWeight: 800, lineHeight: 1, textTransform: 'uppercase' }}
               >
-                <div
-                  className="tabular-nums"
-                  style={{
-                    fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                    fontSize: '30vw',
-                    lineHeight: 1,
-                    color: RED,
-                    textShadow: '0 6px 0 rgba(227,36,55,0.25)',
-                  }}
-                >
-                  {game.countdownTime || '🏒'}
-                </div>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-                    fontSize: 12,
-                    letterSpacing: '0.22em',
-                    color: INK,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Get ready!
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ── Classic mode: active question ── */}
-          <AnimatePresence mode="wait">
-            {(game.command === 'answering' || game.command === 'revealing') &&
-              gameMode === 'classic' &&
-              currentQuestion && (
-                <motion.div
-                  key={currentQuestion.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-4"
-                >
-                  {/* Controller header row: Q badge · name·score · timer */}
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      style={{
-                        background: RED,
-                        color: '#fff',
-                        border: `2px solid ${INK}`,
-                        borderRadius: 9999,
-                        padding: '4px 12px',
-                        fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-                        fontSize: 11,
-                        letterSpacing: '0.12em',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
-                    </span>
-                    <span
-                      className="flex-1 truncate"
-                      style={{
-                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                        fontSize: 15,
-                        color: INK,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {me ? `${me.name} · ${me.score}` : ''}
-                    </span>
-                    <span
-                      className="tabular-nums"
-                      style={{
-                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                        fontSize: 20,
-                        color: RED,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {formatClock(questionTimeLeft)}
-                    </span>
-                  </div>
-
-                  {/* Progress bar (time remaining) */}
-                  <div
-                    style={{
-                      height: 8,
-                      boxSizing: 'border-box',
-                      background: '#d3e3ff',
-                      border: `2px solid ${INK}`,
-                      borderRadius: 9999,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${Math.max(0, Math.min(100, (questionTimeLeft / 30) * 100))}%`,
-                        background: RED,
-                        borderRadius: 9999,
-                        transition: 'width 0.4s linear',
-                      }}
-                    />
-                  </div>
-
-                  {/* Compact stat strip */}
-                  <div className="grid grid-cols-5 gap-2 pt-2 pb-1 mb-8">
-                    {STAT_COLUMNS.map((col, ci) => (
-                      <StatTile
-                        key={col.key}
-                        abbr={col.abbr}
-                        size="sm"
-                        value={String(currentQuestion[col.key])}
-                        highlight={col.highlight}
-                        hidden={ci >= (game.revealedColumns ?? 0)}
-                      />
-                    ))}
-                  </div>
-
-                  {game.command === 'revealing' &&
-                    (() => {
-                      const history = (game.questionHistory as unknown as QuestionResult[]) ?? []
-                      const latestResult = history.length > 0 ? history[history.length - 1] : null
-                      const myResult = latestResult?.playerAnswers?.[myId]
-                      const isCorrect = myResult?.correct ?? false
-                      const pointsEarned = myResult?.points ?? 0
-                      const resultBg = hasAnswered ? (isCorrect ? '#2cc66b' : RED) : '#ffcf33'
-                      const resultText = hasAnswered && !isCorrect ? '#fff' : INK
-
-                      const prevScores = players.map((p) => {
-                        const pts = latestResult?.playerAnswers?.[p.id]?.points ?? 0
-                        return { id: p.id, prevScore: p.score - pts }
-                      })
-                      prevScores.sort((a, b) => b.prevScore - a.prevScore)
-                      const prevRank = prevScores.findIndex((p) => p.id === myId) + 1
-                      let rankMessage = null
-                      if (players.length > 1) {
-                        if (myRank < prevRank && prevRank > 0) {
-                          rankMessage =
-                            myRank === 1 ? 'You took top spot! 🥇' : `Moved up to #${myRank}! 📈`
-                        } else if (myRank > prevRank && prevRank > 0) {
-                          rankMessage = `Dropped to #${myRank} 📉`
-                        } else if (myRank === 1 && prevRank === 1 && history.length > 1) {
-                          rankMessage = 'Holding onto #1! 🛡️'
-                        }
-                      }
-
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          className="p-5 text-center"
-                          style={{
-                            background: resultBg,
-                            color: resultText,
-                            border: `2px solid ${INK}`,
-                            borderRadius: 14,
-                            boxShadow: `0 4px 0 ${INK}`,
-                          }}
-                        >
-                          {hasAnswered ? (
-                            <>
-                              <h2
-                                style={{
-                                  fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                                  fontSize: 30,
-                                  lineHeight: 1.05,
-                                  marginBottom: 8,
-                                }}
-                              >
-                                {isCorrect ? 'Nailed It! 🔥' : 'Oof! 🧊'}
-                              </h2>
-                              <p
-                                style={{
-                                  fontFamily: 'var(--font-jetbrains-mono), monospace',
-                                  fontSize: 13,
-                                  fontWeight: 700,
-                                  marginBottom: 8,
-                                }}
-                              >
-                                {isCorrect
-                                  ? `You earned +${pointsEarned} pts`
-                                  : 'Tough luck - next round is yours'}
-                              </p>
-                              {rankMessage && (
-                                <p
-                                  className="inline-block"
-                                  style={{
-                                    background: INK,
-                                    color: '#fff',
-                                    fontFamily:
-                                      'var(--font-archivo-black), "Archivo Black", sans-serif',
-                                    fontSize: 11,
-                                    letterSpacing: '0.14em',
-                                    textTransform: 'uppercase',
-                                    padding: '4px 10px',
-                                    borderRadius: 9999,
-                                    marginBottom: 8,
-                                  }}
-                                >
-                                  {rankMessage}
-                                </p>
-                              )}
-                            </>
-                          ) : (
-                            <h2
-                              style={{
-                                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                                fontSize: 26,
-                                marginBottom: 8,
-                              }}
-                            >
-                              Time&apos;s Up! ⏱️
-                            </h2>
-                          )}
-                          <div
-                            style={{
-                              background: '#fff',
-                              border: `2px solid ${INK}`,
-                              borderRadius: 12,
-                              boxShadow: `0 3px 0 ${INK}`,
-                              padding: 16,
-                              marginTop: 16,
-                            }}
-                          >
-                            <p
-                              style={{
-                                fontFamily:
-                                  'var(--font-archivo-black), "Archivo Black", sans-serif',
-                                fontSize: 9,
-                                letterSpacing: '0.18em',
-                                textTransform: 'uppercase',
-                                color: '#6b7ea0',
-                                marginBottom: 6,
-                              }}
-                            >
-                              The Correct Answer Was
-                            </p>
-                            <h3
-                              style={{
-                                fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                                fontSize: 22,
-                                color: INK,
-                              }}
-                            >
-                              {currentQuestion.firstName} {currentQuestion.lastName}
-                            </h3>
-                            {hasAnswered && !isCorrect && myResult?.answer && (
-                              <p
-                                style={{
-                                  fontFamily: 'var(--font-jetbrains-mono), monospace',
-                                  fontSize: 12,
-                                  color: '#6b7ea0',
-                                  marginTop: 8,
-                                }}
-                              >
-                                (not {myResult.answer})
-                              </p>
-                            )}
-                          </div>
-                        </motion.div>
-                      )
-                    })()}
-
-                  {game.command === 'answering' &&
-                    (() => {
-                      const choices = (game.choices as unknown as string[]) ?? []
-                      const myEliminated =
-                        ((game.playerEliminatedChoices as unknown as Record<string, string[]>) ??
-                          {})[myId] ?? []
-                      const mySelected = (game.answers as Record<string, string> | undefined)?.[
-                        myId
-                      ]
-
-                      return (
-                        <div className="space-y-3">
-                          {game.answerMode === 'multiplechoice' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {choices.map((choice, i) => {
-                                const isEliminated = myEliminated.includes(choice)
-                                const isSelected = mySelected === choice
-                                const disabled = hasAnswered || isEliminated
-                                const letterBg = ANSWER_LETTER_BG[i] ?? INK
-                                return (
-                                  <button
-                                    key={choice}
-                                    onClick={() => {
-                                      if (!disabled) handleAnswer(choice)
-                                    }}
-                                    disabled={disabled}
-                                    className="btn-puffy"
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 12,
-                                      width: '100%',
-                                      textAlign: 'left',
-                                      minHeight: 52,
-                                      padding: '10px 14px',
-                                      borderRadius: 14,
-                                      border: `2px solid ${isEliminated ? '#9aa2bd' : INK}`,
-                                      background: isSelected
-                                        ? ROYAL
-                                        : isEliminated
-                                          ? '#d9d9e6'
-                                          : '#fff',
-                                      boxShadow: isEliminated
-                                        ? 'none'
-                                        : isSelected
-                                          ? `0 5px 0 ${INK}`
-                                          : `0 5px 0 ${INK}`,
-                                      opacity: isEliminated ? 0.55 : 1,
-                                      cursor: disabled ? 'default' : 'pointer',
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        width: 32,
-                                        height: 32,
-                                        flexShrink: 0,
-                                        borderRadius: 8,
-                                        border: `2px solid ${INK}`,
-                                        background: isSelected ? '#fff' : letterBg,
-                                        color: isSelected ? ROYAL : '#fff',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                                        fontSize: 14,
-                                        lineHeight: 1,
-                                      }}
-                                    >
-                                      {ANSWER_LETTERS[i] ?? ''}
-                                    </span>
-                                    <span
-                                      className="flex-1"
-                                      style={{
-                                        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                                        fontSize: 14,
-                                        color: isSelected ? '#fff' : isEliminated ? '#6b7ea0' : INK,
-                                        textDecoration: isEliminated ? 'line-through' : 'none',
-                                      }}
-                                    >
-                                      {choice}
-                                      {isSelected ? ' ✓' : ''}
-                                    </span>
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          ) : (
-                            <PlayerGuessInput
-                              answerMode={game.answerMode}
-                              choices={choices}
-                              eliminatedChoices={myEliminated}
-                              hasAnswered={hasAnswered}
-                              answeredCount={answeredCount}
-                              totalPlayers={connectedPlayers.length}
-                              onSubmit={handleAnswer}
-                            />
-                          )}
-
-                          {hasAnswered && (
-                            <p
-                              className="text-center"
-                              style={{
-                                fontFamily:
-                                  'var(--font-archivo-black), "Archivo Black", sans-serif',
-                                fontSize: 10,
-                                letterSpacing: '0.16em',
-                                textTransform: 'uppercase',
-                                color: '#6b7ea0',
-                              }}
-                            >
-                              Answer locked · {answeredCount}/{connectedPlayers.length} in
-                            </p>
-                          )}
-
-                          {game.hintsEnabled && (
-                            <HintPanel
-                              question={currentQuestion}
-                              usedHints={sharedHints}
-                              hintsEnabled={game.hintsEnabled}
-                              onRequestHint={handleHint}
-                            />
-                          )}
-
-                          {game.powerupsEnabled && (
-                            <div className="pt-1 flex gap-2.5 justify-center">
-                              {PU_LIST.map((pu) => {
-                                const charge = myPowerupCharges[pu.type] ?? 0
-                                const available = pu.availableIn(game.answerMode, game.revealMode)
-                                const canUse =
-                                  available && charge > 0 && game.command === 'answering'
-                                return (
-                                  <button
-                                    key={pu.type}
-                                    disabled={!canUse}
-                                    onClick={() => canUse && setConfirmingPowerup(pu.type)}
-                                    title={pu.label}
-                                    className={canUse ? 'btn-puffy' : undefined}
-                                    style={{
-                                      position: 'relative',
-                                      width: 44,
-                                      height: 44,
-                                      borderRadius: 12,
-                                      border: `2px solid ${canUse ? INK : '#9aa2bd'}`,
-                                      background: !canUse
-                                        ? '#e6e8f2'
-                                        : pu.type === 'doubledown'
-                                          ? '#ffcf33'
-                                          : '#fff',
-                                      boxShadow: canUse ? `0 3px 0 ${INK}` : 'none',
-                                      color: INK,
-                                      opacity: canUse ? 1 : 0.45,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                                      fontSize: pu.type === 'doubledown' ? 15 : 18,
-                                      cursor: canUse ? 'pointer' : 'not-allowed',
-                                    }}
-                                  >
-                                    {pu.icon}
-                                    {charge > 0 && (
-                                      <span
-                                        style={{
-                                          position: 'absolute',
-                                          top: -6,
-                                          right: -6,
-                                          minWidth: 16,
-                                          height: 16,
-                                          padding: '0 3px',
-                                          borderRadius: 9999,
-                                          background: INK,
-                                          color: '#fff',
-                                          border: '1.5px solid #fff',
-                                          fontFamily: 'var(--font-jetbrains-mono), monospace',
-                                          fontSize: 9,
-                                          fontWeight: 700,
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          lineHeight: 1,
-                                        }}
-                                      >
-                                        {charge}
-                                      </span>
-                                    )}
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })()}
-                </motion.div>
+                {MODE_TITLES.classic}
+              </span>
+              {isAnswering && (
+                <span className="shrink-0">
+                  <Clock seconds={questionTimeLeft} size={38} label={null} />
+                </span>
               )}
-          </AnimatePresence>
-
-          {/* ── Career mode ── */}
-          <AnimatePresence mode="wait">
-            {(game.command === 'answering' || game.command === 'revealing') &&
-              gameMode === 'career' &&
-              careerSeasons.length > 0 && (
-                <motion.div
-                  key={`career-round-${game.currentQuestionIndex}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-4 bg-white p-6 card-puffy"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-game-text-muted">
-                      Career Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
-                    </span>
-                    <span className="text-xs font-bold text-game-red uppercase tracking-widest">
-                      Career Mode
-                    </span>
-                  </div>
-
-                  <CareerRevealCard
-                    seasons={careerSeasons}
-                    revealedCount={revealedSeasonCount}
-                    buzzedInPlayerName={
-                      buzzedInPlayerId && buzzedInPlayerId !== myId
-                        ? players.find((p) => p.id === buzzedInPlayerId)?.name
-                        : undefined
-                    }
-                    lockedOutCount={lockedOutPlayers.length}
-                  />
-
-                  {/* Career reveal result */}
-                  {game.command === 'revealing' &&
-                    currentQuestion &&
-                    (() => {
-                      const history = (game.questionHistory as unknown as QuestionResult[]) ?? []
-                      const latestResult = history.length > 0 ? history[history.length - 1] : null
-                      const myResult = latestResult?.playerAnswers?.[myId]
-                      const isCorrect = myResult?.correct ?? false
-                      const pts = myResult?.points ?? 0
-
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className={`card-puffy p-6 text-center ${isCorrect ? 'bg-lime text-game-text' : 'bg-white text-game-text'}`}
-                        >
-                          {isCorrect ? (
-                            <>
-                              <h2 className="font-display text-3xl uppercase mb-1">
-                                Nailed It! 🔥
-                              </h2>
-                              <p className="font-mono font-bold">+{pts} pts</p>
-                            </>
-                          ) : (
-                            <h2 className="font-display text-2xl uppercase mb-1">
-                              {lockedOutPlayers.includes(myId)
-                                ? 'Wrong guess ❌'
-                                : 'Nobody got it 🏒'}
-                            </h2>
-                          )}
-                          <div className="bg-white card-puffy-sm p-4 mt-4">
-                            <p className="text-game-text-muted text-xs uppercase tracking-widest mb-1">
-                              The Answer Was
-                            </p>
-                            <h3 className="font-display text-2xl text-game-text">
-                              {currentQuestion.firstName} {currentQuestion.lastName}
-                            </h3>
-                          </div>
-                        </motion.div>
-                      )
-                    })()}
-
-                  {game.command === 'answering' && (!isController || gameMode === 'career') && (
-                    <BuzzInButton
-                      playerId={myId}
-                      buzzedInPlayerId={buzzedInPlayerId}
-                      lockedOutPlayers={lockedOutPlayers}
-                      onBuzzIn={handleBuzzIn}
-                      onSubmitAnswer={handleCareerAnswer}
-                      offsetForDock={isController}
-                    />
-                  )}
-                </motion.div>
-              )}
-          </AnimatePresence>
-
-          {/* ── H2H mode ── */}
-          <AnimatePresence mode="wait">
-            {(game.command === 'answering' || game.command === 'revealing') &&
-              gameMode === 'h2h' &&
-              h2hCurrentPair && (
-                <motion.div
-                  key={`h2h-round-${game.currentQuestionIndex}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="bg-white p-6 card-puffy space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-game-text-muted">
-                      Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
-                    </span>
-                    <span className="text-xs font-bold text-game-red uppercase tracking-widest">
-                      Head-to-Head
-                    </span>
-                  </div>
-
-                  <H2HComparisonCard
-                    pair={h2hCurrentPair}
-                    myAnswer={(game.answers as Record<string, string>)?.[myId]}
-                    revealed={game.command === 'revealing'}
-                    onAnswer={(side) => {
-                      if (hasAnswered) return
-                      submitAnswer({ playerId: myId, answer: side })
-                    }}
-                  />
-
-                  {game.command === 'revealing' &&
-                    (() => {
-                      const history = (game.questionHistory as unknown as QuestionResult[]) ?? []
-                      const latestResult = history.length > 0 ? history[history.length - 1] : null
-                      const myResult = latestResult?.playerAnswers?.[myId]
-                      const isCorrect = myResult?.correct ?? false
-                      const pts = myResult?.points ?? 0
-
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className={`card-puffy p-5 text-center ${isCorrect ? 'bg-lime text-game-text' : 'bg-game-red text-white'}`}
-                        >
-                          <h2 className="font-display text-2xl uppercase">
-                            {hasAnswered ? (isCorrect ? 'Correct! 🔥' : 'Wrong ❌') : "Time's up!"}
-                          </h2>
-                          {isCorrect && pts > 0 && (
-                            <p className="font-mono font-bold mt-1">+{pts} pts</p>
-                          )}
-                        </motion.div>
-                      )
-                    })()}
-
-                  {game.command === 'answering' && (
-                    <div className="flex items-center gap-2 text-xs text-game-text-muted justify-center pt-1">
-                      <span>
-                        {answeredCount}/{connectedPlayers.length} answered
-                      </span>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-          </AnimatePresence>
-
-          {/* ── Higher / Lower mode ── */}
-          <AnimatePresence mode="wait">
-            {(game.command === 'answering' || game.command === 'revealing') &&
-              gameMode === 'higher-lower' &&
-              hlCurrentPair && (
-                <motion.div
-                  key={`hl-round-${game.currentQuestionIndex}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="bg-white p-6 card-puffy space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-game-text-muted">
-                      Q {(game.currentQuestionIndex ?? 0) + 1}/{game.questionCount}
-                    </span>
-                    <span className="text-xs font-bold text-game-red uppercase tracking-widest">
-                      Higher or Lower
-                    </span>
-                  </div>
-
-                  <HigherLowerCard
-                    pair={hlCurrentPair}
-                    myAnswer={(game.answers as Record<string, string>)?.[myId]}
-                    revealed={game.command === 'revealing'}
-                    onAnswer={(answer) => {
-                      if (hasAnswered) return
-                      submitAnswer({ playerId: myId, answer })
-                    }}
-                  />
-
-                  {game.command === 'revealing' &&
-                    (() => {
-                      const history = (game.questionHistory as unknown as QuestionResult[]) ?? []
-                      const latestResult = history.length > 0 ? history[history.length - 1] : null
-                      const myResult = latestResult?.playerAnswers?.[myId]
-                      const isCorrect = myResult?.correct ?? false
-                      const pts = myResult?.points ?? 0
-
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className={`card-puffy p-5 text-center ${isCorrect ? 'bg-lime text-game-text' : 'bg-game-red text-white'}`}
-                        >
-                          <h2 className="font-display text-2xl uppercase">
-                            {hasAnswered ? (isCorrect ? 'Correct! 🔥' : 'Wrong ❌') : "Time's up!"}
-                          </h2>
-                          {isCorrect && pts > 0 && (
-                            <p className="font-mono font-bold mt-1">+{pts} pts</p>
-                          )}
-                        </motion.div>
-                      )
-                    })()}
-
-                  {game.command === 'answering' && (
-                    <div className="flex items-center gap-2 text-xs text-game-text-muted justify-center pt-1">
-                      <span>
-                        {answeredCount}/{connectedPlayers.length} answered
-                      </span>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-          </AnimatePresence>
-
-          {/* Game finished */}
-          <AnimatePresence>
-            {game.command === 'finished' && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6 bg-white p-8 card-puffy"
-              >
-                <div className="text-center py-4">
-                  <div className="text-6xl mb-3">🏆</div>
-                  <h2 className="font-display text-3xl uppercase text-game-text">Game Over!</h2>
-                </div>
-
-                <Scoreboard players={players} variant="final" myId={myId} />
-
-                <QuestionHistory
-                  history={(game.questionHistory as unknown as QuestionResult[]) ?? []}
-                  players={players}
-                  myId={myId}
-                  gameMode={gameMode}
-                />
-
-                {!isController && (
-                  <p className="text-center text-game-text-muted text-sm pt-2">
-                    Waiting for host to restart…
-                  </p>
-                )}
-
-                {/* Monetization: end-screen banner + popunder (player device only). */}
-                <AdsterraBanner slot="player-finished" suppressed={adsSuppressed} />
-                <AdsterraPopunder suppressed={adsSuppressed} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* ── Standings sidebar (multiplayer only, hidden on finished screen) ── */}
-        {connectedPlayers.length >= 2 && game.command !== 'finished' && (
-          <aside className="shrink-0 border-t border-game-card-border lg:border-t-0 lg:border-l lg:w-72 overflow-y-auto bg-game-bg/50">
-            <div className="p-4 lg:sticky lg:top-0">
-              <p className="text-xs font-bold uppercase tracking-widest text-game-text-muted mb-3 flex items-center gap-1.5">
-                <span>🏆</span> Standings
-              </p>
-              <Scoreboard players={players} variant="live" myId={myId} />
             </div>
-          </aside>
+
+            <StatsCard
+              question={currentQuestion}
+              revealedColumns={isRevealing ? 5 : (game.revealedColumns ?? 0)}
+              size="phone"
+            />
+
+            {isAnswering && (
+              <PlayerGuessInput
+                answerMode={game.answerMode}
+                choices={choices}
+                eliminatedChoices={myEliminated}
+                hasAnswered={hasAnswered}
+                answeredCount={answeredCount}
+                totalPlayers={connectedPlayers.length}
+                selected={mySelected}
+                onSubmit={handleAnswer}
+              />
+            )}
+
+            {isRevealing && (
+              <RevealResult
+                question={currentQuestion}
+                history={history}
+                myId={myId}
+                hasAnswered={hasAnswered}
+              />
+            )}
+
+            {isAnswering && game.hintsEnabled && (
+              <div className="on-ice p-4">
+                <HintPanel
+                  question={currentQuestion}
+                  usedHints={sharedHints}
+                  hintsEnabled={game.hintsEnabled}
+                  onRequestHint={handleHint}
+                />
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── Career ── */}
+        {isActive && gameMode === 'career' && careerSeasons.length > 0 && (
+          <motion.div
+            key={`career-${game.currentQuestionIndex}`}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex items-end justify-between gap-3">
+              <span
+                className="font-display"
+                style={{ fontWeight: 800, fontSize: 34, lineHeight: 1, textTransform: 'uppercase' }}
+              >
+                {MODE_TITLES.career}
+              </span>
+              <MonoLabel size={9}>
+                Round {(game.currentQuestionIndex ?? 0) + 1} / {game.questionCount}
+              </MonoLabel>
+            </div>
+
+            <div className="on-ice overflow-x-auto p-4">
+              <CareerRevealCard
+                seasons={careerSeasons}
+                revealedCount={revealedSeasonCount}
+                buzzedInPlayerName={
+                  buzzedInPlayerId && buzzedInPlayerId !== myId
+                    ? players.find((p) => p.id === buzzedInPlayerId)?.name
+                    : undefined
+                }
+                lockedOutCount={lockedOutPlayers.length}
+              />
+            </div>
+
+            {isRevealing && currentQuestion && (
+              <RevealResult
+                question={currentQuestion}
+                history={history}
+                myId={myId}
+                hasAnswered={hasAnswered}
+              />
+            )}
+
+            {isAnswering && (
+              <BuzzInButton
+                playerId={myId}
+                buzzedInPlayerId={buzzedInPlayerId}
+                lockedOutPlayers={lockedOutPlayers}
+                onBuzzIn={handleBuzzIn}
+                onSubmitAnswer={handleCareerAnswer}
+                offsetForDock={isController}
+              />
+            )}
+          </motion.div>
+        )}
+
+        {/* ── Head-to-Head ── */}
+        {isActive && gameMode === 'h2h' && h2hCurrentPair && (
+          <motion.div
+            key={`h2h-${game.currentQuestionIndex}`}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex items-end justify-between gap-3">
+              <span
+                className="font-display"
+                style={{ fontWeight: 800, fontSize: 32, lineHeight: 1, textTransform: 'uppercase' }}
+              >
+                {MODE_TITLES.h2h}
+              </span>
+              {isAnswering && <Clock seconds={questionTimeLeft} size={38} label={null} />}
+            </div>
+
+            <div>
+              <H2HComparisonCard
+                pair={h2hCurrentPair}
+                myAnswer={mySelected}
+                revealed={isRevealing}
+                onAnswer={(side) => {
+                  if (hasAnswered) return
+                  submitAnswer({ playerId: myId, answer: side })
+                }}
+              />
+            </div>
+
+            <RoundStatus
+              isRevealing={isRevealing}
+              history={history}
+              myId={myId}
+              hasAnswered={hasAnswered}
+              answeredCount={answeredCount}
+              totalPlayers={connectedPlayers.length}
+            />
+          </motion.div>
+        )}
+
+        {/* ── Higher / Lower ── */}
+        {isActive && gameMode === 'higher-lower' && hlCurrentPair && (
+          <motion.div
+            key={`hl-${game.currentQuestionIndex}`}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex items-end justify-between gap-3">
+              <span
+                className="font-display"
+                style={{ fontWeight: 800, fontSize: 34, lineHeight: 1, textTransform: 'uppercase' }}
+              >
+                {MODE_TITLES['higher-lower']}
+              </span>
+              {isAnswering && <Clock seconds={questionTimeLeft} size={38} label={null} />}
+            </div>
+
+            <div>
+              <HigherLowerCard
+                pair={hlCurrentPair}
+                myAnswer={mySelected}
+                revealed={isRevealing}
+                onAnswer={(answer) => {
+                  if (hasAnswered) return
+                  submitAnswer({ playerId: myId, answer })
+                }}
+              />
+            </div>
+
+            <RoundStatus
+              isRevealing={isRevealing}
+              history={history}
+              myId={myId}
+              hasAnswered={hasAnswered}
+              answeredCount={answeredCount}
+              totalPlayers={connectedPlayers.length}
+            />
+          </motion.div>
+        )}
+
+        {/* Standings — hairline rows on a plane, not a floating sidebar. */}
+        {connectedPlayers.length >= 2 && (
+          <div className="on-ice mt-2">
+            <div className="px-3 pt-3 pb-2">
+              <MonoLabel size={9}>Standings</MonoLabel>
+            </div>
+            <Scoreboard players={players} variant="live" myId={myId} />
+          </div>
         )}
       </div>
 
-      {/* ── Controller Dock (host / boss) ── */}
-      {isController && (
-        <ControllerDock
-          game={game as unknown as import('@/types/game').GameState}
-          gameMode={gameMode}
-          isBoss={isBoss}
-          onReveal={() => {
-            if (gameMode === 'career') revealCareerAnswer(myId)
-            else if (gameMode === 'h2h') revealH2HAnswers(myId)
-            else if (gameMode === 'higher-lower') revealHLAnswers(myId)
-            else revealAnswers(myId)
-          }}
-          onSkip={() => skipQuestion(myId)}
-          onNext={() => advanceToNext(myId)}
-          onRematch={() => rematch(myId)}
-          onSettings={() => router.push(`/${roomId}/setup`)}
-        />
+      {/* Power plays own the bottom edge. */}
+      {showPowerupBar && (
+        <div
+          className="fixed inset-x-0 z-40"
+          style={{ bottom: controls.length ? 60 : 0 }}
+        >
+          <div className="mx-auto w-full max-w-[560px]">
+            <PowerupBar
+              charges={myPowerupCharges}
+              answerMode={game.answerMode}
+              revealMode={game.revealMode}
+              command={game.command}
+              activeType={activePowerup?.playerId === myId ? activePowerup.type : null}
+              status={myStreak > 1 ? `STREAK ×${myStreak}` : undefined}
+              onActivate={handlePowerup}
+            />
+          </div>
+        </div>
       )}
 
-      {/* ── Powerup confirmation ── */}
-      <AnimatePresence>
-        {confirmingPowerup &&
-          (() => {
-            const pu = PU_LIST.find((p) => p.type === confirmingPowerup)
-            if (!pu) return null
-            return (
-              <Modal open onClose={() => setConfirmingPowerup(null)}>
-                <div className="text-center space-y-4">
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                      fontSize: 40,
-                      color: INK,
-                    }}
-                  >
-                    {pu.icon}
-                  </div>
-                  <h3
-                    style={{
-                      fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-                      fontSize: 20,
-                      color: INK,
-                    }}
-                  >
-                    {pu.label}
-                  </h3>
-                  <p className="text-game-text-muted text-sm">{pu.description}</p>
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      variant="ghost"
-                      className="flex-1"
-                      onClick={() => setConfirmingPowerup(null)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="primary"
-                      className="flex-1"
-                      onClick={() => {
-                        handlePowerup(pu.type)
-                        setConfirmingPowerup(null)
-                      }}
-                    >
-                      Use It
-                    </Button>
-                  </div>
-                </div>
-              </Modal>
-            )
-          })()}
-      </AnimatePresence>
+      {/* Host controls — a flush bar, not a floating dock. */}
+      {controls.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-50">
+          <div
+            className="mx-auto grid w-full max-w-[560px]"
+            style={{ gridTemplateColumns: `repeat(${controls.length}, 1fr)` }}
+          >
+            {controls.map((c) => (
+              <button
+                key={c.label}
+                onClick={c.onClick}
+                className="btn-ice font-display flex items-center justify-center gap-2"
+                style={{
+                  padding: '19px 0',
+                  background: c.tone === 'red' ? RED : INK,
+                  border: 'none',
+                  color: c.tone === 'red' ? '#fff' : '#eef3f9',
+                  fontWeight: 700,
+                  fontSize: 15,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                }}
+              >
+                {c.icon}
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   )
 }
 
-// ─── Question History ─────────────────────────────────────────────────────────
+// ─── Reveal result ────────────────────────────────────────────────────────────
+// State is never carried by colour alone: the outcome is spelled out in words
+// and the answer is always stated, whether you got it or not.
+
+function RevealResult({
+  question,
+  history,
+  myId,
+  hasAnswered,
+}: {
+  question: Question
+  history: QuestionResult[]
+  myId: string
+  hasAnswered: boolean
+}) {
+  const latest = history.length > 0 ? history[history.length - 1] : null
+  const myResult = latest?.playerAnswers?.[myId]
+  const isCorrect = myResult?.correct ?? false
+  const points = myResult?.points ?? 0
+
+  const headline = !hasAnswered ? 'No answer' : isCorrect ? 'Correct' : 'Missed'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="on-ice flex flex-col gap-4 p-5"
+      style={{ borderLeft: `5px solid ${isCorrect ? RED : '#b3c0cf'}` }}
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <span
+          className="font-display"
+          style={{
+            fontWeight: 800,
+            fontSize: 34,
+            lineHeight: 1,
+            textTransform: 'uppercase',
+            color: isCorrect ? RED : INK,
+          }}
+        >
+          {headline}
+        </span>
+        {points !== 0 && (
+          <span
+            className="font-display tabular-nums"
+            style={{
+              fontWeight: 800,
+              fontSize: 30,
+              lineHeight: 1,
+              color: points > 0 ? RED : INK,
+            }}
+          >
+            {points > 0 ? `+${points}` : points}
+          </span>
+        )}
+      </div>
+
+      <div
+        className="flex flex-col gap-1.5 pt-3"
+        style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
+      >
+        <MonoLabel size={9}>The answer was</MonoLabel>
+        <span
+          className="font-display"
+          style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
+        >
+          {question.firstName} {question.lastName}
+        </span>
+        <MonoLabel size={9} tracking="0.14em">
+          {question.season} · {question.teamAbbrevs} · {question.positionCode}
+        </MonoLabel>
+        {hasAnswered && !isCorrect && myResult?.answer && (
+          <span className="pt-1">
+            <MonoLabel size={9} tracking="0.14em">You said {myResult.answer}</MonoLabel>
+          </span>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Round status (h2h / higher-lower) ────────────────────────────────────────
+
+function RoundStatus({
+  isRevealing,
+  history,
+  myId,
+  hasAnswered,
+  answeredCount,
+  totalPlayers,
+}: {
+  isRevealing: boolean
+  history: QuestionResult[]
+  myId: string
+  hasAnswered: boolean
+  answeredCount: number
+  totalPlayers: number
+}) {
+  if (!isRevealing) {
+    return (
+      <div className="flex items-baseline justify-between">
+        <MonoLabel size={9}>{hasAnswered ? 'Answer locked' : 'Pick one'}</MonoLabel>
+        <MonoLabel size={9} tracking="0.14em">
+          {answeredCount} / {totalPlayers} in
+        </MonoLabel>
+      </div>
+    )
+  }
+
+  const latest = history.length > 0 ? history[history.length - 1] : null
+  const myResult = latest?.playerAnswers?.[myId]
+  const isCorrect = myResult?.correct ?? false
+  const points = myResult?.points ?? 0
+
+  return (
+    <div
+      className="on-ice flex items-baseline justify-between p-4"
+      style={{ borderLeft: `5px solid ${isCorrect ? RED : '#b3c0cf'}` }}
+    >
+      <span
+        className="font-display"
+        style={{
+          fontWeight: 800,
+          fontSize: 28,
+          lineHeight: 1,
+          textTransform: 'uppercase',
+          color: isCorrect ? RED : INK,
+        }}
+      >
+        {!hasAnswered ? 'No answer' : isCorrect ? 'Correct' : 'Missed'}
+      </span>
+      {points !== 0 && (
+        <span
+          className="font-display tabular-nums"
+          style={{ fontWeight: 800, fontSize: 24, color: points > 0 ? RED : INK }}
+        >
+          {points > 0 ? `+${points}` : points}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ─── Question history ─────────────────────────────────────────────────────────
 
 function QuestionHistory({
   history,
@@ -1182,48 +814,64 @@ function QuestionHistory({
   if (history.length === 0) return null
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs font-bold uppercase tracking-widest text-game-text-muted">
-        Round Recap
-      </p>
+    <div className="flex flex-col gap-3">
+      <MonoLabel size={9}>Round recap</MonoLabel>
+
       {history.map((entry, i) => {
         const q = entry.question
         return (
-          <div key={q.id + i} className="bg-white card-flat p-4 space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <span className="text-xs text-game-text-muted mr-2">Q{i + 1}</span>
-                <span className="font-bold text-game-text">
-                  {gameMode === 'higher-lower' ? 'Higher or Lower' : `${q.firstName} ${q.lastName}`}
-                </span>
-                {(gameMode === 'classic' || gameMode === 'career') && (
-                  <span className="text-xs text-game-text-muted ml-2">
-                    {q.season} · {q.teamAbbrevs} · {q.points} pts
-                  </span>
-                )}
-              </div>
+          <div key={q.id + i} className="on-ice flex flex-col gap-3 p-4">
+            <div className="flex items-baseline gap-3">
+              <MonoLabel size={9} tracking="0.2em">Q{i + 1}</MonoLabel>
+              <span
+                className="font-display flex-1 truncate"
+                style={{ fontWeight: 700, fontSize: 22, textTransform: 'uppercase' }}
+              >
+                {gameMode === 'higher-lower'
+                  ? 'Higher or lower'
+                  : `${q.firstName} ${q.lastName}`}
+              </span>
+              {(gameMode === 'classic' || gameMode === 'career') && (
+                <MonoLabel size={9} tracking="0.14em">
+                  {q.season} · {q.points} PTS
+                </MonoLabel>
+              )}
             </div>
-            <div className="space-y-1">
+
+            <div className="flex flex-col">
               {players.map((player) => {
                 const result = entry.playerAnswers[player.id]
                 if (!result) return null
-                const isMe = player.id === myId
                 return (
                   <div
                     key={player.id}
-                    className={`flex items-center gap-3 text-sm rounded-lg px-3 py-1.5 ${isMe ? 'bg-ice-blue border border-game-card-border' : ''}`}
+                    className="flex items-center gap-3 py-1.5"
+                    style={{
+                      borderBottom: '1px solid rgba(13,27,42,0.07)',
+                      borderLeft: `4px solid ${player.id === myId ? INK : 'transparent'}`,
+                      paddingLeft: 8,
+                    }}
                   >
                     <span
-                      className={`text-base ${result.correct ? 'text-tier-easy' : 'text-game-red'}`}
+                      className="font-display flex-1 truncate"
+                      style={{ fontWeight: 700, fontSize: 17, textTransform: 'uppercase' }}
                     >
-                      {result.correct ? '✓' : '✗'}
+                      {player.name}
                     </span>
-                    <span className="flex-1 font-medium truncate">{player.name}</span>
-                    <span className="text-game-text-muted truncate max-w-[120px] text-xs">
-                      {result.answer || '-'}
+                    <span className="max-w-[130px] truncate">
+                      <MonoLabel size={9} tracking="0.1em">
+                        {result.correct ? 'CORRECT' : result.answer || 'NO ANSWER'}
+                      </MonoLabel>
                     </span>
                     <span
-                      className={`font-bold tabular-nums ${result.points > 0 ? 'text-tier-easy' : result.points < 0 ? 'text-game-red' : 'text-game-text-muted'}`}
+                      className="font-display tabular-nums"
+                      style={{
+                        fontWeight: 800,
+                        fontSize: 19,
+                        width: 46,
+                        textAlign: 'right',
+                        color: result.points > 0 ? RED : '#55677d',
+                      }}
                     >
                       {result.points > 0 ? `+${result.points}` : result.points}
                     </span>
@@ -1234,90 +882,6 @@ function QuestionHistory({
           </div>
         )
       })}
-    </div>
-  )
-}
-
-// ─── Controller Dock ──────────────────────────────────────────────────────────
-
-function ControllerDock({
-  game,
-  gameMode,
-  isBoss,
-  onReveal,
-  onSkip,
-  onNext,
-  onRematch,
-  onSettings,
-}: {
-  game: import('@/types/game').GameState | null
-  gameMode: string
-  isBoss: boolean
-  onReveal: () => void
-  onSkip: () => void
-  onNext: () => void
-  onRematch: () => void
-  onSettings: () => void
-}) {
-  if (!game) return null
-
-  const command = game.command as string
-  const nextLabel = gameMode === 'classic' ? 'Next Question' : 'Next Round'
-
-  type Item = {
-    icon: React.ReactNode
-    label: React.ReactNode
-    onClick: () => void
-    className?: string
-  }
-  const items: Item[] = []
-
-  if (command === 'answering') {
-    items.push({
-      icon: <Eye size={24} />,
-      label: 'Reveal',
-      onClick: onReveal,
-      className: 'bg-c-red text-white',
-    })
-    items.push({
-      icon: <SkipForward size={24} />,
-      label: 'Skip',
-      onClick: onSkip,
-      className: 'bg-c-yellow text-c-ink',
-    })
-  }
-
-  if (command === 'revealing') {
-    items.push({
-      icon: <ChevronRight size={24} />,
-      label: nextLabel,
-      onClick: onNext,
-      className: 'bg-c-navy text-white',
-    })
-  }
-
-  if (command === 'finished') {
-    items.push({
-      icon: <RotateCcw size={24} />,
-      label: 'Play Again',
-      onClick: onRematch,
-      className: 'bg-c-red text-white',
-    })
-    items.push({
-      icon: <Settings size={24} />,
-      label: 'Settings',
-      onClick: onSettings,
-      className: 'bg-white text-c-ink',
-    })
-  }
-
-  if (items.length === 0) return null
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 flex flex-col items-center pb-4 pointer-events-none z-50">
-      <div className="pointer-events-auto">
-        <Dock items={items} />
-      </div>
     </div>
   )
 }

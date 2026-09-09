@@ -4,6 +4,13 @@ export const alt = 'Stats Master - Multiplayer NHL Stats Trivia'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
+/**
+ * The share card, in the "On the Ice" system: white ice, navy ink, one red
+ * accent, and an amber kickplate along the foot of the boards.
+ *
+ * Satori has no access to next/font here, so this leans on weight and scale
+ * rather than the Big Shoulders face.
+ */
 export default function OpengraphImage() {
   return new ImageResponse(
     <div
@@ -12,64 +19,70 @@ export default function OpengraphImage() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        padding: '80px',
-        background: '#eaf1fb',
-        backgroundImage: 'linear-gradient(135deg, #eaf1fb 0%, #d6e4f7 100%)',
+        background: 'linear-gradient(178deg, #ffffff 0%, #eef3f9 38%, #e4ecf5 100%)',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          background: '#e32437',
-          color: '#fff',
-          border: '4px solid #0a1535',
-          borderRadius: 9999,
-          padding: '14px 30px',
-          fontSize: 30,
-          fontWeight: 900,
-          letterSpacing: '0.12em',
-          boxShadow: '0 8px 0 #0a1535',
-        }}
-      >
-        🏒 MULTIPLAYER · 2–8 PLAYERS
-      </div>
+      {/* Rink geometry: two blue lines and the red centre line. */}
+      <div style={{ position: 'absolute', left: '31%', top: 0, bottom: 0, width: 8, background: 'rgba(11,83,201,0.10)' }} />
+      <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 8, background: 'rgba(207,10,44,0.10)' }} />
+      <div style={{ position: 'absolute', left: '69%', top: 0, bottom: 0, width: 8, background: 'rgba(11,83,201,0.10)' }} />
 
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          marginTop: 46,
-          fontSize: 132,
-          lineHeight: 0.92,
-          fontWeight: 900,
-          color: '#0a1535',
-          letterSpacing: '-0.02em',
+          alignItems: 'flex-start',
+          flex: 1,
+          padding: '76px 80px 0',
         }}
       >
-        <span>
-          <span style={{ color: '#003087', marginRight: '0.28em' }}>FIVE</span>STATS.
-        </span>
-        <span>
-          <span style={{ color: '#e32437', marginRight: '0.28em' }}>ONE</span>LEGEND.
-        </span>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 18,
+            background: '#0d1b2a',
+            color: '#ffffff',
+            padding: '14px 22px',
+            fontSize: 24,
+            letterSpacing: '0.26em',
+          }}
+        >
+          MULTIPLAYER · 2–8 PLAYERS · FREE
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            marginTop: 44,
+            fontSize: 118,
+            lineHeight: 0.9,
+            fontWeight: 800,
+            color: '#0d1b2a',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          <span>FIVE STATS.</span>
+          <span>ONE LEGEND.</span>
+          <span style={{ color: '#cf0a2c' }}>TWELVE SECONDS.</span>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            marginTop: 36,
+            fontSize: 30,
+            color: '#55677d',
+            maxWidth: 880,
+          }}
+        >
+          Guess the NHL skater from a season stat line before the room beats you to it.
+        </div>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          marginTop: 40,
-          fontSize: 34,
-          color: '#0a1535',
-          opacity: 0.75,
-          maxWidth: 900,
-        }}
-      >
-        Couch-co-op NHL trivia - guess the player from their stats.
-      </div>
+      {/* Kickplate — the padding at the base of the boards. */}
+      <div style={{ display: 'flex', height: 14, background: '#f2b21c' }} />
     </div>,
     { ...size },
   )

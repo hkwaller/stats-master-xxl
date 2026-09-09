@@ -1,54 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Fresh Ice palette ───────────────────────────────────────────────────── */
-  --color-c-ice:        #eaf2ff;
-  --color-c-ice-2:      #d3e3ff;
-  --color-c-cream:      #fdfaf1;
-  --color-c-ink:        #0a1535;
-  --color-c-navy:       #003087;
-  --color-c-red:        #e32437;
-  --color-c-red-soft:   #ffd6dc;
-  --color-c-yellow:     #ffcf33;
-  --color-c-green:      #2cc66b;
-  --color-c-muted:      #6b7ea0;
-  --color-c-shadow:     rgba(10,21,53,0.22);
+  /* ── Ice surface ──────────────────────────────────────────────────────────── */
+  --color-ice-0:        #ffffff;
+  --color-ice-1:        #eef3f9;   /* page base */
+  --color-ice-2:        #e4ecf5;   /* far end of the ice gradient */
+  --color-ice-3:        #f4f7fa;   /* disabled fill */
 
-  /* Disabled / eliminated */
-  --color-c-disabled-border: #9aa2bd;
-  --color-c-disabled-fill:   #eef1f8;
-  --color-c-eliminated:      #d9d9e6;
+  /* ── Ink ──────────────────────────────────────────────────────────────────── */
+  --color-ink:          #0d1b2a;   /* primary text, dark bars, boards */
+  --color-ink-2:        #55677d;   /* secondary text, mono labels — 4.5:1 on white */
+  --color-ink-3:        #7d8b9c;   /* disabled text — use sparingly */
+  --color-ink-4:        #6b7a8c;   /* eliminated body text */
+  --color-edge-dead:    #b3c0cf;   /* left edge marker on eliminated rows */
+  --color-hairline:     rgba(13,27,42,0.10);
+  --color-hairline-2:   rgba(13,27,42,0.07);
 
-  /* Jumbotron stat-tile panels */
-  --color-tile-blue-top:  #00266b;
-  --color-tile-blue-bot:  #001c50;
-  --color-tile-red-top:   #c0182a;
-  --color-tile-red-bot:   #8f1220;
-  --color-tile-label-blue: #9db9f0;
-  --color-tile-label-red:  #ffb9c2;
+  /* ── Accents ──────────────────────────────────────────────────────────────── */
+  --color-red:          #cf0a2c;   /* the accent — leader, live, primary CTA */
+  --color-blue-line:    #0b53c9;   /* rink geometry + section rules, always alpha'd */
+  --color-amber:        #f2b21c;   /* kickplate trim only */
 
-  /* ── Backward-compat aliases (setup/lobby/player pages use these classes) ── */
-  --color-magenta:          #003087;
-  --color-cyan:             #d3e3ff;
-  --color-yellow:           #ffcf33;
-  --color-lime:             #d4f4de;
-  --color-game-bg:          #eaf2ff;
-  --color-game-card:        #ffffff;
-  --color-game-card-border: #0a1535;
-  --color-game-text:        #0a1535;
-  --color-game-text-muted:  #6b7ea0;
-  --color-game-red:         #e32437;
-  --color-ice-blue:         #dce8ff;
-  --color-tier-easy:        #2cc66b;
-  --color-tier-medium:      #003087;
-  --color-tier-hard:        #e32437;
-  --color-tier-expert:      #ffcf33;
+  /* ── Jumbotron ────────────────────────────────────────────────────────────── */
+  --color-jumbo-screen:  #05070b;
+  --color-jumbo-led:     #ffb01f;
+  --color-jumbo-led-dim: rgba(255,176,31,0.6);
 
   /* ── Fonts ────────────────────────────────────────────────────────────────── */
-  --font-display:     var(--font-bungee), "Bungee", impact, sans-serif;
-  --font-display-alt: var(--font-archivo-black), "Archivo Black", sans-serif;
-  --font-body:        var(--font-space-grotesk), "Space Grotesk", sans-serif;
-  --font-mono:        var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+  --font-display: var(--font-big-shoulders), "Big Shoulders Display", "Barlow Condensed", sans-serif;
+  --font-led:     var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+  --font-body:    var(--font-archivo), "Archivo", sans-serif;
+  --font-mono:    var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 }
 
 :root {
@@ -56,57 +38,167 @@
 }
 
 body {
-  background-color: var(--color-c-ice);
-  color: var(--color-c-ink);
+  background-color: var(--color-ice-1);
+  color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Ice page background ───────────────────────────────────────────────────── */
+/* ── Ice page surface ───────────────────────────────────────────────────────
+   The page IS the rink: white to pale blue, with faint diagonal skate scuffs.
+   `.ice-bg` paints the gradient; `.ice-bg::before` lays the scuffs over it. */
 .ice-bg {
-  background: linear-gradient(180deg, #f4f8ff 0%, #eaf2ff 60%, #e0ebff 100%);
+  position: relative;
+  background: linear-gradient(178deg, #ffffff 0%, #eef3f9 38%, #e4ecf5 100%);
 }
 
-/* ── Card treatments - one hard offset shadow per element class, no blur ───── */
-.card-puffy {
-  border: 2px solid #0a1535;
-  box-shadow: 0 4px 0 #0a1535;
-  border-radius: 16px;
+.ice-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(102deg, rgba(11,83,201,0.035) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-61deg, rgba(11,83,201,0.028) 0 1px, transparent 1px 14px);
 }
 
-.card-puffy-sm {
-  border: 2px solid #0a1535;
-  box-shadow: 0 3px 0 #0a1535;
-  border-radius: 12px;
+/* Scuffs on their own element, for sections that need them without the gradient. */
+.ice-scuffs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(102deg, rgba(11,83,201,0.035) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-61deg, rgba(11,83,201,0.028) 0 1px, transparent 1px 14px);
 }
 
-/* Resting / non-interactive card (softer shadow) */
-.card-flat {
-  border: 2px solid #0a1535;
-  box-shadow: 0 3px 0 rgba(10,21,53,0.22);
-  border-radius: 14px;
+/* ── Planes on the ice ──────────────────────────────────────────────────────
+   Flat white, square, separated by ambient shadow rather than an outline. */
+.on-ice {
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: 0 2px 10px rgba(13,27,42,0.07);
 }
 
-
-/* ── Button press animation ────────────────────────────────────────────────── */
-.btn-puffy {
-  transition: box-shadow 0.1s ease, transform 0.1s ease;
-}
-.btn-puffy:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #0a1535 !important;
+.on-ice-header {
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: 0 1px 0 rgba(13,27,42,0.10), 0 8px 24px rgba(13,27,42,0.06);
 }
 
-/* ── Score delta float ────────────────────────────────────────────────────── */
+/* The padding at the base of the boards — 4–5px amber under a header bar. */
+.kickplate {
+  height: 5px;
+  background: var(--color-amber);
+}
+
+/* Eliminated answers: hatched, like the penalty box glass. */
+.penalty-hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(13,27,42,0.055) 0 8px,
+    rgba(13,27,42,0.02) 8px 16px
+  );
+}
+
+/* ── Jumbotron ──────────────────────────────────────────────────────────────
+   The one dark object in the system, and the only place amber LED type lives. */
+.jumbo-body {
+  background: linear-gradient(180deg, #2b3646 0%, #141c28 55%, #0b1017 100%);
+  box-shadow: 0 30px 60px rgba(13,27,42,0.35), inset 0 1px 0 rgba(255,255,255,0.16);
+}
+
+.jumbo-screen {
+  background: var(--color-jumbo-screen);
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+}
+
+.jumbo-dots {
+  background-image: radial-gradient(rgba(255,255,255,0.09) 0.8px, transparent 0.9px);
+  background-size: 4px 4px;
+}
+
+.led-glow {
+  text-shadow: 0 0 14px rgba(255,176,31,0.45), 0 0 40px rgba(255,176,31,0.22);
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────────
+   Square, borderless. Only the primary keeps a hard offset, and it is 3px. */
+.btn-ice {
+  border-radius: 0;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+}
+.btn-ice:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* ── Focus ──────────────────────────────────────────────────────────────────
+   This system has no borders to thicken, so focus is a red offset ring. The
+   inputs set `focus:outline-none` to drop the UA ring; this replaces it. */
+:focus-visible {
+  outline: 2px solid var(--color-red);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+input:focus {
+  outline: 2px solid var(--color-red);
+  outline-offset: -2px;
+}
+
+/* ── Timer urgency ──────────────────────────────────────────────────────────
+   Under 5s the clock goes red and the progress track pulses at 1Hz.
+   No shake, no scale — this system does not bounce. */
+@keyframes urgentPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+.timer-urgent {
+  animation: urgentPulse 1s ease-in-out infinite;
+}
+
+/* ── Jumbotron cell illumination ────────────────────────────────────────────
+   Cells light left to right, 60ms apart. The one flourish in the system. */
+@keyframes ledOn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.led-cell-in {
+  animation: ledOn 260ms ease-out both;
+}
+
+/* ── Score delta float ──────────────────────────────────────────────────────── */
 @keyframes scoreFloat {
   0%   { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-40px); }
 }
 .score-delta {
   animation: scoreFloat 1.5s ease-out forwards;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--color-red);
 }
 
-/* ── Tabular nums ─────────────────────────────────────────────────────────── */
+/* ── Tabular nums ───────────────────────────────────────────────────────────── */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Marquee for the live ticker ────────────────────────────────────────────── */
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: tickerScroll 38s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
+  .timer-urgent { animation: none; }
+  .led-cell-in  { animation: none; }
 }

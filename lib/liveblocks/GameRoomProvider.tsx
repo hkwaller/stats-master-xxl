@@ -92,11 +92,10 @@ export function GameRoomProvider({ roomId, hostId, children }: GameRoomProviderP
     >
       <ClientSideSuspense
         fallback={
-          <div className="flex items-center justify-center min-h-screen bg-game-bg">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-4 border-ice-blue border-t-transparent rounded-full animate-spin" />
-              <p className="text-game-text-muted text-lg tracking-widest uppercase">Loading…</p>
-            </div>
+          <div className="ice-bg flex min-h-screen items-center justify-center">
+            <p className="font-mono animate-pulse relative z-[2] text-[10px] uppercase tracking-[0.24em] text-[#55677d]">
+              Taking the ice
+            </p>
           </div>
         }
       >

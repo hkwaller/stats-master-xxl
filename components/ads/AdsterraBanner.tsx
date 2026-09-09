@@ -38,12 +38,12 @@ export function AdsterraBanner({ slot = 'top', className = '', suppressed = fals
       <div className="w-full flex justify-center overflow-hidden">
         <div
           id={`adsterra-banner-${slot}`}
-          className="w-full max-w-[min(728px,100%)] min-h-[90px] bg-game-card-dark/50 rounded-lg overflow-hidden [&_iframe]:!max-w-full"
+          className="w-full max-w-[min(728px,100%)] min-h-[90px] overflow-hidden bg-white/60 [&_iframe]:!max-w-full"
         />
       </div>
       <Link
         href="/go-ad-free"
-        className="text-xs font-bold text-[#6b7ea0] underline decoration-dotted hover:text-[#0a1535]"
+        className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#55677d] underline decoration-dotted underline-offset-4 hover:text-[#0d1b2a]"
       >
         Remove ads
       </Link>

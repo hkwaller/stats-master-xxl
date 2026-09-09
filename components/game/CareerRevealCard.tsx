@@ -1,8 +1,11 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import type { DifficultyTier, Question } from '@/types/game'
-import { TierBadge } from '@/components/design-system'
+import type { Question } from '@/types/game'
+import { MonoLabel } from '@/components/design-system'
+
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
 
 interface CareerRevealCardProps {
   seasons: Question[] // all seasons for this player (in reveal order)
@@ -11,76 +14,75 @@ interface CareerRevealCardProps {
   lockedOutCount?: number
 }
 
-const FIELD_LABELS: {
+const COLUMNS: {
   key: keyof Question
   abbr: string
-  color?: string
-  isTier?: boolean
-  cellClass?: string
+  align: 'left' | 'right'
+  emphasis?: boolean
 }[] = [
-  { key: 'season', abbr: 'Season', cellClass: 'whitespace-nowrap min-w-[5.5rem]' },
-  { key: 'gamesPlayed', abbr: 'GP' },
-  { key: 'goals', abbr: 'G' },
-  { key: 'assists', abbr: 'A' },
-  { key: 'points', abbr: 'PTS', color: 'text-[#c8102e] font-extrabold' },
-  { key: 'penaltyMinutes', abbr: 'PIM' },
-  { key: 'difficulty', abbr: 'Tier', isTier: true },
+  { key: 'season', abbr: 'Season', align: 'left' },
+  { key: 'gamesPlayed', abbr: 'GP', align: 'right' },
+  { key: 'goals', abbr: 'G', align: 'right' },
+  { key: 'assists', abbr: 'A', align: 'right' },
+  { key: 'points', abbr: 'PTS', align: 'right', emphasis: true },
+  { key: 'penaltyMinutes', abbr: 'PIM', align: 'right' },
 ]
 
+/**
+ * A career as a stat sheet: hairline-ruled rows on white, revealed rows in navy
+ * ink and unrevealed ones blurred out. No table chrome, no zebra striping.
+ */
 function SeasonTable({ rows, revealedIds }: { rows: Question[]; revealedIds: Set<string> }) {
   return (
-    <table className="w-full border-collapse">
+    <table className="w-full border-collapse" style={{ minWidth: 320 }}>
       <thead>
-        <tr className="bg-black text-white">
-          {FIELD_LABELS.map((f) => (
+        <tr>
+          {COLUMNS.map((c) => (
             <th
-              key={f.abbr}
-              className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-center border border-black/20"
+              key={c.abbr}
+              className="font-mono pb-2"
+              style={{
+                textAlign: c.align,
+                fontSize: 9,
+                fontWeight: 400,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: '#55677d',
+                borderBottom: `1px solid rgba(13,27,42,0.10)`,
+                padding: '0 8px 8px',
+                whiteSpace: 'nowrap',
+              }}
             >
-              {f.abbr}
+              {c.abbr}
             </th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {rows.map((season, i) => {
+        {rows.map((season) => {
           const isRevealed = revealedIds.has(season.id)
           return (
-            <motion.tr
-              key={season.id}
-              className={`border-b border-black/10 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-              animate={isRevealed ? { backgroundColor: i % 2 === 0 ? '#ffffff' : '#f9fafb' } : {}}
-              initial={false}
-            >
-              {FIELD_LABELS.map((f) => (
+            <motion.tr key={season.id} initial={false}>
+              {COLUMNS.map((c) => (
                 <td
-                  key={f.abbr}
-                  className={`
-                    px-3 py-2.5 text-center text-sm tabular-nums border border-black/10
-                    ${f.cellClass ?? ''}
-                    ${
-                      isRevealed
-                        ? f.isTier
-                          ? ''
-                          : (f.color ?? 'text-black font-semibold')
-                        : 'text-black/25 select-none'
-                    }
-                    transition-all duration-300
-                  `}
-                  style={isRevealed ? undefined : { filter: 'blur(3px)' }}
+                  key={c.abbr}
+                  className="tabular-nums"
+                  style={{
+                    textAlign: c.align,
+                    padding: '9px 8px',
+                    borderBottom: '1px solid rgba(13,27,42,0.07)',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: c.emphasis ? 800 : 700,
+                    fontSize: c.key === 'season' ? 18 : 20,
+                    lineHeight: 1,
+                    color: !isRevealed ? '#7d8b9c' : c.emphasis ? RED : INK,
+                    filter: isRevealed ? undefined : 'blur(4px)',
+                    userSelect: isRevealed ? undefined : 'none',
+                    whiteSpace: 'nowrap',
+                    transition: 'filter 300ms ease-out, color 300ms ease-out',
+                  }}
                 >
-                  {f.isTier ? (
-                    season[f.key] ? (
-                      <TierBadge
-                        tier={season[f.key] as DifficultyTier}
-                        className={isRevealed ? '' : 'opacity-30'}
-                      />
-                    ) : (
-                      <span className="text-black/30">-</span>
-                    )
-                  ) : (
-                    String(season[f.key] ?? '-')
-                  )}
+                  {String(season[c.key] ?? '—')}
                 </td>
               ))}
             </motion.tr>
@@ -97,34 +99,42 @@ export function CareerRevealCard({
   buzzedInPlayerName,
   lockedOutCount = 0,
 }: CareerRevealCardProps) {
-  // Which season IDs have been revealed (first N in reveal order)
   const revealedIds = new Set(seasons.slice(0, revealedCount).map((s) => s.id))
 
-  // Always display in chronological order
+  // Always display in chronological order, whatever the reveal order was.
   const chronological = [...seasons].sort((a, b) => a.seasonId - b.seasonId)
 
-  // Split into two columns when there are many seasons
   const useGrid = chronological.length > 10
   const mid = useGrid ? Math.ceil(chronological.length / 2) : chronological.length
   const leftCol = chronological.slice(0, mid)
   const rightCol = useGrid ? chronological.slice(mid) : []
 
   return (
-    <div className="w-full space-y-3">
+    <div className="flex w-full flex-col gap-4">
       {buzzedInPlayerName && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-yellow border-4 border-black shadow-[4px_4px_0_#000] px-4 py-2 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.16 }}
+          className="px-4 py-2.5"
+          style={{ background: RED, color: '#fff' }}
         >
-          <span className="font-bold text-black uppercase tracking-widest text-sm">
-            🚨 {buzzedInPlayerName} is answering…
+          <span
+            className="font-display"
+            style={{
+              fontWeight: 700,
+              fontSize: 18,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {buzzedInPlayerName} is answering
           </span>
         </motion.div>
       )}
 
       {useGrid ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-6 md:grid-cols-2">
           <div className="overflow-x-auto">
             <SeasonTable rows={leftCol} revealedIds={revealedIds} />
           </div>
@@ -138,14 +148,17 @@ export function CareerRevealCard({
         </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-game-text-muted px-1">
-        <span>
+      <div
+        className="flex items-baseline justify-between gap-3 pt-1"
+        style={{ borderTop: '1px solid rgba(13,27,42,0.10)', paddingTop: 12 }}
+      >
+        <MonoLabel size={9} tracking="0.18em">
           {revealedCount} / {seasons.length} seasons revealed
-        </span>
+        </MonoLabel>
         {lockedOutCount > 0 && (
-          <span className="text-game-red font-bold">
-            {lockedOutCount} player{lockedOutCount !== 1 ? 's' : ''} locked out
-          </span>
+          <MonoLabel size={9} tracking="0.18em" color={RED}>
+            {lockedOutCount} in the penalty box
+          </MonoLabel>
         )}
       </div>
     </div>

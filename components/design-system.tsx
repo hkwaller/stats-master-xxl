@@ -2,19 +2,9 @@
 
 import { motion, HTMLMotionProps } from 'framer-motion'
 import type { DifficultyTier } from '@/types/game'
-import { CBrand } from './arcade/Brand'
 
-// ─── Panel ────────────────────────────────────────────────────────────────────
-
-interface PanelProps {
-  children: React.ReactNode
-  className?: string
-  glow?: boolean
-}
-
-export function Panel({ children, className = '' }: PanelProps) {
-  return <div className={`bg-white card-puffy ${className}`}>{children}</div>
-}
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
 
 // ─── Button ───────────────────────────────────────────────────────────────────
 
@@ -22,25 +12,28 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children: React.ReactNode
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
+  /** Flush against its container — no shadow, fills the cell. Used in 2-up bars. */
+  flush?: boolean
 }
 
-const variantStyles: Record<string, { bg: string; fg: string }> = {
-  primary: { bg: '#e32437', fg: '#ffffff' },
-  secondary: { bg: '#003087', fg: '#ffffff' },
-  danger: { bg: '#e32437', fg: '#ffffff' },
-  ghost: { bg: '#ffffff', fg: '#0a1535' },
+const variantStyles: Record<string, { bg: string; fg: string; hover: string }> = {
+  primary: { bg: RED, fg: '#ffffff', hover: '#b80927' },
+  secondary: { bg: INK, fg: '#eef3f9', hover: '#16283c' },
+  danger: { bg: RED, fg: '#ffffff', hover: '#b80927' },
+  ghost: { bg: '#ffffff', fg: INK, hover: '#f4f7fa' },
 }
 
 const sizeStyles = {
-  sm: { padding: '9px 16px', fontSize: 13, borderRadius: 12, shadow: 3 },
-  md: { padding: '13px 20px', fontSize: 15, borderRadius: 12, shadow: 4 },
-  lg: { padding: '16px 26px', fontSize: 18, borderRadius: 12, shadow: 5 },
+  sm: { padding: '11px 18px', fontSize: 15, tracking: '0.12em' },
+  md: { padding: '15px 26px', fontSize: 18, tracking: '0.13em' },
+  lg: { padding: '17px 30px', fontSize: 21, tracking: '0.14em' },
 }
 
 export function Button({
   children,
   variant = 'primary',
   size = 'md',
+  flush = false,
   className = '',
   disabled,
   style,
@@ -48,31 +41,50 @@ export function Button({
 }: ButtonProps) {
   const v = variantStyles[variant]
   const s = sizeStyles[size]
+  // Hard offsets survive only on the primary action, and only when not flush.
+  const offset = variant === 'primary' && !flush
+  const ghostRule = variant === 'ghost' ? 'inset 0 0 0 1px rgba(13,27,42,0.14)' : ''
+  const rest = [offset ? `0 3px 0 ${INK}` : '', ghostRule].filter(Boolean).join(', ') || 'none'
 
   return (
     <motion.button
-      whileHover={!disabled ? { y: -2, boxShadow: `0 ${s.shadow + 2}px 0 #0a1535` } : undefined}
-      whileTap={!disabled ? { y: 2, boxShadow: `0 2px 0 #0a1535` } : undefined}
+      whileHover={!disabled ? { backgroundColor: v.hover } : undefined}
+      whileTap={
+        !disabled
+          ? {
+              y: 1,
+              boxShadow:
+                [offset ? `0 2px 0 ${INK}` : '', ghostRule].filter(Boolean).join(', ') || 'none',
+            }
+          : undefined
+      }
       transition={{ duration: 0.1 }}
       disabled={disabled}
       style={
         {
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
           backgroundColor: v.bg,
           color: v.fg,
-          border: '2px solid #0a1535',
-          borderRadius: s.borderRadius,
-          padding: s.padding,
+          border: 'none',
+          borderRadius: 0,
+          padding: flush ? '18px 0' : s.padding,
+          width: flush ? '100%' : undefined,
           cursor: disabled ? 'not-allowed' : 'pointer',
-          fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
+          fontFamily: 'var(--font-display)',
+          fontWeight: 700,
           fontSize: s.fontSize,
           lineHeight: 1,
-          letterSpacing: '0.01em',
-          boxShadow: `0 ${s.shadow}px 0 #0a1535`,
+          letterSpacing: s.tracking,
+          textTransform: 'uppercase',
+          boxShadow: rest,
           opacity: disabled ? 0.4 : 1,
           ...style,
         } as React.CSSProperties
       }
-      className={`btn-puffy ${className}`}
+      className={`btn-ice ${className}`}
       {...props}
     >
       {children}
@@ -80,7 +92,40 @@ export function Button({
   )
 }
 
+// ─── MonoLabel ────────────────────────────────────────────────────────────────
+// The system's small-caps voice. Never below 9px, never lighter than #55677d.
+
+export function MonoLabel({
+  children,
+  size = 10,
+  tracking = '0.24em',
+  color = '#55677d',
+  className = '',
+}: {
+  children: React.ReactNode
+  size?: number
+  tracking?: string
+  color?: string
+  className?: string
+}) {
+  return (
+    <span
+      className={`font-mono ${className}`}
+      style={{
+        fontSize: Math.max(9, size),
+        letterSpacing: tracking,
+        color,
+        textTransform: 'uppercase',
+        lineHeight: 1,
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
 // ─── TierBadge ────────────────────────────────────────────────────────────────
+// A square mono chip. Tier is carried by the label, not only by the colour.
 
 interface BadgeProps {
   tier: DifficultyTier
@@ -88,28 +133,27 @@ interface BadgeProps {
 }
 
 const tierConfig: Record<DifficultyTier, { label: string; bg: string; fg: string }> = {
-  easy: { label: 'Easy', bg: '#2cc66b', fg: '#ffffff' },
-  medium: { label: 'Medium', bg: '#003087', fg: '#ffffff' },
-  hard: { label: 'Hard', bg: '#e32437', fg: '#ffffff' },
-  expert: { label: 'Expert', bg: '#ffcf33', fg: '#0a1535' },
+  easy: { label: 'Easy · 140+', bg: INK, fg: '#eef3f9' },
+  medium: { label: 'Medium · 120–139', bg: 'rgba(11,83,201,0.12)', fg: '#0b53c9' },
+  hard: { label: 'Hard · 100–119', bg: RED, fg: '#ffffff' },
+  expert: { label: 'Expert · 70–99', bg: 'var(--color-amber)', fg: INK },
 }
 
 export function TierBadge({ tier, className = '' }: BadgeProps) {
   const cfg = tierConfig[tier]
   return (
     <span
-      className={`inline-flex items-center ${className}`}
+      className={`font-mono inline-flex items-center ${className}`}
       style={{
         background: cfg.bg,
         color: cfg.fg,
-        border: '2px solid #0a1535',
-        borderRadius: 9999,
-        padding: '3px 12px',
-        fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-        fontSize: 10,
-        fontWeight: 900,
+        borderRadius: 0,
+        padding: '4px 9px',
+        fontSize: 9,
         letterSpacing: '0.16em',
         textTransform: 'uppercase',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
       }}
     >
       {cfg.label}
@@ -126,207 +170,144 @@ interface AvatarProps {
   className?: string
 }
 
-export function Avatar({ url, name, size = 40, className = '' }: AvatarProps) {
+export function Avatar({ url, name, size = 34, className = '' }: AvatarProps) {
   return (
-    <div
-      className={`overflow-hidden flex-shrink-0 ${className}`}
-      style={{
-        width: size,
-        height: size,
-        border: '2px solid #0a1535',
-        borderRadius: 12,
-        background: '#fff',
-      }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={url} alt={name} width={size} height={size} className="w-full h-full object-cover" />
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt={name}
+      width={size}
+      height={size}
+      className={`shrink-0 object-cover ${className}`}
+      style={{ width: size, height: size, borderRadius: 3, background: '#e4ecf5' }}
+    />
   )
 }
 
-// ─── PlayerChip ───────────────────────────────────────────────────────────────
+// ─── ProgressTrack ────────────────────────────────────────────────────────────
+// The 6px time track. Under 5s the fill pulses; it never shakes or scales.
 
-interface PlayerChipProps {
-  name: string
-  avatarUrl: string
-  score: number
-  isHost?: boolean
-  isBoss?: boolean
-  isMe?: boolean
-  size?: 'sm' | 'md'
-  /** Overrides the "{score} pts" meta line (e.g. "READY"). */
-  statusLabel?: string
-}
-
-export function PlayerChip({
-  name,
-  avatarUrl,
-  score,
-  isHost,
-  isBoss,
-  isMe,
-  size = 'md',
-  statusLabel,
-}: PlayerChipProps) {
-  const avatarSize = size === 'sm' ? 28 : 40
-
+export function ProgressTrack({
+  fraction,
+  urgent = false,
+  height = 6,
+  className = '',
+}: {
+  fraction: number
+  urgent?: boolean
+  height?: number
+  className?: string
+}) {
+  const pct = Math.max(0, Math.min(1, fraction)) * 100
   return (
     <div
-      className="card-puffy-sm flex items-center"
-      style={{
-        gap: 10,
-        padding: size === 'sm' ? '6px 10px' : '10px 14px',
-        background: isMe ? '#003087' : '#ffffff',
-        color: isMe ? '#ffffff' : '#0a1535',
-      }}
+      className={`w-full ${className}`}
+      style={{ height, background: 'rgba(13,27,42,0.10)' }}
+      role="progressbar"
+      aria-valuenow={Math.round(pct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
     >
       <div
+        className={urgent ? 'timer-urgent' : ''}
         style={{
-          width: avatarSize,
-          height: avatarSize,
-          border: `2px solid ${isMe ? '#fff' : '#0a1535'}`,
-          borderRadius: 10,
-          overflow: 'hidden',
-          flexShrink: 0,
+          height,
+          width: `${pct}%`,
+          background: RED,
+          transition: 'width 0.4s linear',
         }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={avatarUrl}
-          alt={name}
-          width={avatarSize}
-          height={avatarSize}
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-              fontSize: size === 'sm' ? 13 : 16,
-              lineHeight: 1,
-              color: isMe ? '#ffffff' : '#0a1535',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {name}
-          </span>
-          {isHost && (
-            <span
-              style={{
-                background: '#e32437',
-                color: '#fff',
-                padding: '2px 7px',
-                fontFamily: 'var(--font-archivo-black), sans-serif',
-                fontSize: 9,
-                borderRadius: 5,
-                border: '1.5px solid #0a1535',
-                letterSpacing: '0.14em',
-              }}
-            >
-              HOST
-            </span>
-          )}
-          {isBoss && (
-            <span
-              style={{
-                background: '#ffcf33',
-                color: '#0a1535',
-                padding: '2px 7px',
-                fontFamily: 'var(--font-archivo-black), sans-serif',
-                fontSize: 9,
-                borderRadius: 5,
-                border: '1.5px solid #0a1535',
-                letterSpacing: '0.14em',
-              }}
-            >
-              👑 BOSS
-            </span>
-          )}
-        </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-jetbrains-mono), "JetBrains Mono", monospace',
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.14em',
-            color: isMe ? 'rgba(255,255,255,0.7)' : '#6b7ea0',
-            marginTop: 3,
-          }}
-        >
-          {statusLabel ?? `${score} pts`}
-        </div>
-      </div>
+      />
     </div>
   )
 }
 
-// ─── CountdownRing ────────────────────────────────────────────────────────────
+// ─── Clock ────────────────────────────────────────────────────────────────────
 
-interface CountdownRingProps {
+export function Clock({
+  seconds,
+  size = 70,
+  label = 'TIME',
+  align = 'end',
+}: {
   seconds: number
-  total: number
   size?: number
-  className?: string
-}
-
-export function CountdownRing({ seconds, total, size = 76, className = '' }: CountdownRingProps) {
-  const strokeWidth = size >= 100 ? 9 : 7
-  const radius = (size - strokeWidth - 4) / 2
-  const circumference = 2 * Math.PI * radius
-  const progress = Math.max(0, Math.min(1, seconds / total))
-  const dashOffset = circumference * (1 - progress)
-  const cx = size / 2
-  const cy = size / 2
-  const fontSize = size >= 100 ? 38 : 26
+  label?: string | null
+  align?: 'start' | 'end'
+}) {
+  const s = Math.max(0, Math.floor(seconds))
+  const urgent = s < 5
+  const text = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
   return (
-    <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        {/* Track */}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={radius}
-          strokeWidth={strokeWidth}
-          stroke="#d3e3ff"
-          fill="white"
-        />
-        {/* Progress */}
-        <motion.circle
-          cx={cx}
-          cy={cy}
-          r={radius}
-          strokeWidth={strokeWidth}
-          stroke="#e32437"
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          transition={{ duration: 1, ease: 'linear' }}
-        />
-        {/* Center number - rendered in SVG space so it rotates back correctly */}
-        <text
-          x={cx}
-          y={cy}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fill="#e32437"
-          fontFamily='var(--font-bungee), "Bungee", sans-serif'
-          fontSize={fontSize}
-          style={{
-            transform: `rotate(90deg)`,
-            transformOrigin: `${cx}px ${cy}px`,
-            fontWeight: 400,
-          }}
-        >
-          {Math.ceil(seconds)}
-        </text>
-      </svg>
+    <div className={`flex flex-col gap-1 ${align === 'end' ? 'items-end' : 'items-start'}`}>
+      {label && <MonoLabel size={9}>{label}</MonoLabel>}
+      <span
+        className="font-display tabular-nums"
+        style={{
+          fontWeight: 800,
+          fontSize: size,
+          lineHeight: 0.8,
+          color: urgent ? RED : INK,
+        }}
+      >
+        {text}
+      </span>
+    </div>
+  )
+}
+
+// ─── Kickplate ────────────────────────────────────────────────────────────────
+// The amber padding at the base of the boards. Trim only — never a fill.
+
+export function Kickplate({ height = 5 }: { height?: number }) {
+  return <div aria-hidden="true" style={{ height, background: 'var(--color-amber)' }} />
+}
+
+// ─── Ticker ───────────────────────────────────────────────────────────────────
+
+export function Ticker({ items }: { items: string[] }) {
+  if (items.length === 0) return null
+
+  return (
+    <div
+      className="relative flex h-9 items-center gap-[26px] overflow-hidden px-5"
+      style={{ background: INK }}
+    >
+      <span
+        className="font-mono shrink-0"
+        style={{
+          fontSize: 9,
+          letterSpacing: '0.24em',
+          color: '#fff',
+          background: RED,
+          padding: '4px 8px',
+        }}
+      >
+        LIVE
+      </span>
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="ticker-track">
+          {/* Two copies so the marquee loops seamlessly at -50%; the second is
+              decorative, so only the first is announced. */}
+          {[false, true].map((isClone) => (
+            <div
+              key={String(isClone)}
+              className="flex shrink-0 items-center gap-[26px] pr-[26px]"
+              aria-hidden={isClone || undefined}
+            >
+              {items.map((item, i) => (
+                <span
+                  key={i}
+                  className="font-mono"
+                  style={{ fontSize: 10, letterSpacing: '0.12em', color: '#55677d' }}
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -348,15 +329,15 @@ export function Modal({ open, onClose, children, className = '' }: ModalProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(10,21,53,0.65)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(13,27,42,0.55)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`bg-white card-puffy p-6 max-w-md w-full ${className}`}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.16, ease: 'easeOut' }}
+        className={`on-ice w-full max-w-md p-7 ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -369,64 +350,27 @@ export function Modal({ open, onClose, children, className = '' }: ModalProps) {
 
 interface GameHeadingProps {
   children: React.ReactNode
+  size?: number
   className?: string
+  style?: React.CSSProperties
 }
 
-export function GameHeading({ children, className = '' }: GameHeadingProps) {
+export function GameHeading({ children, size = 50, className = '', style }: GameHeadingProps) {
   return (
     <h1
-      className={className}
+      className={`font-display ${className}`}
       style={{
-        fontFamily: 'var(--font-bungee), "Bungee", sans-serif',
-        fontSize: 36,
+        fontWeight: 800,
+        fontSize: size,
         lineHeight: 0.9,
-        color: '#0a1535',
-        letterSpacing: '-0.01em',
+        letterSpacing: '0.005em',
+        color: INK,
+        textTransform: 'uppercase',
         margin: 0,
+        ...style,
       }}
     >
       {children}
     </h1>
-  )
-}
-
-// ─── GameLogo ─────────────────────────────────────────────────────────────────
-
-export function GameLogo({ className = '' }: { className?: string }) {
-  return <CBrand className={className} />
-}
-
-// ─── GameDivider ─────────────────────────────────────────────────────────────
-
-export function GameDivider({ className = '' }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <div style={{ flex: 1, height: 1, background: '#003087' }} />
-      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#e32437' }} />
-      <div style={{ flex: 1, height: 1, background: '#e32437' }} />
-    </div>
-  )
-}
-
-// ─── StatLabel ───────────────────────────────────────────────────────────────
-
-export function StatLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      style={{
-        display: 'inline-block',
-        background: '#0a1535',
-        color: '#ffffff',
-        borderRadius: 9999,
-        padding: '2px 8px',
-        fontFamily: 'var(--font-archivo-black), "Archivo Black", sans-serif',
-        fontSize: 11,
-        fontWeight: 900,
-        letterSpacing: '0.2em',
-        textTransform: 'uppercase',
-      }}
-    >
-      {children}
-    </span>
   )
 }

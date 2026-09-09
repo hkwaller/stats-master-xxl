@@ -1,14 +1,22 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { ArrowDown, ArrowUp, Check } from 'lucide-react'
 import type { HLComparisonField, HLPair } from '@/types/game'
+import { MonoLabel } from '@/components/design-system'
+import { JumbotronPanel } from '@/components/arcade'
+
+const INK = '#0d1b2a'
+const RED = '#cf0a2c'
+const DEAD = '#b3c0cf'
+const LED = '#ffb01f'
 
 const FIELD_DISPLAY: Record<HLComparisonField, string> = {
   goals: 'Goals',
   assists: 'Assists',
   points: 'Points',
-  penaltyMinutes: 'Penalty Minutes',
-  gamesPlayed: 'Games Played',
+  penaltyMinutes: 'Penalty minutes',
+  gamesPlayed: 'Games played',
 }
 
 interface HigherLowerCardProps {
@@ -25,98 +33,159 @@ export function HigherLowerCard({
   onAnswer,
 }: HigherLowerCardProps) {
   const fieldLabel = FIELD_DISPLAY[pair.field] ?? pair.field
-  const hasAnswered = !!myAnswer
-
-  function buttonClass(choice: 'higher' | 'lower') {
-    const isMyChoice = myAnswer === choice
-    const isCorrect = pair.correctAnswer === choice
-
-    if (revealed) {
-      if (isCorrect) return 'bg-lime border-black text-black'
-      if (isMyChoice && !isCorrect) return 'bg-game-red border-black text-white'
-      return 'bg-white border-black/30 text-black/40'
-    }
-    if (isMyChoice) return 'bg-cyan border-black text-black'
-    if (hasAnswered) return 'bg-white border-black/30 text-black/40'
-    return 'bg-white border-black text-black hover:bg-cyan/30 cursor-pointer'
-  }
+  const hasAnswered = Boolean(myAnswer)
 
   return (
-    <div className="space-y-6">
-      {/* Reference player */}
-      <div className="bg-white border-4 border-black shadow-[4px_4px_0_#000] p-5">
-        <div className="text-xs font-bold uppercase tracking-widest text-black/50 mb-2">
-          Reference
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="font-bold text-black text-lg">
+    <div className="flex flex-col gap-5">
+      {/* Reference — a plain white plane. */}
+      <div className="flex flex-col gap-3">
+        <MonoLabel size={9}>Reference</MonoLabel>
+        <div
+          className="flex items-end justify-between gap-4 p-4"
+          style={{
+            background: '#fff',
+            borderLeft: `5px solid ${INK}`,
+            boxShadow: '0 2px 10px rgba(13,27,42,0.07)',
+          }}
+        >
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <span
+              className="font-display truncate"
+              style={{ fontWeight: 700, fontSize: 26, lineHeight: 1, textTransform: 'uppercase' }}
+            >
               {pair.reference.firstName} {pair.reference.lastName}
-            </p>
-            <p className="text-sm text-black/60">
+            </span>
+            <MonoLabel size={9} tracking="0.14em">
               {pair.reference.season} · {pair.reference.teamAbbrevs}
-            </p>
+            </MonoLabel>
           </div>
-          <div className="text-right">
-            <p className="text-4xl font-bold tabular-nums text-black">{pair.referenceValue}</p>
-            <p className="text-xs text-black/50 font-bold uppercase">{fieldLabel}</p>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span
+              className="font-display tabular-nums"
+              style={{ fontWeight: 800, fontSize: 46, lineHeight: 0.85, color: INK }}
+            >
+              {pair.referenceValue}
+            </span>
+            <MonoLabel size={9} tracking="0.16em">{fieldLabel}</MonoLabel>
           </div>
         </div>
       </div>
 
-      {/* Challenge player */}
-      <div className="bg-white border-4 border-black shadow-[4px_4px_0_#000] p-5">
-        <div className="text-xs font-bold uppercase tracking-widest text-black/50 mb-2">
-          Challenge
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="font-bold text-black text-lg">
-              {pair.challenge.firstName} {pair.challenge.lastName}
-            </p>
-            <p className="text-sm text-black/60">
-              {pair.challenge.season} · {pair.challenge.teamAbbrevs}
-            </p>
-          </div>
-          <div className="text-right">
+      {/* Challenge — the hidden number lives on the jumbotron. */}
+      <div className="flex flex-col gap-3">
+        <MonoLabel size={9}>Challenge</MonoLabel>
+        <JumbotronPanel bezel={8} screenPad="18px 20px">
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex min-w-0 flex-col gap-2">
+              <span
+                className="font-mono"
+                style={{ fontSize: 9, letterSpacing: '0.28em', color: 'rgba(255,176,31,0.6)' }}
+              >
+                {pair.challenge.season} · {pair.challenge.teamAbbrevs}
+              </span>
+              <span
+                className="truncate"
+                style={{
+                  fontFamily: 'var(--font-led)',
+                  fontWeight: 700,
+                  fontSize: 34,
+                  lineHeight: 0.9,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  color: LED,
+                }}
+              >
+                {pair.challenge.firstName} {pair.challenge.lastName}
+              </span>
+            </div>
+
             {revealed ? (
-              <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="text-4xl font-bold tabular-nums text-black"
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.24, ease: 'easeOut' }}
+                className="led-glow tabular-nums shrink-0"
+                style={{
+                  fontFamily: 'var(--font-led)',
+                  fontWeight: 700,
+                  fontSize: 62,
+                  lineHeight: 0.8,
+                  color: LED,
+                }}
               >
                 {pair.challengeValue}
-              </motion.div>
+              </motion.span>
             ) : (
-              <div className="text-4xl font-bold text-black/20">???</div>
+              // Unlit LEDs, matching the jumbotron's own placeholder.
+              <span
+                role="img"
+                aria-label="Not revealed yet"
+                className="shrink-0"
+                style={{
+                  display: 'block',
+                  width: 96,
+                  height: 26,
+                  background: 'rgba(255,176,31,0.10)',
+                }}
+              />
             )}
-            <p className="text-xs text-black/50 font-bold uppercase">{fieldLabel}</p>
           </div>
-        </div>
+        </JumbotronPanel>
       </div>
 
-      {/* Higher / Lower buttons */}
-      <div className="flex gap-4">
-        {(['higher', 'lower'] as const).map((choice) => (
-          <motion.button
-            key={choice}
-            onClick={() => !hasAnswered && !revealed && onAnswer?.(choice)}
-            disabled={hasAnswered || revealed}
-            whileTap={!hasAnswered && !revealed ? { scale: 0.96 } : undefined}
-            whileHover={!hasAnswered && !revealed ? { scale: 1.02 } : undefined}
-            className={`
-              flex-1 py-5 font-bold text-xl uppercase tracking-widest
-              border-4 shadow-[4px_4px_0_#000] transition-all
-              disabled:cursor-default
-              ${buttonClass(choice)}
-            `}
-          >
-            {choice === 'higher' ? '↑ Higher' : '↓ Lower'}
-            {revealed && pair.correctAnswer === choice && (
-              <span className="block text-sm font-bold mt-1">{pair.challengeValue}</span>
-            )}
-          </motion.button>
-        ))}
+      {/* Higher / lower */}
+      <div className="grid grid-cols-2 gap-2.5">
+        {(['higher', 'lower'] as const).map((choice) => {
+          const isMyChoice = myAnswer === choice
+          const isCorrect = pair.correctAnswer === choice
+          const wrongPick = revealed && isMyChoice && !isCorrect
+          const dimmed = revealed && !isCorrect && !isMyChoice
+          const edge = revealed ? (isCorrect ? RED : DEAD) : isMyChoice ? RED : INK
+          const locked = hasAnswered || revealed
+
+          return (
+            <motion.button
+              key={choice}
+              onClick={() => !locked && onAnswer?.(choice)}
+              disabled={locked}
+              whileTap={!locked ? { y: 1 } : undefined}
+              animate={{ opacity: dimmed ? 0.55 : 1 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className={`flex items-center justify-center gap-2.5 ${wrongPick ? 'penalty-hatch' : ''}`}
+              style={{
+                borderWidth: '0 0 0 5px',
+                borderStyle: 'solid',
+                borderColor: edge,
+                borderRadius: 0,
+                padding: '20px 0',
+                background: revealed && isCorrect ? 'rgba(207,10,44,0.07)' : '#ffffff',
+                boxShadow: wrongPick ? 'none' : '0 2px 10px rgba(13,27,42,0.07)',
+                cursor: locked ? 'default' : 'pointer',
+                transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
+              }}
+            >
+              {choice === 'higher' ? (
+                <ArrowUp size={18} strokeWidth={2.4} color={INK} />
+              ) : (
+                <ArrowDown size={18} strokeWidth={2.4} color={INK} />
+              )}
+              <span
+                className="font-display"
+                style={{
+                  fontWeight: 700,
+                  fontSize: 24,
+                  lineHeight: 1,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: INK,
+                }}
+              >
+                {choice}
+              </span>
+              {revealed && isCorrect && <Check size={16} strokeWidth={2.4} color={RED} />}
+            </motion.button>
+          )
+        })}
       </div>
     </div>
   )
