@@ -132,7 +132,10 @@ export function Jumbotron({
 
       <div className="jumbo-body" style={{ padding: s.bezel }}>
         <div className="jumbo-screen relative overflow-hidden" style={{ padding: s.screenPad }}>
-          <div className="jumbo-dots pointer-events-none absolute inset-0" style={{ backgroundSize: s.dots }} />
+          <div
+            className="jumbo-dots pointer-events-none absolute inset-0"
+            style={{ backgroundSize: s.dots }}
+          />
 
           <div className="relative flex flex-col" style={{ gap: 12 }}>
             {(topLeft || topRight) && (
@@ -218,22 +221,6 @@ export function Jumbotron({
           </div>
         </div>
       </div>
-
-      {caption && (
-        <span
-          className="font-mono absolute right-0"
-          style={{
-            bottom: -11,
-            fontSize: 9,
-            letterSpacing: '0.2em',
-            color: '#0d1b2a',
-            background: 'var(--color-amber)',
-            padding: '3px 9px',
-          }}
-        >
-          {caption}
-        </span>
-      )}
     </div>
   )
 }
