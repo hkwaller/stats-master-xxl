@@ -7,28 +7,11 @@ import { nanoid } from 'nanoid'
 import { Play } from 'lucide-react'
 import { SignInButton, useAuth, UserButton } from '@clerk/nextjs'
 import { Button, Kickplate, MonoLabel } from '@/components/design-system'
-import { PuckMark, Jumbotron, FaceoffCircle, type JumboCell } from '@/components/arcade'
-import { AnswerRow } from '@/components/game/AnswerRow'
+import { PuckMark, FaceoffCircle } from '@/components/arcade'
 import { DailyChallenge } from '@/components/game/DailyChallenge'
 
 const INK = '#0d1b2a'
 const RED = '#cf0a2c'
-
-// A real 1987–88 line, used as the hero's demo board.
-const HERO_CELLS: JumboCell[] = [
-  { abbr: 'GP', value: '80' },
-  { abbr: 'G', value: '52' },
-  { abbr: 'A', value: '87' },
-  { abbr: 'PTS', value: '139', emphasis: true },
-  { abbr: 'PIM', value: '46' },
-]
-
-const HERO_CHOICES = [
-  { letter: 'A', name: 'Jari Kurri' },
-  { letter: 'B', name: 'Mike Bossy' },
-  { letter: 'C', name: 'Peter Stastny' },
-  { letter: 'D', name: 'Denis Savard' },
-]
 
 const HERO_STATS = [
   { value: '46,704', label: 'Real seasons' },
@@ -289,26 +272,21 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          {/* Right - the board, hanging from the rafters */}
+          {/* Right - today's live challenge */}
           <motion.div
+            id="daily-challenge"
             initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.4, ease: 'easeOut' }}
             className="flex min-w-0 flex-col gap-3.5 pt-10 lg:pt-0"
-            aria-hidden="true"
           >
-            <Jumbotron cells={HERO_CELLS} size="hero" topLeft="1987–88" topRight="EDMONTON" />
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              {HERO_CHOICES.map((c, i) => (
-                <AnswerRow
-                  key={c.letter}
-                  letter={c.letter}
-                  name={c.name}
-                  state={i === 3 ? 'correct' : 'default'}
-                  variant="phone"
-                />
-              ))}
-            </div>
+            <MonoLabel size={10} tracking="0.2em">
+              One free guess, every day
+            </MonoLabel>
+            <DailyChallenge />
+            <p className="m-0" style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>
+              Same skater for everyone. New challenge at midnight UTC. No room needed.
+            </p>
           </motion.div>
         </div>
       </section>
@@ -399,36 +377,6 @@ export default function LandingPage() {
                 <span style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>{m.desc}</span>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Daily challenge ── */}
-      <section
-        className="px-5 py-[54px] md:px-[34px]"
-        style={{ background: '#fff', borderTop: '1px solid rgba(13,27,42,0.10)' }}
-      >
-        <div className="mx-auto grid max-w-[1180px] items-start gap-11 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="flex flex-col gap-[18px] lg:sticky lg:top-8">
-            <MonoLabel size={10} tracking="0.26em" color={RED}>
-              Today&apos;s skater
-            </MonoLabel>
-            <h2
-              className="font-display m-0"
-              style={{ fontWeight: 800, fontSize: 'clamp(34px,6vw,50px)', lineHeight: 1 }}
-            >
-              ONE FREE GUESS,
-              <br />
-              EVERY DAY
-            </h2>
-            <p className="m-0" style={{ fontSize: 14, lineHeight: 1.65, color: '#55677d' }}>
-              A single stat line, one shot, no room needed. Same skater for everyone in the world
-              until midnight.
-            </p>
-          </div>
-
-          <div className="min-w-0">
-            <DailyChallenge />
           </div>
         </div>
       </section>

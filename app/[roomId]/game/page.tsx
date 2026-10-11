@@ -39,6 +39,7 @@ import { Scorebug } from '@/components/game/Scorebug'
 import { SideRail, type RailControl } from '@/components/game/SideRail'
 import { AnswerRow, type AnswerState } from '@/components/game/AnswerRow'
 import { FinalBoard } from '@/components/game/Scoreboard'
+import { CareerAnswerPopover } from '@/components/game/CareerAnswerPopover'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
 import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
 import { HigherLowerCard } from '@/components/game/HigherLowerCard'
@@ -416,7 +417,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
 
           {/* Reveal band - the answer, stated plainly under the board. */}
           <AnimatePresence>
-            {isRevealing && (
+            {isRevealing && gameMode !== 'career' && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -467,6 +468,16 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           )}
         />
       </div>
+      {isRevealing && gameMode === 'career' && currentQuestion && (
+        <CareerAnswerPopover
+          key={`career-answer-${game.currentQuestionIndex}`}
+          question={currentQuestion}
+          seasons={careerSeasons}
+          result={undefined}
+          onNext={isController ? () => advanceToNext(myId) : undefined}
+          tv
+        />
+      )}
     </main>
   )
 }

@@ -16,6 +16,7 @@ import { useStorage } from '@/lib/liveblocks/client'
 import {
   useAdvanceToNext,
   useBuzzIn,
+  useCancelCareerBuzz,
   useNextCareerRound,
   useRefreshCareerData,
   useNextH2HRound,
@@ -38,8 +39,9 @@ import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
 import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
 import { RevealResult } from '@/components/game/RevealResult'
+import { CareerAnswerPopover } from '@/components/game/CareerAnswerPopover'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
-import { BuzzInButton } from '@/components/game/BuzzInButton'
+import { BuzzInButton, BUZZER_HEIGHT } from '@/components/game/BuzzInButton'
 import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
 import { HigherLowerCard } from '@/components/game/HigherLowerCard'
 import { PlayerGuessInput } from '@/components/game/PlayerGuessInput'
@@ -99,6 +101,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const refreshCareerData = useRefreshCareerData()
   const revealNextCareerSeason = useRevealNextCareerSeason()
   const buzzIn = useBuzzIn()
+  const cancelCareerBuzz = useCancelCareerBuzz()
   const submitCareerAnswer = useSubmitCareerAnswer()
   const revealCareerAnswer = useRevealCareerAnswer()
   const nextH2HRound = useNextH2HRound()
@@ -181,9 +184,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   )
 
   useEffect(() => {
-    if (!game || game.command !== 'rematch') return
+    if (!roomId || !isHost || game?.command !== 'rematch') return
     router.push(`/${roomId}/lobby`)
-  }, [game?.command])
+  }, [game?.command, isHost, roomId, router])
 
   // Remember what has been played today so the pool does not repeat itself.
   useEffect(() => {
@@ -251,6 +254,8 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const showPowerupBar = Boolean(game.powerupsEnabled) && isAnswering && gameMode === 'classic'
 
   const controls = buildControls()
+  const showCareerBuzzer = isAnswering && gameMode === 'career' && careerSeasons.length > 0
+    && !buzzedInPlayerId && !lockedOutPlayers.includes(myId)
 
   function buildControls() {
     if (!isController)
@@ -270,7 +275,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
       out.push({
         label: 'Reveal',
         icon: <Eye size={14} strokeWidth={2.2} />,
-        tone: 'red',
+        tone: 'navy',
         onClick: () => {
           if (gameMode === 'career') revealCareerAnswer(myId)
           else if (gameMode === 'h2h') revealH2HAnswers(myId)
@@ -365,11 +370,11 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
       <div
         className="relative z-[2] mx-auto flex w-full max-w-[560px] flex-1 flex-col gap-4 px-[18px] pt-[18px]"
         style={{
-          paddingBottom: (showPowerupBar ? 112 : 0) + (controls.length ? 60 : 0) + 32,
+          paddingBottom: `calc(${(showPowerupBar ? 112 : 0) + (showCareerBuzzer ? BUZZER_HEIGHT : 0) + (controls.length ? 60 : 0) + 32}px + env(safe-area-inset-bottom, 0px))`,
         }}
       >
         {/* Idle */}
-        {game.command === 'idle' && (
+        {(game.command === 'idle' || game.command === 'rematch') && (
           <div className="flex flex-col items-center gap-3 py-20 text-center">
             <span
               className="font-display"
@@ -504,25 +509,19 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               />
             </div>
 
-            {isRevealing && currentQuestion && (
-              <RevealResult
-                question={currentQuestion}
-                history={history}
-                myId={myId}
-              />
-            )}
-
-            {isAnswering && (
-              <BuzzInButton
-                playerId={myId}
-                buzzedInPlayerId={buzzedInPlayerId}
-                lockedOutPlayers={lockedOutPlayers}
-                onBuzzIn={handleBuzzIn}
-                onSubmitAnswer={handleCareerAnswer}
-                offsetForDock={isController}
-              />
-            )}
           </motion.div>
+        )}
+
+        {/* Keep the fixed buzzer outside the animated card's transformed container. */}
+        {isAnswering && gameMode === 'career' && careerSeasons.length > 0 && (
+          <BuzzInButton
+            playerId={myId}
+            buzzedInPlayerId={buzzedInPlayerId}
+            lockedOutPlayers={lockedOutPlayers}
+            onBuzzIn={handleBuzzIn}
+            onCancel={() => cancelCareerBuzz({ playerId: myId })}
+            onSubmitAnswer={handleCareerAnswer}
+          />
         )}
 
         {/* ── Head-to-Head ── */}
@@ -639,12 +638,19 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
       {/* Host controls - a flush bar, not a floating dock. */}
       {controls.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-50">
+        <div
+          className="fixed inset-x-0 z-50"
+          style={{
+            bottom: showCareerBuzzer ? `calc(${BUZZER_HEIGHT}px + env(safe-area-inset-bottom, 0px))` : 0,
+            paddingBottom: showCareerBuzzer ? 0 : 'env(safe-area-inset-bottom, 0px)',
+            background: INK,
+          }}
+        >
           <div
             className="mx-auto grid w-full max-w-[560px]"
             style={{ gridTemplateColumns: `repeat(${controls.length}, 1fr)` }}
           >
-            {controls.map((c) => (
+            {controls.map((c, index) => (
               <button
                 key={c.label}
                 onClick={c.onClick}
@@ -653,6 +659,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                   padding: '19px 0',
                   background: c.tone === 'red' ? RED : INK,
                   border: 'none',
+                  borderLeft: index > 0 ? '1px solid rgba(238,243,249,0.2)' : undefined,
                   color: c.tone === 'red' ? '#fff' : '#eef3f9',
                   fontWeight: 700,
                   fontSize: 15,
@@ -667,6 +674,15 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
             ))}
           </div>
         </div>
+      )}
+      {isRevealing && gameMode === 'career' && currentQuestion && (
+        <CareerAnswerPopover
+          key={`career-answer-${game.currentQuestionIndex}`}
+          question={currentQuestion}
+          seasons={careerSeasons}
+          result={history[history.length - 1]?.playerAnswers?.[myId]}
+          onNext={isController ? () => advanceToNext(myId) : undefined}
+        />
       )}
     </main>
   )

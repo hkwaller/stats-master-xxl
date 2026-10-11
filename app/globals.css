@@ -251,8 +251,11 @@ input:focus {
 .career-season-scroll {
   /* One deliberate scroll, rather than browser anchoring followed by another. */
   overflow-anchor: none;
-  scrollbar-color: var(--color-edge-dead) var(--color-ice-0);
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.career-season-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .career-season-scroll:focus-visible {
@@ -272,4 +275,85 @@ input:focus {
   --career-header-padding: 8px 12px 12px;
   --career-row-padding: 15px 12px;
   --career-sheet-height: min(46vh, 540px);
+}
+
+/* Possession has one short broadcast-style underline, with no hidden text. */
+.career-possession {
+  position: relative;
+  overflow: hidden;
+}
+
+.career-possession::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--color-ice-0);
+  transform-origin: left;
+  animation: career-possession-arrival 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes career-possession-arrival {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.career-season-latest td:first-child {
+  box-shadow: inset 2px 0 var(--color-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .career-possession::after { animation: none; }
+}
+
+.career-answer-dialog {
+  width: min(880px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: clamp(24px, 4vw, 48px);
+  border: none;
+  background: var(--color-ice-0);
+  color: var(--color-ink);
+  box-shadow: 0 24px 64px rgba(13, 27, 42, 0.24);
+  overflow-y: auto;
+}
+
+.career-answer-dialog::backdrop {
+  background: rgba(13, 27, 42, 0.7);
+}
+
+.career-answer-dialog[open] {
+  animation: career-answer-arrival 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.career-answer-name {
+  font-size: clamp(36px, 5vw, 72px);
+  line-height: 0.95;
+  overflow-wrap: anywhere;
+}
+
+.career-answer-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 16px;
+}
+
+.career-answer-stat {
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: 1;
+}
+
+@media (min-width: 640px) {
+  .career-answer-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .career-answer-dialog-tv { width: min(1040px, calc(100% - 48px)); }
+  .career-answer-dialog-tv .career-answer-name { font-size: clamp(56px, 6vw, 88px); }
+}
+
+@keyframes career-answer-arrival {
+  from { transform: translateY(8px); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .career-answer-dialog[open] { animation: none; }
 }

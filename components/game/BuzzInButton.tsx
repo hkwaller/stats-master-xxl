@@ -1,20 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Pause } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { MonoLabel } from '@/components/design-system'
+import { Button, MonoLabel } from '@/components/design-system'
 import { PlayerNameInput } from './PlayerNameInput'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = 'var(--color-ink)'
+const RED = 'var(--color-red)'
+export const BUZZER_HEIGHT = 84
 
 interface BuzzInButtonProps {
   playerId: string
   buzzedInPlayerId: string // '' if nobody
   lockedOutPlayers: string[]
+  onCancel: () => void
   onBuzzIn: () => void
   onSubmitAnswer: (answer: string) => void
-  offsetForDock?: boolean
 }
 
 /** A hairline-bounded status plane - locked out, or someone else has the puck. */
@@ -59,8 +61,8 @@ export function BuzzInButton({
   buzzedInPlayerId,
   lockedOutPlayers,
   onBuzzIn,
+  onCancel,
   onSubmitAnswer,
-  offsetForDock = false,
 }: BuzzInButtonProps) {
   const isLockedOut = lockedOutPlayers.includes(playerId)
   const isBuzzed = buzzedInPlayerId === playerId
@@ -84,41 +86,41 @@ export function BuzzInButton({
   }
 
   if (someoneElseBuzzed) {
-    return <StatusPlane label="Someone else buzzed" detail="Stand by" tone="wait" />
+    return <StatusPlane label="Someone else buzzed" detail="Seasons paused until they respond" tone="wait" />
   }
 
   if (isBuzzed) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
-        className="flex flex-col gap-3"
-      >
-        <div className="px-4 py-3 text-center" style={{ background: RED, color: '#fff' }}>
-          <span
-            className="font-display"
-            style={{
-              fontWeight: 700,
-              fontSize: 18,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-            }}
-          >
-            You have the puck - name him
+      <div className="on-ice flex flex-col gap-4 p-4" aria-label="Your answer">
+        <div className="career-possession flex flex-col gap-2 px-4 py-4" style={{ background: RED, color: 'var(--color-ice-0)' }}>
+          <span className="font-display text-[26px] leading-none font-extrabold uppercase">
+            You have the puck
+          </span>
+          <span className="flex items-center gap-2 text-sm">
+            <Pause size={14} strokeWidth={2.4} aria-hidden="true" />
+            Seasons paused. Name the player or cancel.
           </span>
         </div>
 
-        <PlayerNameInput value={answer} setValue={setAnswer} onSubmit={onSubmitAnswer} autoFocus />
-      </motion.div>
+        <PlayerNameInput value={answer} setValue={setAnswer} onSubmit={onSubmitAnswer} placeholder="Player name…" autoFocus />
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm text-ink-2">Not sure? Give up the puck.</span>
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel}
+            className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-line"
+            style={{ minHeight: 44, minWidth: 96 }}
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
     )
   }
 
   // Default: the buzzer, pinned to the bottom of the phone.
   return (
     <div
-      className={`fixed inset-x-0 z-40 ${offsetForDock ? 'bottom-[72px]' : 'bottom-0'}`}
-      style={{ background: '#ffffff', boxShadow: '0 -1px 0 rgba(13,27,42,0.10)' }}
+      className="fixed inset-x-0 bottom-0 z-40"
+      style={{ background: RED, paddingBottom: 'env(safe-area-inset-bottom, 0px)', boxShadow: '0 -1px 0 rgba(13,27,42,0.10)' }}
     >
       <motion.button
         onClick={onBuzzIn}
@@ -129,7 +131,9 @@ export function BuzzInButton({
           background: RED,
           border: 'none',
           color: '#fff',
-          padding: '26px 0',
+          minHeight: BUZZER_HEIGHT,
+          padding: '20px 0',
+          lineHeight: '1',
           fontWeight: 700,
           fontSize: 26,
           letterSpacing: '0.16em',

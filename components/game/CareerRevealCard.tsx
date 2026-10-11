@@ -1,6 +1,7 @@
 'use client'
 
 import { useLayoutEffect, useRef } from 'react'
+import { Pause } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { Question } from '@/types/game'
 import { MonoLabel } from '@/components/design-system'
@@ -65,7 +66,7 @@ function SeasonTable({ rows }: { rows: Question[] }) {
       </thead>
       <tbody>
         {rows.map((season) => (
-          <tr key={`${season.playerId}:${season.seasonId}`} className="career-season-row">
+          <tr key={`${season.playerId}:${season.seasonId}`} className={`career-season-row ${season === rows[rows.length - 1] ? 'career-season-latest' : ''}`}>
             {COLUMNS.map((c) => (
               <td
                 key={c.abbr}
@@ -123,7 +124,7 @@ export function CareerRevealCard({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.16 }}
-          className="px-4 py-2.5"
+          className="career-possession flex flex-wrap items-center justify-between gap-2 px-4 py-3"
           style={{ background: RED, color: '#fff' }}
         >
           <span
@@ -136,6 +137,10 @@ export function CareerRevealCard({
             }}
           >
             {buzzedInPlayerName} is answering
+          </span>
+          <span className="flex items-center gap-2 text-sm">
+            <Pause size={14} strokeWidth={2.4} aria-hidden="true" />
+            Seasons paused
           </span>
         </motion.div>
       )}

@@ -255,3 +255,42 @@ test('buzzing blocks season reveals and expiry, then preserves the remaining rev
     } finally { global.setTimeout = originalTimeout }
   } finally { Date.now = originalNow }
 })
+
+test('only the buzzer can cancel, without a penalty, and can buzz again', () => {
+  const values = new Map(Object.entries({
+    command: 'answering', gameMode: 'career', buzzedInPlayerId: 'me', buzzedInSeasonCount: 2,
+    careerPausedAt: new Date(100_000).toISOString(), careerPausedDurationMs: 2000,
+    lockedOutPlayers: [], answers: {}, revealedSeasonCount: 2,
+  }))
+  const game = { get: key => values.get(key), set: (key, value) => values.set(key, value) }
+  const mutations = load('lib/liveblocks/mutations.ts', {
+    './client': { useMutation: callback => args => callback({ storage: { get: () => game } }, args) },
+    '@/lib/avatar': {},
+  })
+  const originalNow = Date.now
+  try {
+    Date.now = () => 105_000
+    const cancel = mutations.useCancelCareerBuzz()
+    cancel({ playerId: 'other' })
+    assert.equal(values.get('buzzedInPlayerId'), 'me')
+    cancel({ playerId: 'me' })
+    assert.equal(values.get('buzzedInPlayerId'), '')
+    assert.equal(values.get('careerPausedAt'), '')
+    assert.equal(values.get('careerPausedDurationMs'), 7000)
+    assert.deepEqual(values.get('lockedOutPlayers'), [])
+    assert.deepEqual(values.get('answers'), {})
+    assert.equal(values.get('revealedSeasonCount'), 2)
+    mutations.useBuzzIn()({ playerId: 'me' })
+    assert.equal(values.get('buzzedInPlayerId'), 'me')
+    assert.equal(values.get('buzzedInSeasonCount'), 2)
+  } finally { Date.now = originalNow }
+})
+
+test('career answer totals include every season exactly once', () => {
+  const { careerTotals } = load('lib/game/career-totals.ts')
+  const first = { seasonId: 19901991, gamesPlayed: 77, goals: 31, assists: 48, points: 79, penaltyMinutes: 66 }
+  const second = { seasonId: 19911992, gamesPlayed: 80, goals: 32, assists: 54, points: 86, penaltyMinutes: 72 }
+  assert.deepEqual(careerTotals([first, second, { ...second }]), {
+    seasons: 2, gamesPlayed: 157, goals: 63, assists: 102, points: 165, penaltyMinutes: 138,
+  })
+})

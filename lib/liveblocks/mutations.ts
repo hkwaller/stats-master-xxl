@@ -782,6 +782,26 @@ export function useBuzzIn() {
   }, [])
 }
 
+/** Give up the answering slot without submitting a guess or taking a penalty. */
+export function useCancelCareerBuzz() {
+  return useMutation(({ storage }, { playerId }: { playerId: string }) => {
+    const game = getGame(storage)
+    if (!game || game.get('gameMode') !== 'career' || game.get('command') !== 'answering') return
+    if (!playerId || game.get('buzzedInPlayerId') !== playerId) return
+    resumeCareerClock(game)
+    game.set('buzzedInPlayerId', '')
+    game.set('buzzedInSeasonCount', 0)
+  }, [])
+}
+
+function resumeCareerClock(game: LiveObject<GameState>) {
+  const pausedAt = game.get('careerPausedAt') as string | undefined
+  const pausedDuration = (game.get('careerPausedDurationMs') as number) ?? 0
+  const answeringTime = pausedAt ? Math.max(0, Date.now() - new Date(pausedAt).getTime()) : 0
+  game.set('careerPausedDurationMs', pausedDuration + answeringTime)
+  game.set('careerPausedAt', '')
+}
+
 /** Buzzer submits their answer - scores if correct, locked out if wrong */
 export function useSubmitCareerAnswer() {
   return useMutation(({ storage }, { playerId, answer }: { playerId: string; answer: string }) => {
@@ -797,11 +817,7 @@ export function useSubmitCareerAnswer() {
     const currentQuestion = game.get('currentQuestion') as unknown as Question
     if (!currentQuestion) return
 
-    const pausedAt = game.get('careerPausedAt') as string | undefined
-    const pausedDuration = (game.get('careerPausedDurationMs') as number) ?? 0
-    const answeringTime = pausedAt ? Math.max(0, Date.now() - new Date(pausedAt).getTime()) : 0
-    game.set('careerPausedDurationMs', pausedDuration + answeringTime)
-    game.set('careerPausedAt', '')
+    resumeCareerClock(game)
 
     const correct = isCorrectAnswer(answer, currentQuestion)
     const existingAnswers = (game.get('answers') as unknown as Record<string, string>) ?? {}

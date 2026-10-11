@@ -62,7 +62,7 @@ export async function getMyDailyChallengeScore(): Promise<DailyChallengeRecord |
   if (!userId) return null
 
   const supabase = createSupabaseClient()
-  const today = getTodayDateString()
+  const today = await getTodayDateString()
 
   const { data, error } = await supabase
     .from('nhl_stats_master_daily_challenge_scores')
@@ -88,7 +88,7 @@ export async function saveDailyChallengeScore(params: {
   if (!userId) return { ok: false, error: 'not_authenticated' }
 
   const supabase = createSupabaseClient()
-  const today = getTodayDateString()
+  const today = await getTodayDateString()
 
   const { error } = await supabase.from('nhl_stats_master_daily_challenge_scores').upsert(
     {
