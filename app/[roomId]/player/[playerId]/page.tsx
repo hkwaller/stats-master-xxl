@@ -1,5 +1,8 @@
 'use client'
 
+// Future monetization boundary: only after the entire session has completed and final results are visible.
+// Consult playam-monetization.monetizationBreakReached; no ad SDK or event is invoked here.
+
 /**
  * The player's phone: a compact scorebug, the jumbotron stat line, an answer
  * stack, and the power-play bar pinned to the bottom edge.
@@ -14,6 +17,7 @@ import {
   useAdvanceToNext,
   useBuzzIn,
   useNextCareerRound,
+  useRefreshCareerData,
   useNextH2HRound,
   useNextHLRound,
   useNextQuestion,
@@ -33,9 +37,7 @@ import {
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
 import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
-import { useInGameAdsSuppressed } from '@/hooks/useInGameAdsSuppressed'
-import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
-import { AdsterraPopunder } from '@/components/ads/AdsterraPopunder'
+import { RevealResult } from '@/components/game/RevealResult'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
 import { BuzzInButton } from '@/components/game/BuzzInButton'
 import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
@@ -58,7 +60,7 @@ import type {
   Question,
   QuestionResult,
 } from '@/types/game'
-import { POWERUP_INITIAL_CHARGES } from '@/types/game'
+import { CAREER_REVEAL_INTERVAL_MS, POWERUP_INITIAL_CHARGES } from '@/types/game'
 
 const INK = '#0d1b2a'
 const RED = '#cf0a2c'
@@ -66,7 +68,7 @@ const QUESTION_SECONDS = 30
 
 const MODE_TITLES: Record<string, string> = {
   classic: 'Name the skater',
-  career: 'Name the career',
+  career: 'Who is this?',
   h2h: 'Which line is his?',
   'higher-lower': 'Higher or lower?',
 }
@@ -82,7 +84,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const [myId, setMyId] = useState('')
 
   const game = useStorage((root) => root.game)
-  const { suppressed: adsSuppressed } = useInGameAdsSuppressed()
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const submitAnswer = useSubmitAnswer()
@@ -95,6 +96,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const tickCountdown = useTickCountdown()
   const nextQuestion = useNextQuestion()
   const nextCareerRound = useNextCareerRound()
+  const refreshCareerData = useRefreshCareerData()
   const revealNextCareerSeason = useRevealNextCareerSeason()
   const buzzIn = useBuzzIn()
   const submitCareerAnswer = useSubmitCareerAnswer()
@@ -157,6 +159,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     tickCountdown,
     nextQuestion,
     nextCareerRound,
+    refreshCareerData,
     revealNextCareerSeason,
     revealCareerAnswer,
     nextH2HRound,
@@ -166,9 +169,15 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     revealHLAnswers,
   })
 
+  const questionDurationMs = gameMode === 'career'
+    ? careerSeasons.length * CAREER_REVEAL_INTERVAL_MS
+    : QUESTION_SECONDS * 1000
   const questionTimeLeft = useQuestionTimeLeft(
     game?.questionStartsAt,
     game?.command === 'answering',
+    questionDurationMs,
+    gameMode === 'career' ? game?.careerPausedDurationMs : 0,
+    gameMode === 'career' ? game?.careerPausedAt : undefined,
   )
 
   useEffect(() => {
@@ -232,9 +241,10 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     ((game.playerEliminatedChoices as unknown as Record<string, string[]>) ?? {})[myId] ?? []
   const choices = (game.choices as unknown as string[]) ?? []
   const myStreak = currentStreak(history, myId)
-  const activePowerup = game.activePowerup as unknown as
-    | { type: PowerupType; playerId: string }
-    | null
+  const activePowerup = game.activePowerup as unknown as {
+    type: PowerupType
+    playerId: string
+  } | null
 
   // The power-play bar owns the bottom edge. It is only useful while answering,
   // so it leaves with the question rather than sitting inert through the reveal.
@@ -243,8 +253,19 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const controls = buildControls()
 
   function buildControls() {
-    if (!isController) return [] as { label: string; icon: React.ReactNode; tone: 'red' | 'navy'; onClick: () => void }[]
-    const out: { label: string; icon: React.ReactNode; tone: 'red' | 'navy'; onClick: () => void }[] = []
+    if (!isController)
+      return [] as {
+        label: string
+        icon: React.ReactNode
+        tone: 'red' | 'navy'
+        onClick: () => void
+      }[]
+    const out: {
+      label: string
+      icon: React.ReactNode
+      tone: 'red' | 'navy'
+      onClick: () => void
+    }[] = []
     if (game!.command === 'answering') {
       out.push({
         label: 'Reveal',
@@ -295,11 +316,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 myId={myId}
                 gameMode={gameMode}
               />
-              {!isController && (
-                <MonoLabel size={9}>Waiting for the host to restart</MonoLabel>
-              )}
-              <AdsterraBanner slot="player-finished" suppressed={adsSuppressed} />
-              <AdsterraPopunder suppressed={adsSuppressed} />
+              {!isController && <MonoLabel size={9}>Waiting for the host to restart</MonoLabel>}
             </div>
           </FinalBoard>
         </div>
@@ -328,7 +345,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 >
                   {me.score}
                 </span>
-                <MonoLabel size={9} tracking="0.16em">#{myRank}</MonoLabel>
+                <MonoLabel size={9} tracking="0.16em">
+                  #{myRank}
+                </MonoLabel>
               </div>
             )}
           </div>
@@ -339,15 +358,14 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
       {/* Above the scuff overlay, which paints in the z-index-0 layer. */}
       <ProgressTrack
         className="relative z-[2]"
-        fraction={isAnswering ? questionTimeLeft / QUESTION_SECONDS : 0}
+        fraction={isAnswering ? questionTimeLeft / (questionDurationMs / 1000) : 0}
         urgent={isAnswering && questionTimeLeft < 5}
       />
 
       <div
         className="relative z-[2] mx-auto flex w-full max-w-[560px] flex-1 flex-col gap-4 px-[18px] pt-[18px]"
         style={{
-          paddingBottom:
-            (showPowerupBar ? 112 : 0) + (controls.length ? 60 : 0) + 32,
+          paddingBottom: (showPowerupBar ? 112 : 0) + (controls.length ? 60 : 0) + 32,
         }}
       >
         {/* Idle */}
@@ -379,7 +397,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               >
                 {game.countdownTime || '·'}
               </span>
-              <MonoLabel size={10} tracking="0.3em">Get ready</MonoLabel>
+              <MonoLabel size={10} tracking="0.3em">
+                Get ready
+              </MonoLabel>
             </motion.div>
           )}
         </AnimatePresence>
@@ -431,7 +451,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 question={currentQuestion}
                 history={history}
                 myId={myId}
-                hasAnswered={hasAnswered}
               />
             )}
 
@@ -464,15 +483,18 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               >
                 {MODE_TITLES.career}
               </span>
-              <MonoLabel size={9}>
-                Round {(game.currentQuestionIndex ?? 0) + 1} / {game.questionCount}
-              </MonoLabel>
+              <div className="flex items-end gap-3">
+                <MonoLabel size={9}>
+                  Round {(game.currentQuestionIndex ?? 0) + 1} / {game.questionCount}
+                </MonoLabel>
+                {isAnswering && <Clock seconds={questionTimeLeft} size={38} label={null} />}
+              </div>
             </div>
 
             <div className="on-ice overflow-x-auto p-4">
               <CareerRevealCard
                 seasons={careerSeasons}
-                revealedCount={revealedSeasonCount}
+                revealedCount={isRevealing ? careerSeasons.length : revealedSeasonCount}
                 buzzedInPlayerName={
                   buzzedInPlayerId && buzzedInPlayerId !== myId
                     ? players.find((p) => p.id === buzzedInPlayerId)?.name
@@ -487,7 +509,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 question={currentQuestion}
                 history={history}
                 myId={myId}
-                hasAnswered={hasAnswered}
               />
             )}
 
@@ -588,7 +609,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
           </motion.div>
         )}
 
-        {/* Standings — hairline rows on a plane, not a floating sidebar. */}
+        {/* Standings - hairline rows on a plane, not a floating sidebar. */}
         {connectedPlayers.length >= 2 && (
           <div className="on-ice mt-2">
             <div className="px-3 pt-3 pb-2">
@@ -601,10 +622,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
       {/* Power plays own the bottom edge. */}
       {showPowerupBar && (
-        <div
-          className="fixed inset-x-0 z-40"
-          style={{ bottom: controls.length ? 60 : 0 }}
-        >
+        <div className="fixed inset-x-0 z-40" style={{ bottom: controls.length ? 60 : 0 }}>
           <div className="mx-auto w-full max-w-[560px]">
             <PowerupBar
               charges={myPowerupCharges}
@@ -619,7 +637,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
         </div>
       )}
 
-      {/* Host controls — a flush bar, not a floating dock. */}
+      {/* Host controls - a flush bar, not a floating dock. */}
       {controls.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-50">
           <div
@@ -657,84 +675,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 // ─── Reveal result ────────────────────────────────────────────────────────────
 // State is never carried by colour alone: the outcome is spelled out in words
 // and the answer is always stated, whether you got it or not.
-
-function RevealResult({
-  question,
-  history,
-  myId,
-  hasAnswered,
-}: {
-  question: Question
-  history: QuestionResult[]
-  myId: string
-  hasAnswered: boolean
-}) {
-  const latest = history.length > 0 ? history[history.length - 1] : null
-  const myResult = latest?.playerAnswers?.[myId]
-  const isCorrect = myResult?.correct ?? false
-  const points = myResult?.points ?? 0
-
-  const headline = !hasAnswered ? 'No answer' : isCorrect ? 'Correct' : 'Missed'
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="on-ice flex flex-col gap-4 p-5"
-      style={{ borderLeft: `5px solid ${isCorrect ? RED : '#b3c0cf'}` }}
-    >
-      <div className="flex items-baseline justify-between gap-3">
-        <span
-          className="font-display"
-          style={{
-            fontWeight: 800,
-            fontSize: 34,
-            lineHeight: 1,
-            textTransform: 'uppercase',
-            color: isCorrect ? RED : INK,
-          }}
-        >
-          {headline}
-        </span>
-        {points !== 0 && (
-          <span
-            className="font-display tabular-nums"
-            style={{
-              fontWeight: 800,
-              fontSize: 30,
-              lineHeight: 1,
-              color: points > 0 ? RED : INK,
-            }}
-          >
-            {points > 0 ? `+${points}` : points}
-          </span>
-        )}
-      </div>
-
-      <div
-        className="flex flex-col gap-1.5 pt-3"
-        style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
-      >
-        <MonoLabel size={9}>The answer was</MonoLabel>
-        <span
-          className="font-display"
-          style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
-        >
-          {question.firstName} {question.lastName}
-        </span>
-        <MonoLabel size={9} tracking="0.14em">
-          {question.season} · {question.teamAbbrevs} · {question.positionCode}
-        </MonoLabel>
-        {hasAnswered && !isCorrect && myResult?.answer && (
-          <span className="pt-1">
-            <MonoLabel size={9} tracking="0.14em">You said {myResult.answer}</MonoLabel>
-          </span>
-        )}
-      </div>
-    </motion.div>
-  )
-}
 
 // ─── Round status (h2h / higher-lower) ────────────────────────────────────────
 
@@ -822,14 +762,14 @@ function QuestionHistory({
         return (
           <div key={q.id + i} className="on-ice flex flex-col gap-3 p-4">
             <div className="flex items-baseline gap-3">
-              <MonoLabel size={9} tracking="0.2em">Q{i + 1}</MonoLabel>
+              <MonoLabel size={9} tracking="0.2em">
+                Q{i + 1}
+              </MonoLabel>
               <span
                 className="font-display flex-1 truncate"
                 style={{ fontWeight: 700, fontSize: 22, textTransform: 'uppercase' }}
               >
-                {gameMode === 'higher-lower'
-                  ? 'Higher or lower'
-                  : `${q.firstName} ${q.lastName}`}
+                {gameMode === 'higher-lower' ? 'Higher or lower' : `${q.firstName} ${q.lastName}`}
               </span>
               {(gameMode === 'classic' || gameMode === 'career') && (
                 <MonoLabel size={9} tracking="0.14em">

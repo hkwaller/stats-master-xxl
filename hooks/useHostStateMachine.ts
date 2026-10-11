@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
-import type { GameState, Player, Question } from '@/types/game'
+import { useEffect, useState } from 'react'
+import type { CareerQuestion, GameState, Player, Question } from '@/types/game'
 import { CAREER_REVEAL_INTERVAL_MS } from '@/types/game'
 
 type Mutations = {
+  refreshCareerData: (args: { requesterId: string; careers: CareerQuestion[] }) => void
   tickCountdown: (id: string) => void
   nextQuestion: (args: { requesterId: string; choices: string[] }) => void
   nextCareerRound: (args: { requesterId: string }) => void
@@ -28,6 +29,7 @@ export function useHostStateMachine(
   mutations: Mutations,
 ) {
   const {
+    refreshCareerData,
     tickCountdown,
     nextQuestion,
     nextCareerRound,
@@ -44,6 +46,35 @@ export function useHostStateMachine(
   const careerSeasons = (game?.careerSeasons as unknown as Question[]) ?? []
   const revealedSeasonCount = game?.revealedSeasonCount ?? 0
   const answeredCount = Object.keys(game?.answers ?? {}).length
+
+  const [refreshAttempt, setRefreshAttempt] = useState(0)
+  const careerData = (game?.careerData as unknown as CareerQuestion[]) ?? []
+  const needsCareerRefresh = careerData.some((c) => !c.fullCareer)
+  const careerPlayerIds = careerData.map((c) => c.playerId).join(',')
+
+  useEffect(() => {
+    if (!isHost || gameMode !== 'career' || !needsCareerRefresh) return
+    const controller = new AbortController()
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+    async function refresh() {
+      try {
+        const res = await fetch('/api/questions/generate-career', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerIds: careerPlayerIds.split(',').map(Number) }),
+          signal: controller.signal,
+        })
+        if (!res.ok) throw new Error('Could not restore full careers')
+        const { careerData: careers } = await res.json() as { careerData: CareerQuestion[] }
+        if (!controller.signal.aborted) refreshCareerData({ requesterId: myId, careers })
+      } catch {
+        if (!controller.signal.aborted) {
+          retryTimer = setTimeout(() => setRefreshAttempt((attempt) => attempt + 1), 5000)
+        }
+      }
+    }
+    void refresh()
+    return () => { controller.abort(); clearTimeout(retryTimer) }
+  }, [isHost, gameMode, needsCareerRefresh, careerPlayerIds, myId, refreshCareerData, refreshAttempt])
 
   // Countdown ticker
   useEffect(() => {
@@ -67,30 +98,34 @@ export function useHostStateMachine(
 
   // Career: launch next career round
   useEffect(() => {
-    if (!isHost || !game || gameMode !== 'career') return
+    if (!isHost || !game || gameMode !== 'career' || needsCareerRefresh) return
     if (game.command !== 'question' && game.command !== 'next') return
     nextCareerRound({ requesterId: myId })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, game?.command, gameMode])
+  }, [isHost, game?.command, gameMode, needsCareerRefresh])
 
-  // Career: reveal timer - reveals one season every CAREER_REVEAL_INTERVAL_MS
+  // Career: reveal time pauses while the answering slot is occupied.
   useEffect(() => {
-    if (!isHost || !game || gameMode !== 'career') return
+    if (!isHost || !game || gameMode !== 'career' || needsCareerRefresh) return
     if (game.command !== 'answering') return
-    if (careerSeasons.length === 0) return
+    if (careerSeasons.length === 0 || game.buzzedInPlayerId) return
 
-    if (revealedSeasonCount >= careerSeasons.length) {
-      revealCareerAnswer(myId)
-      return
-    }
-
+    // Schedule from the shared start time so render/network delays do not
+    // accumulate. The final season also gets a full interval before time expires.
+    const deadline = new Date(game.questionStartsAt).getTime() +
+      (game.careerPausedDurationMs ?? 0) + revealedSeasonCount * CAREER_REVEAL_INTERVAL_MS
     const timer = setTimeout(() => {
-      revealNextCareerSeason(myId)
-    }, CAREER_REVEAL_INTERVAL_MS)
+      if (revealedSeasonCount >= careerSeasons.length) {
+        revealCareerAnswer(myId)
+      } else {
+        revealNextCareerSeason(myId)
+      }
+    }, Math.max(0, deadline - Date.now()))
 
     return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, game?.command, gameMode, revealedSeasonCount, careerSeasons.length])
+  }, [isHost, game?.command, game?.questionStartsAt, gameMode, revealedSeasonCount,
+    careerSeasons.length, myId, revealNextCareerSeason, revealCareerAnswer, needsCareerRefresh,
+    game?.buzzedInPlayerId, game?.careerPausedDurationMs])
 
   // H2H: launch next round
   useEffect(() => {

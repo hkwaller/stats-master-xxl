@@ -66,7 +66,9 @@ export default function ConnectPage({ params }: ConnectPageProps) {
               STATS MASTER
             </span>
           </div>
-          <MonoLabel size={9} tracking="0.2em">Joining</MonoLabel>
+          <MonoLabel size={9} tracking="0.2em">
+            Joining
+          </MonoLabel>
         </div>
         <Kickplate height={4} />
       </header>
@@ -77,7 +79,7 @@ export default function ConnectPage({ params }: ConnectPageProps) {
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className="relative z-[2] mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center gap-6 px-[18px] py-10"
       >
-        {/* Room code on the board — the same object the TV is showing. */}
+        {/* Room code on the board - the same object the TV is showing. */}
         <JumbotronPanel bezel={8} screenPad="16px 18px">
           <div className="flex flex-col gap-2.5">
             <span
@@ -97,7 +99,7 @@ export default function ConnectPage({ params }: ConnectPageProps) {
                 color: '#ffb01f',
               }}
             >
-              {roomId || '—'}
+              {roomId || '-'}
             </span>
           </div>
         </JumbotronPanel>
@@ -133,18 +135,22 @@ export default function ConnectPage({ params }: ConnectPageProps) {
               />
             )}
             <div className="flex flex-col gap-1.5">
-              <MonoLabel size={9} tracking="0.22em">Your jersey</MonoLabel>
+              <MonoLabel size={9} tracking="0.22em">
+                Your jersey
+              </MonoLabel>
               <span
                 className="font-display"
                 style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
               >
-                {name || '—'}
+                {name || '-'}
               </span>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <MonoLabel size={9} tracking="0.22em">Name on the board</MonoLabel>
+            <MonoLabel size={9} tracking="0.22em">
+              Name on the board
+            </MonoLabel>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}

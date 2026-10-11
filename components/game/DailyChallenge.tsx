@@ -142,7 +142,9 @@ export function DailyChallenge() {
     return (
       <div className="on-ice flex min-h-[320px] items-center justify-center p-6">
         <span className="animate-pulse">
-          <MonoLabel size={10} tracking="0.24em">Loading today&apos;s skater</MonoLabel>
+          <MonoLabel size={10} tracking="0.24em">
+            Loading today&apos;s skater
+          </MonoLabel>
         </span>
       </div>
     )
@@ -209,7 +211,7 @@ function shortDateLabel(): string {
   return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
 }
 
-/** A navy strip closed by the amber kickplate — the boards, in miniature. */
+/** A navy strip closed by the amber kickplate - the boards, in miniature. */
 function ChallengeHeader({ question }: { question: Question }) {
   return (
     <>
@@ -310,11 +312,15 @@ function ResultPlane({
               Sign in to save your score
             </Button>
           </SignInButton>
-          <MonoLabel size={9} tracking="0.14em">And appear on the leaderboard</MonoLabel>
+          <MonoLabel size={9} tracking="0.14em">
+            And appear on the leaderboard
+          </MonoLabel>
         </div>
       )}
 
-      <MonoLabel size={9} tracking="0.14em">{note}</MonoLabel>
+      <MonoLabel size={9} tracking="0.14em">
+        {note}
+      </MonoLabel>
     </motion.div>
   )
 }
@@ -367,9 +373,14 @@ function LeaderboardPanel() {
   }, [period])
 
   return (
-    <div className="flex flex-col gap-3 pt-4" style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}>
+    <div
+      className="flex flex-col gap-3 pt-4"
+      style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <MonoLabel size={10} tracking="0.22em">Leaderboard</MonoLabel>
+        <MonoLabel size={10} tracking="0.22em">
+          Leaderboard
+        </MonoLabel>
         <div className="flex flex-wrap gap-px" style={{ background: 'rgba(13,27,42,0.12)' }}>
           {PERIODS.map((p) => {
             const selected = period === p.id

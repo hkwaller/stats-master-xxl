@@ -161,7 +161,9 @@ function GoAdFreeInner() {
 
       <div className="relative z-[2] mx-auto w-full max-w-[1000px] px-5 pt-10 pb-16 md:px-8">
         <div className="flex flex-col gap-4">
-          <MonoLabel size={10} tracking="0.3em">No ads · covers your whole room</MonoLabel>
+          <MonoLabel size={10} tracking="0.3em">
+            No ads · covers your whole room
+          </MonoLabel>
           <h1
             className="font-display m-0"
             style={{
@@ -178,7 +180,7 @@ function GoAdFreeInner() {
             className="m-0 max-w-[520px]"
             style={{ fontSize: 15, lineHeight: 1.6, color: '#55677d' }}
           >
-            Ditch the banners and popups. Host a game ad-free and your whole room plays clean — the
+            Ditch the banners and popups. Host a game ad-free and your whole room plays clean - the
             perk covers everyone you invite.
           </p>
         </div>
@@ -206,10 +208,7 @@ function GoAdFreeInner() {
               <MonoLabel size={9} tracking="0.2em">
                 {isDayPass ? 'Day pass' : `${meta.adFreePlan ?? 'Subscription'} plan`}
               </MonoLabel>
-              <span
-                className="font-display"
-                style={{ fontWeight: 700, fontSize: 22, color: INK }}
-              >
+              <span className="font-display" style={{ fontWeight: 700, fontSize: 22, color: INK }}>
                 Until {formatUntil(meta.adFreeUntil)}
               </span>
             </div>
@@ -239,7 +238,9 @@ function GoAdFreeInner() {
             >
               Confirming your purchase
             </span>
-            <MonoLabel size={9} tracking="0.14em">This only takes a moment</MonoLabel>
+            <MonoLabel size={9} tracking="0.14em">
+              This only takes a moment
+            </MonoLabel>
           </div>
         )}
 
@@ -248,7 +249,7 @@ function GoAdFreeInner() {
           <>
             {status === 'cancelled' && (
               <p className="mt-8 mb-0" style={{ fontSize: 13, color: RED }}>
-                Checkout cancelled — no charge was made.
+                Checkout cancelled - no charge was made.
               </p>
             )}
             {error && (
@@ -301,7 +302,9 @@ function GoAdFreeInner() {
                       {tier.price}
                     </span>
                   </div>
-                  <MonoLabel size={9} tracking="0.16em">{tier.cadence}</MonoLabel>
+                  <MonoLabel size={9} tracking="0.16em">
+                    {tier.cadence}
+                  </MonoLabel>
 
                   <p
                     className="m-0 flex-1 pt-3"
@@ -349,7 +352,7 @@ function GoAdFreeInner() {
             {!isSignedIn && (
               <p className="mt-6">
                 <MonoLabel size={9} tracking="0.14em">
-                  Sign-in is required to purchase — it links the perk to your account
+                  Sign-in is required to purchase - it links the perk to your account
                 </MonoLabel>
               </p>
             )}
@@ -359,7 +362,9 @@ function GoAdFreeInner() {
         {!isLoaded && (
           <div className="flex justify-center py-20">
             <span className="animate-pulse">
-              <MonoLabel size={10} tracking="0.24em">Loading</MonoLabel>
+              <MonoLabel size={10} tracking="0.24em">
+                Loading
+              </MonoLabel>
             </span>
           </div>
         )}
@@ -382,7 +387,9 @@ export default function GoAdFreePage() {
       fallback={
         <main className="ice-bg flex min-h-screen items-center justify-center">
           <span className="animate-pulse relative z-[2]">
-            <MonoLabel size={10} tracking="0.24em">Loading</MonoLabel>
+            <MonoLabel size={10} tracking="0.24em">
+              Loading
+            </MonoLabel>
           </span>
         </main>
       }

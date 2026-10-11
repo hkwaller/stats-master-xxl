@@ -1,36 +1,37 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* ── Ice surface ──────────────────────────────────────────────────────────── */
-  --color-ice-0:        #ffffff;
-  --color-ice-1:        #eef3f9;   /* page base */
-  --color-ice-2:        #e4ecf5;   /* far end of the ice gradient */
-  --color-ice-3:        #f4f7fa;   /* disabled fill */
+  --color-ice-0: #ffffff;
+  --color-ice-1: #eef3f9; /* page base */
+  --color-ice-2: #e4ecf5; /* far end of the ice gradient */
+  --color-ice-3: #f4f7fa; /* disabled fill */
 
   /* ── Ink ──────────────────────────────────────────────────────────────────── */
-  --color-ink:          #0d1b2a;   /* primary text, dark bars, boards */
-  --color-ink-2:        #55677d;   /* secondary text, mono labels — 4.5:1 on white */
-  --color-ink-3:        #7d8b9c;   /* disabled text — use sparingly */
-  --color-ink-4:        #6b7a8c;   /* eliminated body text */
-  --color-edge-dead:    #b3c0cf;   /* left edge marker on eliminated rows */
-  --color-hairline:     rgba(13,27,42,0.10);
-  --color-hairline-2:   rgba(13,27,42,0.07);
+  --color-ink: #0d1b2a; /* primary text, dark bars, boards */
+  --color-ink-2: #55677d; /* secondary text, mono labels - 4.5:1 on white */
+  --color-ink-3: #7d8b9c; /* disabled text - use sparingly */
+  --color-ink-4: #6b7a8c; /* eliminated body text */
+  --color-edge-dead: #b3c0cf; /* left edge marker on eliminated rows */
+  --color-hairline: rgba(13, 27, 42, 0.1);
+  --color-hairline-2: rgba(13, 27, 42, 0.07);
 
   /* ── Accents ──────────────────────────────────────────────────────────────── */
-  --color-red:          #cf0a2c;   /* the accent — leader, live, primary CTA */
-  --color-blue-line:    #0b53c9;   /* rink geometry + section rules, always alpha'd */
-  --color-amber:        #f2b21c;   /* kickplate trim only */
+  --color-red: #cf0a2c; /* the accent - leader, live, primary CTA */
+  --color-blue-line: #0b53c9; /* rink geometry + section rules, always alpha'd */
+  --color-amber: #f2b21c; /* kickplate trim only */
 
   /* ── Jumbotron ────────────────────────────────────────────────────────────── */
-  --color-jumbo-screen:  #05070b;
-  --color-jumbo-led:     #ffb01f;
-  --color-jumbo-led-dim: rgba(255,176,31,0.6);
+  --color-jumbo-screen: #05070b;
+  --color-jumbo-led: #ffb01f;
+  --color-jumbo-led-dim: rgba(255, 176, 31, 0.6);
 
   /* ── Fonts ────────────────────────────────────────────────────────────────── */
-  --font-display: var(--font-big-shoulders), "Big Shoulders Display", "Barlow Condensed", sans-serif;
-  --font-led:     var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
-  --font-body:    var(--font-archivo), "Archivo", sans-serif;
-  --font-mono:    var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+  --font-display:
+    var(--font-big-shoulders), 'Big Shoulders Display', 'Barlow Condensed', sans-serif;
+  --font-led: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
+  --font-body: var(--font-archivo), 'Archivo', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
 }
 
 :root {
@@ -59,8 +60,8 @@ body {
   pointer-events: none;
   z-index: 0;
   background-image:
-    repeating-linear-gradient(102deg, rgba(11,83,201,0.035) 0 1px, transparent 1px 9px),
-    repeating-linear-gradient(-61deg, rgba(11,83,201,0.028) 0 1px, transparent 1px 14px);
+    repeating-linear-gradient(102deg, rgba(11, 83, 201, 0.035) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-61deg, rgba(11, 83, 201, 0.028) 0 1px, transparent 1px 14px);
 }
 
 /* Scuffs on their own element, for sections that need them without the gradient. */
@@ -69,8 +70,8 @@ body {
   inset: 0;
   pointer-events: none;
   background-image:
-    repeating-linear-gradient(102deg, rgba(11,83,201,0.035) 0 1px, transparent 1px 9px),
-    repeating-linear-gradient(-61deg, rgba(11,83,201,0.028) 0 1px, transparent 1px 14px);
+    repeating-linear-gradient(102deg, rgba(11, 83, 201, 0.035) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-61deg, rgba(11, 83, 201, 0.028) 0 1px, transparent 1px 14px);
 }
 
 /* ── Planes on the ice ──────────────────────────────────────────────────────
@@ -78,16 +79,18 @@ body {
 .on-ice {
   background: #ffffff;
   border-radius: 0;
-  box-shadow: 0 2px 10px rgba(13,27,42,0.07);
+  box-shadow: 0 2px 10px rgba(13, 27, 42, 0.07);
 }
 
 .on-ice-header {
   background: #ffffff;
   border-radius: 0;
-  box-shadow: 0 1px 0 rgba(13,27,42,0.10), 0 8px 24px rgba(13,27,42,0.06);
+  box-shadow:
+    0 1px 0 rgba(13, 27, 42, 0.1),
+    0 8px 24px rgba(13, 27, 42, 0.06);
 }
 
-/* The padding at the base of the boards — 4–5px amber under a header bar. */
+/* The padding at the base of the boards - 4–5px amber under a header bar. */
 .kickplate {
   height: 5px;
   background: var(--color-amber);
@@ -97,8 +100,8 @@ body {
 .penalty-hatch {
   background-image: repeating-linear-gradient(
     45deg,
-    rgba(13,27,42,0.055) 0 8px,
-    rgba(13,27,42,0.02) 8px 16px
+    rgba(13, 27, 42, 0.055) 0 8px,
+    rgba(13, 27, 42, 0.02) 8px 16px
   );
 }
 
@@ -106,28 +109,35 @@ body {
    The one dark object in the system, and the only place amber LED type lives. */
 .jumbo-body {
   background: linear-gradient(180deg, #2b3646 0%, #141c28 55%, #0b1017 100%);
-  box-shadow: 0 30px 60px rgba(13,27,42,0.35), inset 0 1px 0 rgba(255,255,255,0.16);
+  box-shadow:
+    0 30px 60px rgba(13, 27, 42, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
 .jumbo-screen {
   background: var(--color-jumbo-screen);
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9);
 }
 
 .jumbo-dots {
-  background-image: radial-gradient(rgba(255,255,255,0.09) 0.8px, transparent 0.9px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 0.8px, transparent 0.9px);
   background-size: 4px 4px;
 }
 
 .led-glow {
-  text-shadow: 0 0 14px rgba(255,176,31,0.45), 0 0 40px rgba(255,176,31,0.22);
+  text-shadow:
+    0 0 14px rgba(255, 176, 31, 0.45),
+    0 0 40px rgba(255, 176, 31, 0.22);
 }
 
 /* ── Buttons ────────────────────────────────────────────────────────────────
    Square, borderless. Only the primary keeps a hard offset, and it is 3px. */
 .btn-ice {
   border-radius: 0;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    background-color 0.1s ease;
 }
 .btn-ice:active:not(:disabled) {
   transform: translateY(1px);
@@ -149,10 +159,15 @@ input:focus {
 
 /* ── Timer urgency ──────────────────────────────────────────────────────────
    Under 5s the clock goes red and the progress track pulses at 1Hz.
-   No shake, no scale — this system does not bounce. */
+   No shake, no scale - this system does not bounce. */
 @keyframes urgentPulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 .timer-urgent {
   animation: urgentPulse 1s ease-in-out infinite;
@@ -161,8 +176,12 @@ input:focus {
 /* ── Jumbotron cell illumination ────────────────────────────────────────────
    Cells light left to right, 60ms apart. The one flourish in the system. */
 @keyframes ledOn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .led-cell-in {
   animation: ledOn 260ms ease-out both;
@@ -170,8 +189,14 @@ input:focus {
 
 /* ── Score delta float ──────────────────────────────────────────────────────── */
 @keyframes scoreFloat {
-  0%   { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-40px); }
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
 }
 .score-delta {
   animation: scoreFloat 1.5s ease-out forwards;
@@ -187,8 +212,12 @@ input:focus {
 
 /* ── Marquee for the live ticker ────────────────────────────────────────────── */
 @keyframes tickerScroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 .ticker-track {
   display: flex;
@@ -198,7 +227,49 @@ input:focus {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ticker-track { animation: none; }
-  .timer-urgent { animation: none; }
-  .led-cell-in  { animation: none; }
+  .ticker-track {
+    animation: none;
+  }
+  .timer-urgent {
+    animation: none;
+  }
+  .led-cell-in {
+    animation: none;
+  }
+}
+
+/* A new season lights up on the stat sheet; its numbers stay visible throughout. */
+.career-season-row td {
+  animation: career-season-arrival 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes career-season-arrival {
+  from { background-color: var(--color-ice-2); }
+  to { background-color: var(--color-ice-0); }
+}
+
+.career-season-scroll {
+  /* One deliberate scroll, rather than browser anchoring followed by another. */
+  overflow-anchor: none;
+  scrollbar-color: var(--color-edge-dead) var(--color-ice-0);
+  scrollbar-width: thin;
+}
+
+.career-season-scroll:focus-visible {
+  outline: 2px solid var(--color-blue-line);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .career-season-row td { animation: none; }
+}
+
+/* The shared board is read across a room; phones keep the compact stat sheet. */
+.career-reveal-tv {
+  --career-season-size: clamp(30px, 2.5vw, 42px);
+  --career-stat-size: clamp(34px, 2.8vw, 48px);
+  --career-label-size: 13px;
+  --career-header-padding: 8px 12px 12px;
+  --career-row-padding: 15px 12px;
+  --career-sheet-height: min(46vh, 540px);
 }

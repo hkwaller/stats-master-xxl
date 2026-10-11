@@ -12,7 +12,6 @@ import { useAdFree } from '@/hooks/useAdFree'
 import { Check, Copy, Settings } from 'lucide-react'
 import { Avatar, Button, Kickplate, Modal, MonoLabel } from '@/components/design-system'
 import { PuckMark, JumbotronPanel } from '@/components/arcade'
-import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
 import type { CareerQuestion, H2HPair, HLPair, Question } from '@/types/game'
 
 const INK = '#0d1b2a'
@@ -63,7 +62,11 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     if (!game || !roomId || !myId) return
     const isHost = game.hostId === myId
     if (isHost) return
-    if (game.command === 'starting' || game.command === 'answering' || game.command === 'question') {
+    if (
+      game.command === 'starting' ||
+      game.command === 'answering' ||
+      game.command === 'question'
+    ) {
       router.push(`/${roomId}/player/${myId}`)
     }
   }, [game?.command, roomId, myId, router])
@@ -81,7 +84,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   async function handleStartGame() {
     if (!myId || starting) return
     const hostPlays = game?.hostPlays !== false
-    const hasBoss = !!(game?.bossId)
+    const hasBoss = !!game?.bossId
     const playerList = (game?.players ?? []) as { id: string; name: string }[]
     if (!hostPlays && !hasBoss) {
       setPendingBossId(playerList[0]?.id ?? '')
@@ -114,7 +117,9 @@ export default function LobbyPage({ params }: LobbyPageProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tiers, eras, count,
+            tiers,
+            eras,
+            count,
             answerMode: game?.answerMode ?? 'multiplechoice',
             excludeIds,
             rookiesOnly: game?.rookiesOnly ?? false,
@@ -129,10 +134,9 @@ export default function LobbyPage({ params }: LobbyPageProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            eras, count,
+            eras,
+            count,
             minSeasons: game?.careerMinSeasons ?? 5,
-            maxReveals: game?.careerMaxReveals ?? 8,
-            revealOrder: game?.careerRevealOrder ?? 'best-first',
             excludePlayerIds,
             difficultyTiers: tiers,
           }),
@@ -160,7 +164,16 @@ export default function LobbyPage({ params }: LobbyPageProps) {
         hlPairs = data.pairs
       }
 
-      startGame({ requesterId: myId, questionSequence, bossToken, gameMode, careerData, h2hPairs, hlPairs, hostAdFree: adFree })
+      startGame({
+        requesterId: myId,
+        questionSequence,
+        bossToken,
+        gameMode,
+        careerData,
+        h2hPairs,
+        hlPairs,
+        hostAdFree: adFree,
+      })
 
       const hostPlays = game?.hostPlays !== false
       if (hostPlays) {
@@ -174,17 +187,23 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   }
 
   const players = (game?.players ?? []) as {
-    id: string; name: string; avatarUrl: string; score: number; isHost: boolean; isBoss: boolean
+    id: string
+    name: string
+    avatarUrl: string
+    score: number
+    isHost: boolean
+    isBoss: boolean
   }[]
   const isHost = game?.hostId === myId
   const canStart = players.length >= 1
   const maxPlayers = 8
-  const modeName = {
-    classic: 'Classic',
-    career: 'Career',
-    h2h: 'Head-to-Head',
-    'higher-lower': 'Higher or Lower',
-  }[game?.gameMode ?? 'classic'] ?? 'Classic'
+  const modeName =
+    {
+      classic: 'Classic',
+      career: 'Career',
+      h2h: 'Head-to-Head',
+      'higher-lower': 'Higher or Lower',
+    }[game?.gameMode ?? 'classic'] ?? 'Classic'
   const configTiers = (game?.difficultyTiers as string[] | undefined) ?? []
   const configSummary = [
     modeName.toUpperCase(),
@@ -216,7 +235,9 @@ export default function LobbyPage({ params }: LobbyPageProps) {
             </MonoLabel>
             <span className="flex items-center gap-[7px]">
               <span className="size-[7px] animate-pulse rounded-full" style={{ background: RED }} />
-              <MonoLabel size={9} tracking="0.16em">Live</MonoLabel>
+              <MonoLabel size={9} tracking="0.16em">
+                Live
+              </MonoLabel>
             </span>
           </div>
         </div>
@@ -226,7 +247,9 @@ export default function LobbyPage({ params }: LobbyPageProps) {
       <div className="relative z-[2] mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-5 pt-8 pb-[132px] md:px-8">
         {/* ── Title ── */}
         <div className="flex flex-col gap-2">
-          <MonoLabel size={10} tracking="0.3em">Step 2 of 2 · {configSummary}</MonoLabel>
+          <MonoLabel size={10} tracking="0.3em">
+            Step 2 of 2 · {configSummary}
+          </MonoLabel>
           <h1
             className="font-display m-0"
             style={{
@@ -263,29 +286,49 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                     color: '#ffb01f',
                   }}
                 >
-                  {roomId || '—'}
+                  {roomId || '-'}
                 </span>
               </div>
             </JumbotronPanel>
 
             <div className="on-ice flex flex-col gap-4 p-5">
-              <MonoLabel size={10} tracking="0.22em">Scan to join</MonoLabel>
+              <MonoLabel size={10} tracking="0.22em">
+                Scan to join
+              </MonoLabel>
 
               <div className="flex items-center gap-5">
                 {connectUrl && (
-                  <div className="shrink-0 bg-white p-2" style={{ boxShadow: 'inset 0 0 0 1px rgba(13,27,42,0.14)' }}>
-                    <QRCodeSVG value={connectUrl} size={116} bgColor="#ffffff" fgColor={INK} level="M" />
+                  <div
+                    className="shrink-0 bg-white p-2"
+                    style={{ boxShadow: 'inset 0 0 0 1px rgba(13,27,42,0.14)' }}
+                  >
+                    <QRCodeSVG
+                      value={connectUrl}
+                      size={116}
+                      bgColor="#ffffff"
+                      fgColor={INK}
+                      level="M"
+                    />
                   </div>
                 )}
                 <div className="flex min-w-0 flex-1 flex-col gap-3">
                   <span
                     className="font-mono break-all"
-                    style={{ fontSize: 10, letterSpacing: '0.08em', color: '#55677d', lineHeight: 1.6 }}
+                    style={{
+                      fontSize: 10,
+                      letterSpacing: '0.08em',
+                      color: '#55677d',
+                      lineHeight: 1.6,
+                    }}
                   >
                     {connectUrl}
                   </span>
                   <Button variant="secondary" size="sm" onClick={handleCopy}>
-                    {copied ? <Check size={14} strokeWidth={2.4} /> : <Copy size={14} strokeWidth={2.2} />}
+                    {copied ? (
+                      <Check size={14} strokeWidth={2.4} />
+                    ) : (
+                      <Copy size={14} strokeWidth={2.2} />
+                    )}
                     {copied ? 'Copied' : 'Copy link'}
                   </Button>
                 </div>
@@ -297,66 +340,87 @@ export default function LobbyPage({ params }: LobbyPageProps) {
           <div className="flex flex-col gap-5">
             <div className="on-ice flex flex-col">
               <div className="flex items-baseline justify-between px-5 pt-5 pb-3">
-                <MonoLabel size={10} tracking="0.22em">On the bench</MonoLabel>
-                <MonoLabel size={9} tracking="0.16em">Tap a name to make them boss</MonoLabel>
+                <MonoLabel size={10} tracking="0.22em">
+                  On the bench
+                </MonoLabel>
+                <MonoLabel size={9} tracking="0.16em">
+                  Tap a name to make them boss
+                </MonoLabel>
               </div>
 
               {players.map((player, i) => (
-                  <div
-                    key={player.id}
-                    className="relative flex items-center gap-3 px-5 py-3"
+                <div
+                  key={player.id}
+                  className="relative flex items-center gap-3 px-5 py-3"
+                  style={{
+                    borderBottom: '1px solid rgba(13,27,42,0.09)',
+                    borderLeft: `5px solid ${player.isBoss ? RED : INK}`,
+                    background: player.isBoss ? 'rgba(207,10,44,0.06)' : 'transparent',
+                  }}
+                >
+                  <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#55677d' }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <Avatar url={player.avatarUrl} name={player.name} size={30} />
+                  <span
+                    className="font-display min-w-0 flex-1 truncate"
                     style={{
-                      borderBottom: '1px solid rgba(13,27,42,0.09)',
-                      borderLeft: `5px solid ${player.isBoss ? RED : INK}`,
-                      background: player.isBoss ? 'rgba(207,10,44,0.06)' : 'transparent',
+                      fontWeight: 700,
+                      fontSize: 22,
+                      textTransform: 'uppercase',
+                      color: INK,
                     }}
                   >
-                    <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#55677d' }}>
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <Avatar url={player.avatarUrl} name={player.name} size={30} />
+                    {player.name}
+                  </span>
+
+                  {player.isHost && (
+                    <MonoLabel size={9} tracking="0.14em">
+                      Host
+                    </MonoLabel>
+                  )}
+                  {player.isBoss && (
                     <span
-                      className="font-display min-w-0 flex-1 truncate"
-                      style={{ fontWeight: 700, fontSize: 22, textTransform: 'uppercase', color: INK }}
+                      className="font-mono"
+                      style={{
+                        fontSize: 9,
+                        letterSpacing: '0.14em',
+                        color: '#fff',
+                        background: RED,
+                        padding: '3px 7px',
+                      }}
                     >
-                      {player.name}
+                      BOSS
                     </span>
+                  )}
+                  {player.id === myId && (
+                    <MonoLabel size={9} tracking="0.14em">
+                      You
+                    </MonoLabel>
+                  )}
 
-                    {player.isHost && <MonoLabel size={9} tracking="0.14em">Host</MonoLabel>}
-                    {player.isBoss && (
-                      <span
-                        className="font-mono"
-                        style={{ fontSize: 9, letterSpacing: '0.14em', color: '#fff', background: RED, padding: '3px 7px' }}
-                      >
-                        BOSS
-                      </span>
-                    )}
-                    {player.id === myId && (
-                      <MonoLabel size={9} tracking="0.14em">You</MonoLabel>
-                    )}
-
-                    {isHost && (
-                      <button
-                        type="button"
-                        onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
-                        className="btn-ice font-mono shrink-0"
-                        style={{
-                          border: 'none',
-                          background: 'transparent',
-                          padding: '4px 0',
-                          fontSize: 9,
-                          letterSpacing: '0.14em',
-                          textTransform: 'uppercase',
-                          color: '#55677d',
-                          textDecoration: 'underline',
-                          textUnderlineOffset: 3,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {player.isBoss ? 'Clear' : 'Make boss'}
-                      </button>
-                    )}
-                  </div>
+                  {isHost && (
+                    <button
+                      type="button"
+                      onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
+                      className="btn-ice font-mono shrink-0"
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: '4px 0',
+                        fontSize: 9,
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        color: '#55677d',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: 3,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {player.isBoss ? 'Clear' : 'Make boss'}
+                    </button>
+                  )}
+                </div>
               ))}
 
               {/* Open seats fill in one by one as phones connect. */}
@@ -374,17 +438,26 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                   </span>
                   <span
                     className="font-display flex-1"
-                    style={{ fontWeight: 700, fontSize: 22, textTransform: 'uppercase', color: '#7d8b9c' }}
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 22,
+                      textTransform: 'uppercase',
+                      color: '#7d8b9c',
+                    }}
                   >
                     Open seat
                   </span>
-                  <MonoLabel size={9} tracking="0.14em" color="#7d8b9c">Scan to join</MonoLabel>
+                  <MonoLabel size={9} tracking="0.14em" color="#7d8b9c">
+                    Scan to join
+                  </MonoLabel>
                 </div>
               ))}
             </div>
 
             <div className="on-ice flex flex-col gap-3 p-5">
-              <MonoLabel size={10} tracking="0.22em">Settings</MonoLabel>
+              <MonoLabel size={10} tracking="0.22em">
+                Settings
+              </MonoLabel>
               {[
                 { key: 'Mode', value: modeName },
                 { key: 'Questions', value: String(game?.questionCount ?? 10) },
@@ -392,7 +465,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                   key: 'Difficulty',
                   value: configTiers.length
                     ? configTiers.map((t) => t[0].toUpperCase() + t.slice(1)).join(' + ')
-                    : '—',
+                    : '-',
                 },
                 {
                   key: 'Answers',
@@ -408,10 +481,17 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                   className="flex items-baseline justify-between gap-3 pb-2.5"
                   style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
                 >
-                  <MonoLabel size={9} tracking="0.2em">{row.key}</MonoLabel>
+                  <MonoLabel size={9} tracking="0.2em">
+                    {row.key}
+                  </MonoLabel>
                   <span
                     className="font-display"
-                    style={{ fontWeight: 700, fontSize: 20, color: INK, textTransform: 'uppercase' }}
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 20,
+                      color: INK,
+                      textTransform: 'uppercase',
+                    }}
                   >
                     {row.value}
                   </span>
@@ -420,8 +500,6 @@ export default function LobbyPage({ params }: LobbyPageProps) {
             </div>
           </div>
         </div>
-
-        <AdsterraBanner slot="lobby" />
       </div>
 
       {/* ── Start bar ── */}
@@ -464,13 +542,18 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                 <MonoLabel size={9}>Spectator mode</MonoLabel>
                 <h2
                   className="font-display m-0"
-                  style={{ fontWeight: 800, fontSize: 38, lineHeight: 1, textTransform: 'uppercase' }}
+                  style={{
+                    fontWeight: 800,
+                    fontSize: 38,
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
+                  }}
                 >
                   Assign a boss
                 </h2>
                 <p className="m-0" style={{ fontSize: 13.5, lineHeight: 1.6, color: '#55677d' }}>
-                  This screen is only showing the board, so someone on a phone has to reveal
-                  answers and advance rounds.
+                  This screen is only showing the board, so someone on a phone has to reveal answers
+                  and advance rounds.
                 </p>
               </div>
 
@@ -495,7 +578,12 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                       <Avatar url={player.avatarUrl} name={player.name} size={28} />
                       <span
                         className="font-display flex-1 truncate"
-                        style={{ fontWeight: 700, fontSize: 20, textTransform: 'uppercase', color: INK }}
+                        style={{
+                          fontWeight: 700,
+                          fontSize: 20,
+                          textTransform: 'uppercase',
+                          color: INK,
+                        }}
                       >
                         {player.name}
                       </span>
@@ -505,7 +593,10 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                 })}
               </div>
 
-              <div className="grid grid-cols-2 gap-px" style={{ background: 'rgba(13,27,42,0.12)' }}>
+              <div
+                className="grid grid-cols-2 gap-px"
+                style={{ background: 'rgba(13,27,42,0.12)' }}
+              >
                 <Button variant="ghost" flush onClick={() => setShowBossModal(false)}>
                   Cancel
                 </Button>

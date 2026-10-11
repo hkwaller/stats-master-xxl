@@ -18,6 +18,7 @@ import { useStorage } from '@/lib/liveblocks/client'
 import {
   useAdvanceToNext,
   useNextCareerRound,
+  useRefreshCareerData,
   useNextH2HRound,
   useNextHLRound,
   useNextQuestion,
@@ -44,14 +45,8 @@ import { HigherLowerCard } from '@/components/game/HigherLowerCard'
 import { Clock, MonoLabel, ProgressTrack, Ticker } from '@/components/design-system'
 import { RinkBg } from '@/components/arcade'
 import { streakLeader } from '@/lib/streaks'
-import type {
-  H2HPair,
-  HintType,
-  HLPair,
-  Player,
-  Question,
-  QuestionResult,
-} from '@/types/game'
+import { CAREER_REVEAL_INTERVAL_MS } from '@/types/game'
+import type { H2HPair, HintType, HLPair, Player, Question, QuestionResult } from '@/types/game'
 
 interface GamePageProps {
   params: Promise<{ roomId: string }>
@@ -69,7 +64,7 @@ const MODE_LABELS: Record<string, string> = {
 
 const MODE_TITLES: Record<string, string> = {
   classic: 'Name the skater',
-  career: 'Name the career',
+  career: 'Who is this?',
   h2h: 'Which line is his?',
   'higher-lower': 'Higher or lower?',
 }
@@ -79,11 +74,7 @@ function fullName(q: Question): string {
 }
 
 /** Live ticker copy, assembled from state that already exists. */
-function buildTicker(
-  history: QuestionResult[],
-  players: Player[],
-  poolLabel: string,
-): string[] {
+function buildTicker(history: QuestionResult[], players: Player[], poolLabel: string): string[] {
   const items: string[] = []
   const last = history[history.length - 1]
 
@@ -91,7 +82,7 @@ function buildTicker(
     for (const p of players) {
       const a = last.playerAnswers?.[p.id]
       if (a?.correct && a.points > 0) {
-        items.push(`${p.name.toUpperCase()} +${a.points} — CORRECT`)
+        items.push(`${p.name.toUpperCase()} +${a.points} - CORRECT`)
       }
     }
   }
@@ -120,6 +111,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const tickCountdown = useTickCountdown()
   const nextQuestion = useNextQuestion()
   const nextCareerRound = useNextCareerRound()
+  const refreshCareerData = useRefreshCareerData()
   const revealNextCareerSeason = useRevealNextCareerSeason()
   const revealCareerAnswer = useRevealCareerAnswer()
   const nextH2HRound = useNextH2HRound()
@@ -145,6 +137,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
     tickCountdown,
     nextQuestion,
     nextCareerRound,
+    refreshCareerData,
     revealNextCareerSeason,
     revealCareerAnswer,
     nextH2HRound,
@@ -159,7 +152,14 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
     router.push(`/${roomId}/lobby`)
   }, [game?.command])
 
-  const timeLeft = useQuestionTimeLeft(game?.questionStartsAt, game?.command === 'answering')
+  const questionDurationMs = game?.gameMode === 'career'
+    ? (game.careerSeasons?.length ?? 0) * CAREER_REVEAL_INTERVAL_MS
+    : QUESTION_SECONDS * 1000
+  const timeLeft = useQuestionTimeLeft(
+    game?.questionStartsAt, game?.command === 'answering', questionDurationMs,
+    game?.gameMode === 'career' ? game.careerPausedDurationMs : 0,
+    game?.gameMode === 'career' ? game.careerPausedAt : undefined,
+  )
 
   if (!game) return null
 
@@ -184,15 +184,14 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const h2hCurrentPair = game.h2hCurrentPair as unknown as H2HPair | null
   const hlCurrentPair = game.hlCurrentPair as unknown as HLPair | null
 
-  const difficulty = currentQuestion?.difficulty ?? (game.difficultyTiers?.[0] as string | undefined)
+  const difficulty =
+    currentQuestion?.difficulty ?? (game.difficultyTiers?.[0] as string | undefined)
   const scorebugMeta = [MODE_LABELS[gameMode] ?? gameMode, difficulty]
     .filter(Boolean)
     .join(' · ')
     .toUpperCase()
 
-  const activePowerup = game.activePowerup as unknown as
-    | { type: string; playerId: string }
-    | null
+  const activePowerup = game.activePowerup as unknown as { type: string; playerId: string } | null
   const powerupOwner = activePowerup && players.find((p) => p.id === activePowerup.playerId)
 
   // Host controls live at the foot of the rail, not in a floating dock.
@@ -303,7 +302,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           </div>
 
           <ProgressTrack
-            fraction={game.command === 'answering' ? timeLeft / QUESTION_SECONDS : 0}
+            fraction={game.command === 'answering' ? timeLeft / (questionDurationMs / 1000) : 0}
             urgent={game.command === 'answering' && timeLeft < 5}
             className="mb-[22px]"
           />
@@ -392,8 +391,9 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           {isActive && gameMode === 'career' && careerSeasons.length > 0 && (
             <div className="on-ice min-h-0 overflow-auto p-6">
               <CareerRevealCard
+                size="tv"
                 seasons={careerSeasons}
-                revealedCount={revealedSeasonCount}
+                revealedCount={isRevealing ? careerSeasons.length : revealedSeasonCount}
                 buzzedInPlayerName={buzzedInPlayer?.name}
                 lockedOutCount={lockedOutPlayers.length}
               />
@@ -414,7 +414,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
             </div>
           )}
 
-          {/* Reveal band — the answer, stated plainly under the board. */}
+          {/* Reveal band - the answer, stated plainly under the board. */}
           <AnimatePresence>
             {isRevealing && (
               <motion.div
@@ -427,7 +427,12 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                 <MonoLabel size={9}>The answer was</MonoLabel>
                 <span
                   className="font-display"
-                  style={{ fontWeight: 800, fontSize: 40, lineHeight: 1, textTransform: 'uppercase' }}
+                  style={{
+                    fontWeight: 800,
+                    fontSize: 40,
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
+                  }}
                 >
                   {gameMode === 'higher-lower' && hlCurrentPair
                     ? hlCurrentPair.correctAnswer
@@ -454,7 +459,13 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
       </div>
 
       <div className="relative z-[2]">
-        <Ticker items={buildTicker(history, players, `${MODE_LABELS[gameMode] ?? gameMode} · Room ${roomId}`)} />
+        <Ticker
+          items={buildTicker(
+            history,
+            players,
+            `${MODE_LABELS[gameMode] ?? gameMode} · Room ${roomId}`,
+          )}
+        />
       </div>
     </main>
   )

@@ -22,10 +22,10 @@ interface AnswerRowProps {
 /**
  * A white plane with a 5px left edge. Never outlined.
  *
- *  default    — white, navy edge
- *  eliminated — hatched "penalty box" fill, dead edge, no shadow
- *  correct    — red edge over a red wash
- *  faded      — someone else's row after you have answered
+ *  default    - white, navy edge
+ *  eliminated - hatched "penalty box" fill, dead edge, no shadow
+ *  correct    - red edge over a red wash
+ *  faded      - someone else's row after you have answered
  */
 export function AnswerRow({
   letter,

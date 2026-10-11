@@ -10,10 +10,8 @@ import { checkAvailableCount, checkCareerPlayerCount } from '@/app/actions/game-
 import { getOrCreateGuest } from '@/lib/guest'
 import { Button, Kickplate, MonoLabel } from '@/components/design-system'
 import { PuckMark } from '@/components/arcade'
-import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
 import type {
   AnswerMode,
-  CareerRevealOrder,
   DifficultyTier,
   GameMode,
   GameSetupConfig,
@@ -80,13 +78,6 @@ const HL_FIELDS: { value: HLComparisonField; label: string }[] = [
   { value: 'gamesPlayed', label: 'GP' },
 ]
 
-const CAREER_REVEAL_ORDERS: { value: CareerRevealOrder; label: string }[] = [
-  { value: 'best-first', label: 'Best first' },
-  { value: 'worst-first', label: 'Worst first' },
-  { value: 'chronological', label: 'Chronological' },
-  { value: 'random', label: 'Random' },
-]
-
 const ERAS = ['1970s', '1980s', '1990s', '2000s', '2010s', '2020s']
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
@@ -103,7 +94,9 @@ function Group({
 }) {
   return (
     <div className={`on-ice flex flex-col gap-4 p-5 ${className}`}>
-      <MonoLabel size={10} tracking="0.22em">{label}</MonoLabel>
+      <MonoLabel size={10} tracking="0.22em">
+        {label}
+      </MonoLabel>
       {children}
     </div>
   )
@@ -179,12 +172,20 @@ function Toggle({
         opacity: disabled ? 0.5 : 1,
       }}
     >
-      <span className="font-mono" style={{ fontSize: 9, letterSpacing: '0.16em', color: on ? RED : '#55677d' }}>
+      <span
+        className="font-mono"
+        style={{ fontSize: 9, letterSpacing: '0.16em', color: on ? RED : '#55677d' }}
+      >
         {on ? 'ON' : 'OFF'}
       </span>
       <span
         className="relative block"
-        style={{ width: 40, height: 20, background: on ? RED : '#f4f7fa', boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(13,27,42,0.14)' }}
+        style={{
+          width: 40,
+          height: 20,
+          background: on ? RED : '#f4f7fa',
+          boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(13,27,42,0.14)',
+        }}
       >
         <span
           className="absolute top-[3px] block transition-[left]"
@@ -265,10 +266,12 @@ function OptionPlane({
         </span>
         {on && <Check size={15} strokeWidth={2.4} color={RED} />}
       </div>
-      {meta && <MonoLabel size={9} tracking="0.16em">{meta}</MonoLabel>}
-      {desc && (
-        <span style={{ fontSize: 12.5, lineHeight: 1.55, color: '#55677d' }}>{desc}</span>
+      {meta && (
+        <MonoLabel size={9} tracking="0.16em">
+          {meta}
+        </MonoLabel>
       )}
+      {desc && <span style={{ fontSize: 12.5, lineHeight: 1.55, color: '#55677d' }}>{desc}</span>}
     </button>
   )
 }
@@ -367,7 +370,7 @@ export default function SetupPage({ params }: SetupPageProps) {
   const tiersLabel =
     config.difficultyTiers.length > 0
       ? config.difficultyTiers.map((t) => t.toUpperCase()).join(' + ')
-      : '—'
+      : '-'
   const configSummary = `${modeLabel} · ${tiersLabel} · ${config.eras.length} ERA${config.eras.length === 1 ? '' : 'S'} · ${config.questionCount} Q`
 
   const startLabel = starting
@@ -391,7 +394,9 @@ export default function SetupPage({ params }: SetupPageProps) {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <MonoLabel size={9} tracking="0.22em">Room {roomId}</MonoLabel>
+            <MonoLabel size={9} tracking="0.22em">
+              Room {roomId}
+            </MonoLabel>
             <Button variant="ghost" size="sm" onClick={() => router.back()}>
               <ArrowLeft size={14} strokeWidth={2.2} />
               Back
@@ -409,7 +414,9 @@ export default function SetupPage({ params }: SetupPageProps) {
       >
         {/* ── Title ── */}
         <div className="flex flex-col gap-2">
-          <MonoLabel size={10} tracking="0.3em">Step 1 of 2</MonoLabel>
+          <MonoLabel size={10} tracking="0.3em">
+            Step 1 of 2
+          </MonoLabel>
           <h1
             className="font-display m-0"
             style={{
@@ -426,7 +433,9 @@ export default function SetupPage({ params }: SetupPageProps) {
 
         {/* ── Mode ── */}
         <div className="flex flex-col gap-3">
-          <MonoLabel size={10} tracking="0.22em">Mode · pick one</MonoLabel>
+          <MonoLabel size={10} tracking="0.22em">
+            Mode · pick one
+          </MonoLabel>
           <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
             {GAME_MODES.map((m) => (
               <OptionPlane
@@ -596,17 +605,8 @@ export default function SetupPage({ params }: SetupPageProps) {
 
               {isCareer && (
                 <>
-                  <FormatRow label="Reveal order">
-                    {CAREER_REVEAL_ORDERS.map(({ value, label }) => (
-                      <SegBtn
-                        key={value}
-                        on={config.careerRevealOrder === value}
-                        onClick={() => setConfig((c) => ({ ...c, careerRevealOrder: value }))}
-                        disabled={!isHost}
-                      >
-                        {label}
-                      </SegBtn>
-                    ))}
+                  <FormatRow label="Season reveals">
+                    <MonoLabel>Full career · First season first · Every 3 seconds</MonoLabel>
                   </FormatRow>
 
                   <FormatRow label="Min seasons">
@@ -621,26 +621,11 @@ export default function SetupPage({ params }: SetupPageProps) {
                       </SegBtn>
                     ))}
                   </FormatRow>
-
-                  <FormatRow label="Max reveals">
-                    {[5, 6, 8, 10].map((n) => (
-                      <SegBtn
-                        key={n}
-                        on={config.careerMaxReveals === n}
-                        onClick={() => setConfig((c) => ({ ...c, careerMaxReveals: n }))}
-                        disabled={!isHost}
-                      >
-                        {n}
-                      </SegBtn>
-                    ))}
-                  </FormatRow>
                 </>
               )}
             </div>
           </Group>
         </div>
-
-        <AdsterraBanner slot="setup" />
       </motion.div>
 
       {/* ── Start bar: the boards at the foot of the screen ── */}

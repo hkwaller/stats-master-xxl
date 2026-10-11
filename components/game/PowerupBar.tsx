@@ -40,7 +40,7 @@ const POWERUPS: {
     type: 'doubledown',
     short: 'Double',
     label: 'Double Down',
-    description: '2× points if correct — lose 50 if wrong',
+    description: '2× points if correct - lose 50 if wrong',
     icon: (
       <span className="font-display" style={{ fontWeight: 800, fontSize: 22, lineHeight: 1 }}>
         ×2
@@ -52,7 +52,7 @@ const POWERUPS: {
     type: 'freeze',
     short: 'Freeze',
     label: 'Freeze',
-    description: 'Stop the reveal timer — lock the columns',
+    description: 'Stop the reveal timer - lock the columns',
     icon: <Snowflake size={18} strokeWidth={2} />,
     availableIn: (_, revealMode) => revealMode === 'timed',
   },
@@ -68,7 +68,7 @@ const POWERUPS: {
 
 /**
  * Fixed to the bottom of the phone on white. A 4-column grid whose 1px gaps
- * show the navy backing through as dividers. Cells are 72px tall — comfortably
+ * show the navy backing through as dividers. Cells are 72px tall - comfortably
  * above the 44px touch minimum at 390px wide.
  */
 export function PowerupBar({
@@ -88,7 +88,9 @@ export function PowerupBar({
     <>
       <div className="on-ice-header" style={{ boxShadow: '0 -1px 0 rgba(13,27,42,0.10)' }}>
         <div className="flex items-center justify-between px-[18px] pt-3 pb-2">
-          <MonoLabel size={9} tracking="0.22em">Power plays</MonoLabel>
+          <MonoLabel size={9} tracking="0.22em">
+            Power plays
+          </MonoLabel>
           {status && (
             <MonoLabel size={9} tracking="0.14em" color={RED}>
               {status}
@@ -96,10 +98,7 @@ export function PowerupBar({
           )}
         </div>
 
-        <div
-          className="grid grid-cols-4"
-          style={{ gap: 1, background: 'rgba(13,27,42,0.12)' }}
-        >
+        <div className="grid grid-cols-4" style={{ gap: 1, background: 'rgba(13,27,42,0.12)' }}>
           {POWERUPS.map((pu) => {
             const charge = charges[pu.type] ?? 0
             const available = pu.availableIn(answerMode, revealMode)
@@ -154,7 +153,10 @@ export function PowerupBar({
               <p style={{ fontSize: 14, lineHeight: 1.6, color: '#55677d', margin: 0 }}>
                 {confirmPowerup.description}
               </p>
-              <div className="grid grid-cols-2 gap-px pt-2" style={{ background: 'rgba(13,27,42,0.12)' }}>
+              <div
+                className="grid grid-cols-2 gap-px pt-2"
+                style={{ background: 'rgba(13,27,42,0.12)' }}
+              >
                 <Button variant="ghost" flush onClick={() => setConfirming(null)}>
                   Cancel
                 </Button>

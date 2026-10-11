@@ -1,6 +1,6 @@
 /**
  * Real rink geometry, sunk into the ice at 8–12% opacity.
- * Structure you feel rather than read — it sits at z-index 0 behind all chrome.
+ * Structure you feel rather than read - it sits at z-index 0 behind all chrome.
  *
  * Two blue lines at 31% / 69%, a red centre line, and a centre faceoff circle
  * with its dot. Everything is pure CSS; there are no image assets.

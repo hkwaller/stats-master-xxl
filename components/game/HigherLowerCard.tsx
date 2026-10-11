@@ -37,7 +37,7 @@ export function HigherLowerCard({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Reference — a plain white plane. */}
+      {/* Reference - a plain white plane. */}
       <div className="flex flex-col gap-3">
         <MonoLabel size={9}>Reference</MonoLabel>
         <div
@@ -66,12 +66,14 @@ export function HigherLowerCard({
             >
               {pair.referenceValue}
             </span>
-            <MonoLabel size={9} tracking="0.16em">{fieldLabel}</MonoLabel>
+            <MonoLabel size={9} tracking="0.16em">
+              {fieldLabel}
+            </MonoLabel>
           </div>
         </div>
       </div>
 
-      {/* Challenge — the hidden number lives on the jumbotron. */}
+      {/* Challenge - the hidden number lives on the jumbotron. */}
       <div className="flex flex-col gap-3">
         <MonoLabel size={9}>Challenge</MonoLabel>
         <JumbotronPanel bezel={8} screenPad="18px 20px">

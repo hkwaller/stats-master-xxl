@@ -16,6 +16,7 @@ import type {
   DifficultyTier,
 } from '@/types/game'
 import {
+  CAREER_REVEAL_INTERVAL_MS,
   CAREER_SCORE_TIERS,
   H2H_SCORE_CORRECT,
   H2H_SCORE_SPEED_MAX,
@@ -268,6 +269,8 @@ export function useStartGame() {
 
       // Reset per-round state
       game.set('careerSeasons', [] as unknown as Question[])
+      game.set('careerPausedAt', '')
+      game.set('careerPausedDurationMs', 0)
       game.set('revealedSeasonCount', 0)
       game.set('buzzedInPlayerId', '')
       game.set('buzzedInSeasonCount', 0)
@@ -643,6 +646,8 @@ export function useRematch() {
     game.set('h2hPairs', [] as unknown as H2HPair[])
     game.set('hlPairs', [] as unknown as HLPair[])
     game.set('careerSeasons', [] as unknown as Question[])
+    game.set('careerPausedAt', '')
+    game.set('careerPausedDurationMs', 0)
     game.set('revealedSeasonCount', 0)
     game.set('buzzedInPlayerId', '')
     game.set('buzzedInSeasonCount', 0)
@@ -655,6 +660,32 @@ export function useRematch() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // CAREER MODE
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/** Restore full careers in rooms generated before chronological reveals shipped. */
+export function useRefreshCareerData() {
+  return useMutation(({ storage }, { requesterId, careers }: {
+    requesterId: string; careers: CareerQuestion[]
+  }) => {
+    const game = getGame(storage)
+    if (!game || game.get('hostId') !== requesterId || game.get('gameMode') !== 'career') return
+    const existing = (game.get('careerData') as unknown as CareerQuestion[]) ?? []
+    const refreshed = new Map(careers.filter((c) => c.fullCareer && c.seasons.length)
+      .map((c) => [c.playerId, c]))
+    const data = existing.map((c) => refreshed.get(c.playerId) ?? c)
+    game.set('careerData', data)
+    const current = data[(game.get('currentQuestionIndex') as number) ?? -1]
+    if (!current || !refreshed.has(current.playerId)) return
+    game.set('careerSeasons', current.seasons)
+    game.set('currentQuestion', current.seasons[0])
+    // Preserve the round's elapsed time and scoring history when restoring it.
+    const pausedAt = game.get('careerPausedAt') as string | undefined
+    const clockNow = pausedAt ? new Date(pausedAt).getTime() : Date.now()
+    const elapsed = clockNow - new Date(game.get('questionStartsAt') as string).getTime()
+      - ((game.get('careerPausedDurationMs') as number) ?? 0)
+    game.set('revealedSeasonCount', Math.min(current.seasons.length,
+      Math.max(1, Math.floor(elapsed / CAREER_REVEAL_INTERVAL_MS) + 1)))
+  }, [])
+}
 
 /** Host calls this instead of useNextQuestion when gameMode === 'career' */
 export function useNextCareerRound() {
@@ -678,13 +709,16 @@ export function useNextCareerRound() {
     }
 
     const career = careerData[currentIndex]
+    const seasons = [...career.seasons].sort((a, b) => a.seasonId - b.seasonId)
 
     // Use the first season as anchor (has the player's name for scoring)
-    const anchor = career.seasons[0]
+    const anchor = seasons[0]
 
     game.set('currentQuestion', anchor as unknown as Question)
     game.set('currentQuestionIndex', currentIndex)
-    game.set('careerSeasons', career.seasons as unknown as Question[])
+    game.set('careerSeasons', seasons as unknown as Question[])
+    game.set('careerPausedAt', '')
+    game.set('careerPausedDurationMs', 0)
     game.set('revealedSeasonCount', 1) // reveal first season immediately
     game.set('buzzedInPlayerId', '')
     game.set('buzzedInSeasonCount', 0)
@@ -711,6 +745,7 @@ export function useRevealNextCareerSeason() {
 
     const gameMode = game.get('gameMode') as string
     if (gameMode !== 'career') return
+    if (game.get('buzzedInPlayerId')) return // answering owns the board until submission
 
     const careerSeasons = (game.get('careerSeasons') as unknown as Question[]) || []
     const current = (game.get('revealedSeasonCount') as number) ?? 0
@@ -741,6 +776,7 @@ export function useBuzzIn() {
 
     const revealedSeasonCount = (game.get('revealedSeasonCount') as number) ?? 0
 
+    game.set('careerPausedAt', new Date(Date.now()).toISOString())
     game.set('buzzedInPlayerId', playerId)
     game.set('buzzedInSeasonCount', revealedSeasonCount)
   }, [])
@@ -761,7 +797,16 @@ export function useSubmitCareerAnswer() {
     const currentQuestion = game.get('currentQuestion') as unknown as Question
     if (!currentQuestion) return
 
+    const pausedAt = game.get('careerPausedAt') as string | undefined
+    const pausedDuration = (game.get('careerPausedDurationMs') as number) ?? 0
+    const answeringTime = pausedAt ? Math.max(0, Date.now() - new Date(pausedAt).getTime()) : 0
+    game.set('careerPausedDurationMs', pausedDuration + answeringTime)
+    game.set('careerPausedAt', '')
+
     const correct = isCorrectAnswer(answer, currentQuestion)
+    const existingAnswers = (game.get('answers') as unknown as Record<string, string>) ?? {}
+    const recordedAnswers = { ...existingAnswers, [playerId]: answer }
+    game.set('answers', recordedAnswers)
 
     if (correct) {
       const careerSeasons = (game.get('careerSeasons') as unknown as Question[]) || []
@@ -784,7 +829,7 @@ export function useSubmitCareerAnswer() {
         const isWinner = player.id === playerId
         const pts = isWinner ? points : 0
         historyEntry.playerAnswers[player.id] = {
-          answer: isWinner ? answer : '',
+          answer: recordedAnswers[player.id] ?? '',
           points: pts,
           correct: isWinner,
         }
@@ -807,9 +852,6 @@ export function useSubmitCareerAnswer() {
       game.set('lockedOutPlayers', [...lockedOutPlayers, playerId] as unknown as string[])
       game.set('buzzedInPlayerId', '')
 
-      // Record wrong answer for history tracking
-      const existing = (game.get('answers') as unknown as Record<string, string>) || {}
-      game.set('answers', { ...existing, [playerId]: answer } as unknown as Record<string, string>)
     }
   }, [])
 }
@@ -828,9 +870,11 @@ export function useRevealCareerAnswer() {
 
     const gameMode = game.get('gameMode') as string
     if (gameMode !== 'career') return
+    if (game.get('buzzedInPlayerId')) return // answering owns the board until submission
 
     const currentQuestion = game.get('currentQuestion') as unknown as Question
     const players = getPlayers(game)
+    const answers = (game.get('answers') as unknown as Record<string, string>) ?? {}
 
     const historyEntry: QuestionResult = {
       question: currentQuestion,
@@ -838,7 +882,7 @@ export function useRevealCareerAnswer() {
     }
 
     players.forEach((player) => {
-      historyEntry.playerAnswers[player.id] = { answer: '', points: 0, correct: false }
+      historyEntry.playerAnswers[player.id] = { answer: answers[player.id] ?? '', points: 0, correct: false }
     })
 
     const playedQuestions = getPlayedQuestions(game)

@@ -17,7 +17,7 @@ interface BuzzInButtonProps {
   offsetForDock?: boolean
 }
 
-/** A hairline-bounded status plane — locked out, or someone else has the puck. */
+/** A hairline-bounded status plane - locked out, or someone else has the puck. */
 function StatusPlane({
   label,
   detail,
@@ -77,7 +77,7 @@ export function BuzzInButton({
     return (
       <StatusPlane
         label="Penalty box"
-        detail="Wrong guess — watch the remaining reveals"
+        detail="Wrong guess - watch the remaining reveals"
         tone="dead"
       />
     )
@@ -95,10 +95,7 @@ export function BuzzInButton({
         transition={{ duration: 0.18, ease: 'easeOut' }}
         className="flex flex-col gap-3"
       >
-        <div
-          className="px-4 py-3 text-center"
-          style={{ background: RED, color: '#fff' }}
-        >
+        <div className="px-4 py-3 text-center" style={{ background: RED, color: '#fff' }}>
           <span
             className="font-display"
             style={{
@@ -108,16 +105,11 @@ export function BuzzInButton({
               textTransform: 'uppercase',
             }}
           >
-            You have the puck — name him
+            You have the puck - name him
           </span>
         </div>
 
-        <PlayerNameInput
-          value={answer}
-          setValue={setAnswer}
-          onSubmit={onSubmitAnswer}
-          autoFocus
-        />
+        <PlayerNameInput value={answer} setValue={setAnswer} onSubmit={onSubmitAnswer} autoFocus />
       </motion.div>
     )
   }

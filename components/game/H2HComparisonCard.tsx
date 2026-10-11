@@ -41,7 +41,9 @@ function StatRow({
       className="flex items-baseline justify-between gap-3 py-1.5"
       style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
     >
-      <MonoLabel size={9} tracking="0.18em">{label}</MonoLabel>
+      <MonoLabel size={9} tracking="0.18em">
+        {label}
+      </MonoLabel>
       <span
         className="font-display tabular-nums"
         style={{
@@ -102,7 +104,11 @@ function PlayerCard({
           Line {side === 'left' ? 'A' : 'B'}
         </MonoLabel>
         {revealed && isCorrect && <Check size={14} strokeWidth={2.4} color={RED} />}
-        {isSelected && !revealed && <MonoLabel size={9} tracking="0.14em" color={RED}>Your pick</MonoLabel>}
+        {isSelected && !revealed && (
+          <MonoLabel size={9} tracking="0.14em" color={RED}>
+            Your pick
+          </MonoLabel>
+        )}
       </div>
 
       {revealed && isCorrect && (
@@ -121,7 +127,7 @@ function PlayerCard({
           <StatRow
             key={r.label}
             label={r.label}
-            value={String(question[r.key] ?? '—')}
+            value={String(question[r.key] ?? '-')}
             emphasis={r.emphasis}
             dimmed={dimmed}
           />

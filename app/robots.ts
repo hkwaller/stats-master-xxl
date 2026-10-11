@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.statsmaster.site'
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://statsmaster.playam.app'
 
 export default function robots(): MetadataRoute.Robots {
   return {

@@ -23,9 +23,36 @@ export default function OpengraphImage() {
       }}
     >
       {/* Rink geometry: two blue lines and the red centre line. */}
-      <div style={{ position: 'absolute', left: '31%', top: 0, bottom: 0, width: 8, background: 'rgba(11,83,201,0.10)' }} />
-      <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 8, background: 'rgba(207,10,44,0.10)' }} />
-      <div style={{ position: 'absolute', left: '69%', top: 0, bottom: 0, width: 8, background: 'rgba(11,83,201,0.10)' }} />
+      <div
+        style={{
+          position: 'absolute',
+          left: '31%',
+          top: 0,
+          bottom: 0,
+          width: 8,
+          background: 'rgba(11,83,201,0.10)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: 0,
+          bottom: 0,
+          width: 8,
+          background: 'rgba(207,10,44,0.10)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: '69%',
+          top: 0,
+          bottom: 0,
+          width: 8,
+          background: 'rgba(11,83,201,0.10)',
+        }}
+      />
 
       <div
         style={{
@@ -81,7 +108,7 @@ export default function OpengraphImage() {
         </div>
       </div>
 
-      {/* Kickplate — the padding at the base of the boards. */}
+      {/* Kickplate - the padding at the base of the boards. */}
       <div style={{ display: 'flex', height: 14, background: '#f2b21c' }} />
     </div>,
     { ...size },

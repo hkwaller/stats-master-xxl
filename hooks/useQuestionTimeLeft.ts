@@ -13,20 +13,24 @@ import { QUESTION_DURATION_MS } from '@/types/game'
 export function useQuestionTimeLeft(
   questionStartsAt: string | undefined,
   active: boolean,
+  durationMs: number = QUESTION_DURATION_MS,
+  pausedDurationMs: number = 0,
+  pausedAt?: string,
 ): number {
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    if (!active) return
+    if (!active || pausedAt) return
     // Re-sync immediately so a new question starts from a full timer.
     setNow(Date.now())
     const id = setInterval(() => setNow(Date.now()), 250)
     return () => clearInterval(id)
-  }, [active, questionStartsAt])
+  }, [active, questionStartsAt, durationMs, pausedAt])
 
-  if (!questionStartsAt) return QUESTION_DURATION_MS / 1000
+  if (!questionStartsAt) return durationMs / 1000
 
-  const elapsed = now - new Date(questionStartsAt).getTime()
-  const remainingMs = Math.min(QUESTION_DURATION_MS, Math.max(0, QUESTION_DURATION_MS - elapsed))
+  const clockNow = pausedAt ? new Date(pausedAt).getTime() : now
+  const elapsed = clockNow - new Date(questionStartsAt).getTime() - pausedDurationMs
+  const remainingMs = Math.min(durationMs, Math.max(0, durationMs - elapsed))
   return remainingMs / 1000
 }

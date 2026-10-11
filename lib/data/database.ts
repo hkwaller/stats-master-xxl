@@ -3,7 +3,6 @@ import 'server-only'
 import { createSupabaseClient } from '@/lib/supabase/server'
 import type {
   CareerQuestion,
-  CareerRevealOrder,
   DifficultyTier,
   H2HPair,
   HLComparisonField,
@@ -243,143 +242,112 @@ export async function getAvailableQuestionCount(
 
 // ─── Career Mode ──────────────────────────────────────────────────────────────
 
-function selectCareerSeasons(seasons: RawStatsRecord[], maxReveals: number): RawStatsRecord[] {
-  if (seasons.length <= maxReveals) return [...seasons]
-
-  const byPoints = [...seasons].sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
-  const mustInclude = new Set<number>([byPoints[0].id, byPoints[byPoints.length - 1].id])
-
-  const rookie = seasons.find((s) => s.rookieFlag)
-  if (rookie) mustInclude.add(rookie.id)
-
-  const chrono = [...seasons].sort((a, b) => a.seasonId - b.seasonId)
-  let prevTeam = ''
-  for (const s of chrono) {
-    if (prevTeam && s.teamAbbrevs !== prevTeam && mustInclude.size < maxReveals) {
-      mustInclude.add(s.id)
-    }
-    prevTeam = s.teamAbbrevs
-  }
-
-  const selected = seasons.filter((s) => mustInclude.has(s.id))
-  const remaining = byPoints.filter((s) => !mustInclude.has(s.id))
-  for (const s of remaining) {
-    if (selected.length >= maxReveals) break
-    selected.push(s)
-  }
-  return selected
-}
-
-function orderSeasons(seasons: RawStatsRecord[], order: CareerRevealOrder): RawStatsRecord[] {
-  const copy = [...seasons]
-  switch (order) {
-    case 'best-first':
-      return copy.sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
-    case 'worst-first':
-      return copy.sort((a, b) => (a.points ?? 0) - (b.points ?? 0))
-    case 'chronological':
-      return copy.sort((a, b) => a.seasonId - b.seasonId)
-    case 'random':
-      return copy.sort(() => Math.random() - 0.5)
-    default:
-      return copy
-  }
-}
-
-export async function getCareerQuestions(options: {
+type CareerOptions = {
   minSeasons: number
-  maxReveals: number
-  revealOrder: CareerRevealOrder
   eras?: string[]
-  count: number
-  excludePlayerIds?: number[]
   difficultyTiers?: DifficultyTier[]
-}): Promise<CareerQuestion[]> {
-  const db = createSupabaseClient()
+}
 
-  // Fetch all seasons matching the era filter in one query
-  let query = db.from('nhl_player_seasons').select('*')
-  if (options.eras?.length) query = query.in('era', options.eras)
-  if (options.excludePlayerIds?.length) {
-    query = query.not('player_id', 'in', `(${options.excludePlayerIds.join(',')})`)
+/** Read every page: Supabase's default row limit can otherwise cut careers short. */
+async function getCareerRows(columns: string, playerIds?: number[]): Promise<DbRow[]> {
+  const db = createSupabaseClient()
+  const pageSize = 1000
+  async function readPage(offset: number) {
+    let query = db.from('nhl_player_seasons')
+      .select(columns, offset === 0 ? { count: 'exact' } : undefined)
+      .order('id').range(offset, offset + pageSize - 1)
+    if (playerIds) query = query.in('player_id', playerIds)
+    const { data, error, count } = await query
+    if (error) throw new Error(`getCareerRows: ${error.message}`)
+    return { rows: data as unknown as DbRow[], count }
   }
 
-  const { data, error } = await query
-  if (error) throw new Error(`getCareerQuestions: ${error.message}`)
+  const first = await readPage(0)
+  const rows = [...first.rows]
+  const total = first.count ?? rows.length
+  // Fetch a few independent pages at once without flooding the database.
+  for (let offset = pageSize; offset < total; offset += pageSize * 4) {
+    const offsets = Array.from({ length: 4 }, (_, i) => offset + i * pageSize)
+      .filter((pageOffset) => pageOffset < total)
+    const pages = await Promise.all(offsets.map(readPage))
+    for (const page of pages) rows.push(...page.rows)
+  }
+  return rows
+}
+
+async function getCareerCandidateIds(options: CareerOptions): Promise<number[]> {
+  const rows = await getCareerRows('player_id, season_id, points, era')
+  const byPlayer = new Map<number, { seasons: number; bestPoints: number; matchesEra: boolean }>()
+  const seen = new Set<string>()
+  for (const row of rows) {
+    const key = `${row.player_id}:${row.season_id}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    const career = byPlayer.get(row.player_id) ?? { seasons: 0, bestPoints: 0, matchesEra: false }
+    career.seasons++
+    career.bestPoints = Math.max(career.bestPoints, row.points ?? 0)
+    career.matchesEra ||= !options.eras?.length || options.eras.includes(row.era)
+    byPlayer.set(row.player_id, career)
+  }
 
   const tierSet = options.difficultyTiers?.length ? new Set(options.difficultyTiers) : null
+  return [...byPlayer].filter(([, career]) => {
+    if (career.seasons < options.minSeasons || !career.matchesEra) return false
+    if (tierSet) {
+      const tier = getTierForPoints(career.bestPoints)
+      if (!tier || !tierSet.has(tier)) return false
+    }
+    return true
+  }).map(([id]) => id)
+}
 
-  // Group by player in JS
+export async function getCareerQuestions(options: CareerOptions & {
+  count: number
+  excludePlayerIds?: number[]
+}): Promise<CareerQuestion[]> {
+  const excluded = new Set(options.excludePlayerIds ?? [])
+  const candidates = (await getCareerCandidateIds(options)).filter((id) => !excluded.has(id))
+  candidates.sort(() => Math.random() - 0.5)
+  const selectedIds = candidates.slice(0, options.count)
+  if (!selectedIds.length) return []
+
+  return getCareersForPlayers(selectedIds)
+}
+
+/** Also upgrades saved rooms that contain the old capped career selections. */
+export async function getCareersForPlayers(playerIds: number[]): Promise<CareerQuestion[]> {
+  if (!playerIds.length) return []
+  // Eras select players, rather than clipping seasons off their full careers.
+  const rows = await getCareerRows('*', playerIds)
   const byPlayer = new Map<number, RawStatsRecord[]>()
-  for (const row of data as DbRow[]) {
-    const r = dbToRaw(row)
-    const existing = byPlayer.get(r.playerId) ?? []
-    existing.push(r)
-    byPlayer.set(r.playerId, existing)
+  for (const row of rows) {
+    const seasons = byPlayer.get(row.player_id) ?? []
+    seasons.push(dbToRaw(row))
+    byPlayer.set(row.player_id, seasons)
   }
 
-  const candidates: CareerQuestion[] = []
-  for (const [, seasons] of byPlayer) {
-    if (seasons.length < options.minSeasons) continue
-
-    // Filter by best season tier when difficultyTiers is specified
-    if (tierSet) {
-      const bestPoints = Math.max(...seasons.map((s) => s.points ?? 0))
-      const bestTier = getTierForPoints(bestPoints)
-      if (!bestTier || !tierSet.has(bestTier)) continue
+  return playerIds.filter((id) => byPlayer.has(id)).map((id) => {
+    // Duplicate imports must not create extra reveals or extend the round timer.
+    const unique = new Map<number, RawStatsRecord>()
+    for (const season of byPlayer.get(id)!) {
+      if (!unique.has(season.seasonId)) unique.set(season.seasonId, season)
     }
-
-    const selected = selectCareerSeasons(seasons, options.maxReveals)
-    const ordered = orderSeasons(selected, options.revealOrder)
-    const totalCareerPoints = seasons.reduce((sum, s) => sum + (s.points ?? 0), 0)
+    const seasons = [...unique.values()].sort((a, b) => a.seasonId - b.seasonId)
     const first = seasons[0]
-
-    candidates.push({
+    return {
+      fullCareer: true,
       playerId: first.playerId,
       firstName: first.firstName,
       lastName: first.lastName,
-      totalCareerPoints,
-      seasons: ordered.map(mapRecord),
-    })
-  }
-
-  candidates.sort(() => Math.random() - 0.5)
-  return candidates.slice(0, options.count)
+      totalCareerPoints: seasons.reduce((sum, season) => sum + (season.points ?? 0), 0),
+      seasons: seasons.map(mapRecord),
+    }
+  })
 }
 
-/** Count of players eligible for career mode */
-export async function getCareerPlayerCount(options: {
-  minSeasons: number
-  eras?: string[]
-  difficultyTiers?: DifficultyTier[]
-}): Promise<number> {
-  const db = createSupabaseClient()
-  let query = db.from('nhl_player_seasons').select('player_id, points')
-  if (options.eras?.length) query = query.in('era', options.eras)
-
-  const { data, error } = await query
-  if (error) throw new Error(`getCareerPlayerCount: ${error.message}`)
-
-  const tierSet = options.difficultyTiers?.length ? new Set(options.difficultyTiers) : null
-
-  // Group seasons by player to check minSeasons and best-season tier
-  const byPlayer = new Map<number, number[]>()
-  for (const r of data as Pick<DbRow, 'player_id' | 'points'>[]) {
-    const pts = byPlayer.get(r.player_id) ?? []
-    pts.push(r.points)
-    byPlayer.set(r.player_id, pts)
-  }
-
-  let count = 0
-  for (const pts of byPlayer.values()) {
-    if (pts.length < options.minSeasons) continue
-    if (tierSet) {
-      const bestTier = getTierForPoints(Math.max(...pts))
-      if (!bestTier || !tierSet.has(bestTier)) continue
-    }
-    count++
-  }
-  return count
+/** Count uses the same full-career eligibility rules as question generation. */
+export async function getCareerPlayerCount(options: CareerOptions): Promise<number> {
+  return (await getCareerCandidateIds(options)).length
 }
 
 // ─── Head-to-Head Mode ────────────────────────────────────────────────────────

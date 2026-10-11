@@ -49,7 +49,8 @@ export type CareerQuestion = {
   firstName: string
   lastName: string
   totalCareerPoints: number
-  seasons: Question[] // ordered per careerRevealOrder setting
+  fullCareer?: boolean // distinguishes full careers from legacy capped room data
+  seasons: Question[] // full career, earliest season first
 }
 
 // ─── Head-to-Head Pair ────────────────────────────────────────────────────────
@@ -119,7 +120,7 @@ export type GameState = {
   // Classic extras
   rookiesOnly: boolean
 
-  // Career setup
+  // Career setup (reveal order and cap retained for older room storage only)
   careerRevealOrder: CareerRevealOrder
   careerMinSeasons: number
   careerMaxReveals: number
@@ -160,6 +161,8 @@ export type GameState = {
   careerData: CareerQuestion[] // parallel to questionSequence (one entry per round)
   careerSeasons: Question[] // current round's ordered seasons
   revealedSeasonCount: number // how many seasons revealed so far this round
+  careerPausedAt?: string // shared pause timestamp while a player is answering
+  careerPausedDurationMs?: number // accumulated answering time excluded from reveal time
   buzzedInPlayerId: string // '' if nobody has buzzed in
   buzzedInSeasonCount: number // revealedSeasonCount at time of buzz-in (for scoring)
   lockedOutPlayers: string[] // players who guessed wrong this round
@@ -217,7 +220,7 @@ export const DEFAULT_SETUP: GameSetupConfig = {
   hintsEnabled: true,
   powerupsEnabled: true,
   rookiesOnly: false,
-  careerRevealOrder: 'best-first',
+  careerRevealOrder: 'chronological',
   careerMinSeasons: 5,
   careerMaxReveals: 8,
   hlComparisonField: 'points',
@@ -246,7 +249,7 @@ export const CAREER_SCORE_TIERS = {
   tier3: 75, // 50–75%
   tier4: 50, // last 25%
 }
-export const CAREER_REVEAL_INTERVAL_MS = 8_000
+export const CAREER_REVEAL_INTERVAL_MS = 3_000
 
 // Head-to-Head scoring
 export const H2H_SCORE_CORRECT = 100

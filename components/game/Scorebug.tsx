@@ -23,7 +23,7 @@ interface ScorebugProps {
 }
 
 /**
- * A single continuous white strip — not floating pills.
+ * A single continuous white strip - not floating pills.
  * Left: puck mark, wordmark, room code. Centre: one hairline-divided cell per
  * player. Right: mode/difficulty and the active powerup. Amber kickplate under.
  */
@@ -45,7 +45,7 @@ export function Scorebug({
         className="grid items-stretch"
         style={{ gridTemplateColumns: 'auto 1fr auto', height: compact ? 52 : 60 }}
       >
-        {/* Left — identity */}
+        {/* Left - identity */}
         <div
           className="flex items-center gap-3 px-5"
           style={{ borderRight: '1px solid rgba(13,27,42,0.10)' }}
@@ -63,11 +63,15 @@ export function Scorebug({
             >
               STATS MASTER
             </span>
-            {roomId && <MonoLabel size={9} tracking="0.22em">Room {roomId}</MonoLabel>}
+            {roomId && (
+              <MonoLabel size={9} tracking="0.22em">
+                Room {roomId}
+              </MonoLabel>
+            )}
           </div>
         </div>
 
-        {/* Centre — one cell per player */}
+        {/* Centre - one cell per player */}
         <div className="flex items-stretch overflow-hidden">
           {sorted.map((p, i) => {
             const isLeader = p.id === leaderId
@@ -113,7 +117,7 @@ export function Scorebug({
                   {p.score ?? 0}
                 </span>
 
-                {/* "Answered" is a bar pinned to the bottom edge — never a checkmark. */}
+                {/* "Answered" is a bar pinned to the bottom edge - never a checkmark. */}
                 {answered && (
                   <span
                     aria-label={`${p.name} answered`}
@@ -127,12 +131,16 @@ export function Scorebug({
           <div className="flex-1" />
         </div>
 
-        {/* Right — mode and active powerup */}
+        {/* Right - mode and active powerup */}
         <div
           className="flex items-center gap-4 px-5"
           style={{ borderLeft: '1px solid rgba(13,27,42,0.10)' }}
         >
-          {meta && <MonoLabel size={9} tracking="0.18em">{meta}</MonoLabel>}
+          {meta && (
+            <MonoLabel size={9} tracking="0.18em">
+              {meta}
+            </MonoLabel>
+          )}
           {powerup && (
             <span
               className="font-display flex items-center gap-[7px]"
@@ -177,7 +185,9 @@ export function PlayerScorebug({
   return (
     <header className="on-ice-header relative z-20">
       <div className="flex h-[52px] items-center justify-between px-[18px]">
-        <MonoLabel size={9} tracking="0.2em">{questionLabel}</MonoLabel>
+        <MonoLabel size={9} tracking="0.2em">
+          {questionLabel}
+        </MonoLabel>
         <div className="flex items-center gap-[9px]">
           <span
             className="font-display max-w-[120px] truncate"

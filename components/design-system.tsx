@@ -12,7 +12,7 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children: React.ReactNode
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
-  /** Flush against its container — no shadow, fills the cell. Used in 2-up bars. */
+  /** Flush against its container - no shadow, fills the cell. Used in 2-up bars. */
   flush?: boolean
 }
 
@@ -257,7 +257,7 @@ export function Clock({
 }
 
 // ─── Kickplate ────────────────────────────────────────────────────────────────
-// The amber padding at the base of the boards. Trim only — never a fill.
+// The amber padding at the base of the boards. Trim only - never a fill.
 
 export function Kickplate({ height = 5 }: { height?: number }) {
   return <div aria-hidden="true" style={{ height, background: 'var(--color-amber)' }} />

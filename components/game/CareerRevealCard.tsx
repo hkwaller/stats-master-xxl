@@ -1,14 +1,16 @@
 'use client'
 
+import { useLayoutEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import type { Question } from '@/types/game'
 import { MonoLabel } from '@/components/design-system'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = 'var(--color-ink)'
+const RED = 'var(--color-red)'
 
 interface CareerRevealCardProps {
-  seasons: Question[] // all seasons for this player (in reveal order)
+  size?: 'compact' | 'tv'
+  seasons: Question[] // full career, earliest season first
   revealedCount: number // how many have been revealed so far
   buzzedInPlayerName?: string
   lockedOutCount?: number
@@ -29,27 +31,30 @@ const COLUMNS: {
 ]
 
 /**
- * A career as a stat sheet: hairline-ruled rows on white, revealed rows in navy
- * ink and unrevealed ones blurred out. No table chrome, no zebra striping.
+ * A career as a stat sheet, with each revealed season appended in order.
  */
-function SeasonTable({ rows, revealedIds }: { rows: Question[]; revealedIds: Set<string> }) {
+function SeasonTable({ rows }: { rows: Question[] }) {
   return (
-    <table className="w-full border-collapse" style={{ minWidth: 320 }}>
+    <table className="w-full table-fixed border-collapse" style={{ minWidth: 320 }}>
+      <colgroup>
+        <col style={{ width: '28%' }} />
+        {COLUMNS.slice(1).map((c) => <col key={c.key} style={{ width: '14.4%' }} />)}
+      </colgroup>
       <thead>
         <tr>
           {COLUMNS.map((c) => (
             <th
               key={c.abbr}
-              className="font-mono pb-2"
+              className="font-mono sticky top-0 z-10 bg-ice-0 pb-2"
               style={{
                 textAlign: c.align,
-                fontSize: 9,
+                fontSize: 'var(--career-label-size, 9px)',
                 fontWeight: 400,
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: '#55677d',
-                borderBottom: `1px solid rgba(13,27,42,0.10)`,
-                padding: '0 8px 8px',
+                color: 'var(--color-ink-2)',
+                borderBottom: '1px solid var(--color-hairline)',
+                padding: 'var(--career-header-padding, 0 8px 8px)',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -59,58 +64,60 @@ function SeasonTable({ rows, revealedIds }: { rows: Question[]; revealedIds: Set
         </tr>
       </thead>
       <tbody>
-        {rows.map((season) => {
-          const isRevealed = revealedIds.has(season.id)
-          return (
-            <motion.tr key={season.id} initial={false}>
-              {COLUMNS.map((c) => (
-                <td
-                  key={c.abbr}
-                  className="tabular-nums"
-                  style={{
-                    textAlign: c.align,
-                    padding: '9px 8px',
-                    borderBottom: '1px solid rgba(13,27,42,0.07)',
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: c.emphasis ? 800 : 700,
-                    fontSize: c.key === 'season' ? 18 : 20,
-                    lineHeight: 1,
-                    color: !isRevealed ? '#7d8b9c' : c.emphasis ? RED : INK,
-                    filter: isRevealed ? undefined : 'blur(4px)',
-                    userSelect: isRevealed ? undefined : 'none',
-                    whiteSpace: 'nowrap',
-                    transition: 'filter 300ms ease-out, color 300ms ease-out',
-                  }}
-                >
-                  {String(season[c.key] ?? '—')}
-                </td>
-              ))}
-            </motion.tr>
-          )
-        })}
+        {rows.map((season) => (
+          <tr key={`${season.playerId}:${season.seasonId}`} className="career-season-row">
+            {COLUMNS.map((c) => (
+              <td
+                key={c.abbr}
+                className="tabular-nums"
+                style={{
+                  textAlign: c.align,
+                  padding: 'var(--career-row-padding, 9px 8px)',
+                  borderBottom: '1px solid var(--color-hairline-2)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: c.emphasis ? 800 : 700,
+                  fontSize: c.key === 'season'
+                    ? 'var(--career-season-size, 18px)'
+                    : 'var(--career-stat-size, 20px)',
+                  lineHeight: 1,
+                  color: c.emphasis ? RED : INK,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {String(season[c.key] ?? '-')}
+              </td>
+            ))}
+          </tr>
+        ))}
       </tbody>
     </table>
   )
 }
 
 export function CareerRevealCard({
+  size = 'compact',
   seasons,
   revealedCount,
   buzzedInPlayerName,
   lockedOutCount = 0,
 }: CareerRevealCardProps) {
-  const revealedIds = new Set(seasons.slice(0, revealedCount).map((s) => s.id))
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const visibleSeasons = seasons.slice(0, revealedCount)
+  const firstSeasonId = seasons[0]?.id
 
-  // Always display in chronological order, whatever the reveal order was.
-  const chronological = [...seasons].sort((a, b) => a.seasonId - b.seasonId)
-
-  const useGrid = chronological.length > 10
-  const mid = useGrid ? Math.ceil(chronological.length / 2) : chronological.length
-  const leftCol = chronological.slice(0, mid)
-  const rightCol = useGrid ? chronological.slice(mid) : []
+  useLayoutEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+    // Scroll only the stat sheet, leaving the timer and buzz controls in place.
+    container.scrollTo({
+      top: revealedCount <= 1 ? 0 : container.scrollHeight,
+      behavior: revealedCount <= 1 || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'instant' : 'smooth',
+    })
+  }, [revealedCount, firstSeasonId])
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className={`flex w-full flex-col gap-4 ${size === 'tv' ? 'career-reveal-tv' : ''}`}>
       {buzzedInPlayerName && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -123,7 +130,7 @@ export function CareerRevealCard({
             className="font-display"
             style={{
               fontWeight: 700,
-              fontSize: 18,
+              fontSize: size === 'tv' ? 26 : 18,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
             }}
@@ -133,30 +140,26 @@ export function CareerRevealCard({
         </motion.div>
       )}
 
-      {useGrid ? (
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="overflow-x-auto">
-            <SeasonTable rows={leftCol} revealedIds={revealedIds} />
-          </div>
-          <div className="overflow-x-auto">
-            <SeasonTable rows={rightCol} revealedIds={revealedIds} />
-          </div>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <SeasonTable rows={leftCol} revealedIds={revealedIds} />
-        </div>
-      )}
+      <div
+        ref={scrollRef}
+        role="region"
+        aria-label="Revealed career seasons"
+        tabIndex={0}
+        className="career-season-scroll overflow-auto overscroll-contain"
+        style={{ height: 'var(--career-sheet-height, min(40vh, 360px))' }}
+      >
+        <SeasonTable rows={visibleSeasons} />
+      </div>
 
       <div
         className="flex items-baseline justify-between gap-3 pt-1"
-        style={{ borderTop: '1px solid rgba(13,27,42,0.10)', paddingTop: 12 }}
+        style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 12 }}
       >
-        <MonoLabel size={9} tracking="0.18em">
+        <MonoLabel size={size === 'tv' ? 12 : 9} tracking="0.18em">
           {revealedCount} / {seasons.length} seasons revealed
         </MonoLabel>
         {lockedOutCount > 0 && (
-          <MonoLabel size={9} tracking="0.18em" color={RED}>
+          <MonoLabel size={size === 'tv' ? 12 : 9} tracking="0.18em" color={RED}>
             {lockedOutCount} in the penalty box
           </MonoLabel>
         )}

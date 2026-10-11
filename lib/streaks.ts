@@ -2,7 +2,7 @@ import type { Player, QuestionResult } from '@/types/game'
 
 /**
  * Current streak = trailing run of correct answers in the question history.
- * Derived rather than stored — the design needs it, the game state does not.
+ * Derived rather than stored - the design needs it, the game state does not.
  */
 export function currentStreak(history: QuestionResult[], playerId: string): number {
   let streak = 0

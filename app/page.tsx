@@ -9,7 +9,6 @@ import { SignInButton, useAuth, UserButton } from '@clerk/nextjs'
 import { Button, Kickplate, MonoLabel } from '@/components/design-system'
 import { PuckMark, Jumbotron, FaceoffCircle, type JumboCell } from '@/components/arcade'
 import { AnswerRow } from '@/components/game/AnswerRow'
-import { AdsterraBanner } from '@/components/ads/AdsterraBanner'
 import { DailyChallenge } from '@/components/game/DailyChallenge'
 
 const INK = '#0d1b2a'
@@ -51,7 +50,7 @@ const STEPS = [
   {
     num: '03',
     title: 'Read the line',
-    desc: 'Five stats light up one column at a time. Answer early, score higher — speed is worth up to 50 points.',
+    desc: 'Five stats light up one column at a time. Answer early, score higher - speed is worth up to 50 points.',
   },
   {
     num: '04',
@@ -71,7 +70,7 @@ const MODES = [
     label: 'Career',
     tag: 'Buzz in',
     edge: '#0b53c9',
-    desc: 'Seasons reveal one by one. First to buzz gets the shot — and the lockout if they miss.',
+    desc: 'Seasons reveal one by one. First to buzz gets the shot - and the lockout if they miss.',
   },
   {
     label: 'Head-to-Head',
@@ -108,7 +107,10 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col overflow-x-hidden" style={{ background: '#eef3f9' }}>
+    <main
+      className="flex min-h-screen flex-col overflow-x-hidden"
+      style={{ background: '#eef3f9' }}
+    >
       {/* ── Nav ── */}
       <nav
         className="flex h-[66px] items-center justify-between px-5 md:px-[34px]"
@@ -126,14 +128,20 @@ export default function LandingPage() {
 
         <div className="flex items-center gap-4 md:gap-[26px]">
           <a href="#modes" className="hidden md:inline">
-            <MonoLabel size={10} tracking="0.18em">Modes</MonoLabel>
+            <MonoLabel size={10} tracking="0.18em">
+              Modes
+            </MonoLabel>
           </a>
           <a href="#how" className="hidden md:inline">
-            <MonoLabel size={10} tracking="0.18em">How it works</MonoLabel>
+            <MonoLabel size={10} tracking="0.18em">
+              How it works
+            </MonoLabel>
           </a>
           <span className="hidden items-center gap-[7px] sm:flex">
             <span className="size-[7px] rounded-full" style={{ background: RED }} />
-            <MonoLabel size={10} tracking="0.16em">Multiplayer · free</MonoLabel>
+            <MonoLabel size={10} tracking="0.16em">
+              Multiplayer · free
+            </MonoLabel>
           </span>
           {isLoaded &&
             (isSignedIn ? (
@@ -154,11 +162,7 @@ export default function LandingPage() {
         className="ice-bg relative px-5 pt-12 pb-14 md:px-[34px] md:pt-16 md:pb-[58px]"
         style={{ overflow: 'hidden' }}
       >
-        <FaceoffCircle
-          size={620}
-          color="rgba(207,10,44,0.10)"
-          style={{ left: -180, top: -120 }}
-        />
+        <FaceoffCircle size={620} color="rgba(207,10,44,0.10)" style={{ left: -180, top: -120 }} />
         <FaceoffCircle
           size={560}
           color="rgba(11,83,201,0.10)"
@@ -166,9 +170,9 @@ export default function LandingPage() {
         />
 
         <div className="relative z-[2] mx-auto grid max-w-[1180px] items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-[52px]">
-          {/* Left — the pitch */}
+          {/* Left - the pitch */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
             className="flex min-w-0 flex-col gap-6"
@@ -202,7 +206,7 @@ export default function LandingPage() {
               style={{ fontSize: 16, lineHeight: 1.6, color: '#55677d' }}
             >
               One screen shows the board. Everyone else plays on their phone. Guess the NHL skater
-              from a season stat line before the room beats you to it — 46,704 real seasons, 1917 to
+              from a season stat line before the room beats you to it - 46,704 real seasons, 1917 to
               2025.
             </p>
 
@@ -277,26 +281,23 @@ export default function LandingPage() {
                   >
                     {s.value}
                   </span>
-                  <MonoLabel size={9} tracking="0.2em">{s.label}</MonoLabel>
+                  <MonoLabel size={9} tracking="0.2em">
+                    {s.label}
+                  </MonoLabel>
                 </div>
               ))}
             </div>
           </motion.div>
 
-          {/* Right — the board, hanging from the rafters */}
+          {/* Right - the board, hanging from the rafters */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.4, ease: 'easeOut' }}
             className="flex min-w-0 flex-col gap-3.5 pt-10 lg:pt-0"
             aria-hidden="true"
           >
-            <Jumbotron
-              cells={HERO_CELLS}
-              size="hero"
-              topLeft="1987–88"
-              topRight="EDMONTON"
-            />
+            <Jumbotron cells={HERO_CELLS} size="hero" topLeft="1987–88" topRight="EDMONTON" />
             <div className="grid gap-2.5 sm:grid-cols-2">
               {HERO_CHOICES.map((c, i) => (
                 <AnswerRow
@@ -326,7 +327,9 @@ export default function LandingPage() {
             >
               HOW A GAME RUNS
             </h2>
-            <MonoLabel size={10} tracking="0.2em">Roughly 6 minutes for 10 questions</MonoLabel>
+            <MonoLabel size={10} tracking="0.2em">
+              Roughly 6 minutes for 10 questions
+            </MonoLabel>
           </div>
 
           <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-4">
@@ -389,7 +392,9 @@ export default function LandingPage() {
                   >
                     {m.label}
                   </span>
-                  <MonoLabel size={9} tracking="0.16em">{m.tag}</MonoLabel>
+                  <MonoLabel size={9} tracking="0.16em">
+                    {m.tag}
+                  </MonoLabel>
                 </div>
                 <span style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>{m.desc}</span>
               </div>
@@ -405,7 +410,9 @@ export default function LandingPage() {
       >
         <div className="mx-auto grid max-w-[1180px] items-start gap-11 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="flex flex-col gap-[18px] lg:sticky lg:top-8">
-            <MonoLabel size={10} tracking="0.26em" color={RED}>Today&apos;s skater</MonoLabel>
+            <MonoLabel size={10} tracking="0.26em" color={RED}>
+              Today&apos;s skater
+            </MonoLabel>
             <h2
               className="font-display m-0"
               style={{ fontWeight: 800, fontSize: 'clamp(34px,6vw,50px)', lineHeight: 1 }}
@@ -456,21 +463,30 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <div className="px-5 py-6 md:px-[34px]" style={{ background: '#eef3f9' }}>
-        <div className="mx-auto max-w-[1180px]">
-          <AdsterraBanner slot="landing" />
-        </div>
-      </div>
-
       {/* ── Footer ── */}
       <footer
         className="flex flex-wrap items-center justify-between gap-5 px-5 py-6 md:px-[34px]"
         style={{ background: INK }}
       >
-        <MonoLabel size={9} tracking="0.16em">Stats Master · Amalies Utviklingsfabrikk</MonoLabel>
+        <MonoLabel size={9} tracking="0.16em">
+          Stats Master · Amalies Utviklingsfabrikk
+        </MonoLabel>
         <MonoLabel size={9} tracking="0.16em">
           Season data 1917–2025 · Not affiliated with any league
         </MonoLabel>
+        <nav aria-label="Legal and Playam" className="text-white">
+          <a href="/privacy" style={{ textDecoration: 'underline' }}>
+            Privacy
+          </a>{' '}
+          ·{' '}
+          <a href="/terms" style={{ textDecoration: 'underline' }}>
+            Terms
+          </a>{' '}
+          ·{' '}
+          <a href="https://playam.app" style={{ textDecoration: 'underline' }}>
+            A game from Playam
+          </a>
+        </nav>
       </footer>
     </main>
   )

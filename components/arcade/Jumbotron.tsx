@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * The jumbotron — the signature element and the one genuinely dark object in
+ * The jumbotron - the signature element and the one genuinely dark object in
  * the design. It is the only place amber LED type is used.
  *
  * Outside in: struts (so it reads as hanging from the rafters) → bezel →
@@ -12,12 +12,12 @@
 export type JumboSize = 'tv' | 'hero' | 'phone'
 
 export interface JumboCell {
-  /** Mono abbreviation above the value — GP / G / A / PTS / PIM. */
+  /** Mono abbreviation above the value - GP / G / A / PTS / PIM. */
   abbr: string
   value: string | number
   /** The emphasised stat. Only this cell blooms. */
   emphasis?: boolean
-  /** Not yet revealed — renders as a dim LED placeholder. */
+  /** Not yet revealed - renders as a dim LED placeholder. */
   hidden?: boolean
 }
 
@@ -226,7 +226,7 @@ export function Jumbotron({
 }
 
 /**
- * The jumbotron used as an announcement board rather than a stat line —
+ * The jumbotron used as an announcement board rather than a stat line -
  * the winner on the final screen. Same shell, free-form amber content.
  */
 export function JumbotronPanel({
