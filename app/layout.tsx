@@ -39,7 +39,7 @@ const jetbrainsMono = JetBrains_Mono({
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://statsmaster.playam.app'
 
 const DESCRIPTION =
-  'Free multiplayer NHL trivia. Five stats, four names, twelve seconds - guess the hockey legend before your friends do. Play 2–8 players from any device.'
+  'Free NHL trivia with Classic, Career, Head-to-Head and Higher / Lower modes. Play with 2–8 players on your phones or try the daily challenge solo.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -16,6 +16,7 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     hostPlays: true,
     players: [],
     command: 'idle',
+    pausedAt: '',
     countdownTime: 3,
     reveal: false,
     hostAdFree: false,
@@ -32,6 +33,7 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     careerRevealOrder: 'chronological',
     careerMinSeasons: 5,
     careerMaxReveals: 8,
+    careerShowYears: true,
     hlComparisonField: 'points',
     eras: [],
     // Classic sequence
@@ -59,6 +61,7 @@ function createInitialGameState(roomId: string, hostId: string): GameState {
     buzzedInPlayerId: '',
     buzzedInSeasonCount: 0,
     lockedOutPlayers: [],
+    careerPenaltyEndsAt: {},
     // H2H mode
     h2hPairs: [],
     h2hCurrentPair: null,

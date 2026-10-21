@@ -14,6 +14,9 @@ function load(file, mocks = {}) {
   const module = { exports: {} }
   const resolve = (id) => {
     if (id in mocks) return mocks[id]
+    if (id === '@/lib/game/room-clock') return load('lib/game/room-clock.ts')
+    if (id === '@/lib/game/career-pool') return load('lib/game/career-pool.ts')
+    if (id === '@/lib/game/room-clock') return load('lib/game/room-clock.ts')
     if (id === '@/types/game') return load('types/game.ts')
     return require(id)
   }
@@ -63,6 +66,16 @@ test('full careers survive pagination, era selection, and legacy reveal settings
   assert.equal(await db.getCareerPlayerCount(options), 1)
   assert.deepEqual(await db.getCareerQuestions({ ...options, excludePlayerIds: [1] }), [])
   assert.ok(pagesRead >= 7)
+  for (const patch of [
+    { eras: [] }, { difficultyTiers: [] }, { difficultyTiers: ['medium'] },
+    { minSeasons: 26 }, { minSeasons: 25 }, { eras: ['2010s'] },
+    { eras: ['1980s', '1990s'], difficultyTiers: ['easy', 'expert'] }, { excludePlayerIds: [1] },
+  ]) {
+    const filtered = { ...options, ...patch, count: 10000 }
+    assert.equal(await db.getCareerPlayerCount(filtered), (await db.getCareerQuestions(filtered)).length,
+      `preview and generation disagree: ${JSON.stringify(patch)}`)
+  }
+
 })
 
 test('each season gets three seconds, including the last, using the shared start time', () => {
@@ -133,6 +146,8 @@ test('only revealed rows render, with one scrolling table following each new sea
       assert.equal(scrolls.at(-1).behavior, 'instant')
       assert.ok(markup.includes('table-fixed'))
       assert.ok(!markup.includes('opacity'), 'reveals must never hide the numbers')
+      assert.ok(markup.includes(`${count} ${count === 1 ? 'season' : 'seasons'} revealed`))
+      assert.ok(!markup.includes('/ 25'), 'the total career length must stay hidden')
     }
   } finally { global.window = originalWindow }
 })
@@ -293,4 +308,27 @@ test('career answer totals include every season exactly once', () => {
   assert.deepEqual(careerTotals([first, second, { ...second }]), {
     seasons: 2, gamesPlayed: 157, goals: 63, assists: 102, points: 165, penaltyMinutes: 138,
   })
+})
+
+test('setup cannot continue while pool eligibility is unknown', () => {
+  const { default: Setup } = load('app/[roomId]/setup/page.tsx', {
+    react: { ...React, useState: initial => [initial, () => {}], useEffect: () => {} },
+    'next/navigation': { useRouter: () => ({}) },
+    'framer-motion': { motion: { div: ({ initial, animate, transition, ...props }) => React.createElement('div', props) } },
+    '@/components/arcade/RinkBg': { RinkBg: () => null },
+    '@/components/arcade': { PuckMark: () => null, JumbotronPanel: ({ children }) => React.createElement('div', null, children) },
+    '@/lib/liveblocks/client': { useStorage: () => ({ hostId: '' }) },
+    '@/lib/liveblocks/mutations': { useSaveSettings: () => () => {} },
+    '@/app/actions/game-actions': {},
+    '@/components/game/AnimatedPoolCount': { AnimatedPoolCount: ({ count }) => React.createElement('span', null, count) },
+    '@/components/game/PowerPlayHelp': { PowerPlayHelp: () => null },
+    '@/hooks/useSetupPool': { useSetupPool: () => ({ count: null, loading: true, error: false }) },
+    '@/lib/guest': {},
+    '@/components/design-system': {
+      Button: ({ children, disabled }) => React.createElement('button', { disabled }, children),
+      MonoLabel: ({ children }) => React.createElement('span', null, children), Kickplate: () => null,
+    },
+  })
+  const markup = renderToStaticMarkup(React.createElement(Setup, { params: Promise.resolve({ roomId: 'TEST' }) }))
+  assert.match(markup, /<button disabled="">(?:Checking pool|Loading)/)
 })

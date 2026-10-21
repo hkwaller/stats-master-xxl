@@ -4,14 +4,15 @@ import { RinkBg } from '@/components/arcade/RinkBg'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BellRing, Check, ChevronDown, Eye, UserRoundCheck } from 'lucide-react'
 import { useStorage } from '@/lib/liveblocks/client'
 import { useSaveSettings } from '@/lib/liveblocks/mutations'
-import { checkAvailableCount, checkCareerPlayerCount } from '@/app/actions/game-actions'
+import { AnimatedPoolCount } from '@/components/game/AnimatedPoolCount'
+import { PowerPlayHelp } from '@/components/game/PowerPlayHelp'
+import { useSetupPool } from '@/hooks/useSetupPool'
 import { getOrCreateGuest } from '@/lib/guest'
 import { Button, Kickplate, MonoLabel } from '@/components/design-system'
-import { PuckMark } from '@/components/arcade'
+import { JumbotronPanel, PuckMark } from '@/components/arcade'
 import type {
   AnswerMode,
   DifficultyTier,
@@ -22,10 +23,9 @@ import type {
 } from '@/types/game'
 import { DEFAULT_SETUP } from '@/types/game'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
-const BLUE = '#0b53c9'
-const DEAD = '#b3c0cf'
+const INK = 'var(--color-ink)'
+const RED = 'var(--color-red)'
+const DEAD = 'var(--color-edge-dead)'
 
 // ─── Options ──────────────────────────────────────────────────────────────────
 
@@ -41,34 +41,26 @@ const TIER_OPTIONS: {
   { tier: 'expert', label: 'Expert', range: '70–99', desc: 'Solid contributors' },
 ]
 
-const GAME_MODES: { mode: GameMode; label: string; tag: string; desc: string; edge: string }[] = [
+const GAME_MODES: { mode: GameMode; label: string; desc: string }[] = [
   {
     mode: 'classic',
     label: 'Classic',
-    tag: 'Most played',
     desc: 'One season stat line. Four names, or type it blind.',
-    edge: RED,
   },
   {
     mode: 'career',
     label: 'Career',
-    tag: 'Buzz in',
     desc: 'Seasons reveal one by one. First to buzz gets the shot.',
-    edge: BLUE,
   },
   {
     mode: 'h2h',
     label: 'Head-to-Head',
-    tag: 'Two lines',
     desc: 'Two stat lines, one name. Which column is his?',
-    edge: INK,
   },
   {
     mode: 'higher-lower',
     label: 'Higher / Lower',
-    tag: 'Fast',
     desc: 'Above or below the reference line?',
-    edge: '#f2b21c',
   },
 ]
 
@@ -95,12 +87,12 @@ function Group({
   className?: string
 }) {
   return (
-    <div className={`on-ice flex flex-col gap-4 p-5 ${className}`}>
+    <section aria-label={label} className={`setup-group on-ice flex flex-col gap-3 p-4 ${className}`}>
       <MonoLabel size={10} tracking="0.22em">
         {label}
       </MonoLabel>
       {children}
-    </div>
+    </section>
   )
 }
 
@@ -122,18 +114,19 @@ function SegBtn({
       disabled={disabled}
       onClick={onClick}
       aria-pressed={on}
-      className="btn-ice font-display"
+      className="setup-segment btn-ice font-display"
       style={{
         border: 'none',
         borderRadius: 0,
-        padding: '9px 13px',
+        padding: '12px 13px',
+        minHeight: 44,
         fontWeight: 700,
         fontSize: 14,
         lineHeight: 1,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
-        background: on ? INK : '#ffffff',
-        color: on ? '#eef3f9' : '#55677d',
+        background: on ? INK : 'var(--color-ice-0)',
+        color: on ? 'var(--color-ice-1)' : 'var(--color-ink-2)',
         boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(13,27,42,0.14)',
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
@@ -164,7 +157,7 @@ function Toggle({
       onClick={onClick}
       aria-pressed={on}
       aria-label={label}
-      className="btn-ice flex items-center gap-2"
+      className="setup-toggle btn-ice flex min-h-11 items-center gap-2"
       style={{
         border: 'none',
         borderRadius: 0,
@@ -176,7 +169,7 @@ function Toggle({
     >
       <span
         className="font-mono"
-        style={{ fontSize: 9, letterSpacing: '0.16em', color: on ? RED : '#55677d' }}
+        style={{ fontSize: 9, letterSpacing: '0.16em', color: on ? RED : 'var(--color-ink-2)' }}
       >
         {on ? 'ON' : 'OFF'}
       </span>
@@ -185,13 +178,13 @@ function Toggle({
         style={{
           width: 40,
           height: 20,
-          background: on ? RED : '#f4f7fa',
+          background: on ? RED : 'var(--color-ice-3)',
           boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(13,27,42,0.14)',
         }}
       >
         <span
-          className="absolute top-[3px] block transition-[left]"
-          style={{ width: 14, height: 14, left: on ? 23 : 3, background: on ? '#ffffff' : INK }}
+          className="setup-toggle-thumb absolute top-[3px] left-[3px] block"
+          style={{ width: 14, height: 14, transform: `translateX(${on ? 20 : 0}px)`, background: on ? 'var(--color-ice-0)' : INK }}
         />
       </span>
     </button>
@@ -242,12 +235,12 @@ function OptionPlane({
       disabled={disabled}
       onClick={onClick}
       aria-pressed={on}
-      className="btn-ice flex flex-col gap-2 p-4 text-left"
+      className="setup-option btn-ice flex min-w-0 flex-col gap-2 p-4 text-left"
       style={{
         border: 'none',
         borderLeft: `6px solid ${on ? edge : DEAD}`,
         borderRadius: 0,
-        background: on ? 'rgba(207,10,44,0.05)' : '#ffffff',
+        background: on ? 'color-mix(in srgb, var(--color-red) 5%, var(--color-ice-0))' : 'var(--color-ice-0)',
         boxShadow: on ? '0 2px 10px rgba(13,27,42,0.10)' : '0 2px 10px rgba(13,27,42,0.05)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.55 : 1,
@@ -273,7 +266,7 @@ function OptionPlane({
           {meta}
         </MonoLabel>
       )}
-      {desc && <span style={{ fontSize: 12.5, lineHeight: 1.55, color: '#55677d' }}>{desc}</span>}
+      {desc && <span style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--color-ink-2)' }}>{desc}</span>}
     </button>
   )
 }
@@ -290,7 +283,7 @@ export default function SetupPage({ params }: SetupPageProps) {
   const [myId, setMyId] = useState('')
   const [config, setConfig] = useState<GameSetupConfig>(DEFAULT_SETUP)
   const [starting, setStarting] = useState(false)
-  const [availableCount, setAvailableCount] = useState<number | null>(null)
+  const { count: availableCount, loading: poolLoading, error: poolError, retry: retryPool } = useSetupPool(config)
 
   const game = useStorage((root) => root.game)
   const saveSettings = useSaveSettings()
@@ -301,46 +294,6 @@ export default function SetupPage({ params }: SetupPageProps) {
     setMyId(guest.id)
   }, [params])
 
-  // Live pool count - mode-aware
-  useEffect(() => {
-    let active = true
-    async function fetchCount() {
-      if (config.eras.length === 0) {
-        if (active) setAvailableCount(0)
-        return
-      }
-      if (config.gameMode === 'career') {
-        const ct = await checkCareerPlayerCount(
-          config.careerMinSeasons,
-          config.eras,
-          config.difficultyTiers.length > 0 ? config.difficultyTiers : undefined,
-        )
-        if (active) setAvailableCount(ct)
-      } else {
-        if (config.difficultyTiers.length === 0) {
-          if (active) setAvailableCount(0)
-          return
-        }
-        const ct = await checkAvailableCount(
-          config.difficultyTiers,
-          config.eras,
-          config.gameMode === 'classic' ? config.rookiesOnly : false,
-        )
-        if (active) setAvailableCount(ct)
-      }
-    }
-    fetchCount()
-    return () => {
-      active = false
-    }
-  }, [
-    config.gameMode,
-    config.difficultyTiers,
-    config.eras,
-    config.rookiesOnly,
-    config.careerMinSeasons,
-  ])
-
   const isHost = game?.hostId === myId || game?.hostId === ''
 
   function toggle<T>(arr: T[], val: T): T[] {
@@ -348,9 +301,7 @@ export default function SetupPage({ params }: SetupPageProps) {
   }
 
   function handleStart() {
-    if (!isHost) return
-    if (config.eras.length === 0) return
-    if (config.difficultyTiers.length === 0) return
+    if (!canStart || starting) return
     setStarting(true)
     saveSettings({ config, requesterId: myId })
     router.push(`/${roomId}/lobby`)
@@ -366,23 +317,28 @@ export default function SetupPage({ params }: SetupPageProps) {
     isHost &&
     config.eras.length > 0 &&
     (!needsTiers || config.difficultyTiers.length > 0) &&
-    (availableCount === null || availableCount >= (isCareer ? 1 : config.questionCount))
+    !poolError && availableCount !== null && availableCount >= config.questionCount
 
-  const modeLabel = GAME_MODES.find((m) => m.mode === config.gameMode)?.label.toUpperCase() ?? ''
+  const selectedMode = GAME_MODES.find((m) => m.mode === config.gameMode)!
+  const modeLabel = selectedMode.label.toUpperCase()
   const tiersLabel =
     config.difficultyTiers.length > 0
       ? config.difficultyTiers.map((t) => t.toUpperCase()).join(' + ')
       : '-'
   const configSummary = `${modeLabel} · ${tiersLabel} · ${config.eras.length} ERA${config.eras.length === 1 ? '' : 'S'} · ${config.questionCount} Q`
 
-  const startLabel = starting
-    ? 'Starting…'
-    : !canStart && availableCount !== null && availableCount < config.questionCount
-      ? 'Not enough players'
-      : 'Continue to lobby'
+  const poolMessage = poolError ? 'Could not load the pool. Try again.'
+    : poolLoading ? 'Checking eligible players…'
+    : !config.difficultyTiers.length ? 'Choose at least one difficulty.'
+    : !config.eras.length ? 'Choose at least one era.'
+    : availableCount === 0 ? isCareer ? 'No matches. Try more eras or a shorter minimum career.' : 'No matches. Try more eras or difficulty tiers.'
+    : availableCount! < config.questionCount ? `Choose fewer ${isCareer ? 'rounds' : 'questions'} or broaden your pool.`
+    : isCareer ? 'Fresh careers for tonight. Previously played today are excluded.' : 'Your pool is ready.'
+  const startLabel = starting ? 'Starting…' : poolLoading ? 'Checking pool…'
+    : poolError ? 'Pool unavailable' : !canStart && isHost ? 'Adjust your settings' : 'Continue to lobby'
 
   return (
-    <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+    <main className="setup-page ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
       <RinkBg intensity={0.65} />
       {/* ── Header ── */}
       <header className="on-ice-header relative z-20">
@@ -409,58 +365,65 @@ export default function SetupPage({ params }: SetupPageProps) {
         <Kickplate />
       </header>
 
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="relative z-[2] mx-auto flex w-full max-w-[1100px] flex-col gap-5 px-5 pt-8 pb-[132px] md:px-8"
-      >
-        {/* ── Title ── */}
-        <div className="flex flex-col gap-2">
-          <MonoLabel size={10} tracking="0.3em">
-            Step 1 of 2
-          </MonoLabel>
-          <h1
-            className="font-display m-0"
-            style={{
-              fontWeight: 800,
-              fontSize: 'clamp(38px,7vw,60px)',
-              lineHeight: 0.9,
-              letterSpacing: '0.005em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Set up your game
-          </h1>
+      <div className="setup-content relative z-[2] mx-auto w-full max-w-[1100px]">
+        <div className="setup-heading">
+          <h1 className="font-display">Set up your game</h1>
+          <ol className="setup-steps" aria-label="Game setup progress">
+            <li aria-current="step"><span>1</span> Game setup</li>
+            <li><span>2</span> Lobby &amp; lineup</li>
+          </ol>
         </div>
 
-        {/* ── Mode ── */}
-        <div className="flex flex-col gap-3">
-          <MonoLabel size={10} tracking="0.22em">
-            Mode · pick one
-          </MonoLabel>
-          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="setup-mode-picker" aria-label="Game mode">
+          <div className="setup-mode-options">
             {GAME_MODES.map((m) => (
-              <OptionPlane
+              <button
                 key={m.mode}
-                on={config.gameMode === m.mode}
+                type="button"
+                className="setup-mode btn-ice"
+                aria-pressed={config.gameMode === m.mode}
+                aria-describedby={config.gameMode === m.mode ? 'setup-mode-description' : undefined}
                 disabled={!isHost}
-                edge={m.edge}
                 onClick={() => setConfig((c) => ({ ...c, gameMode: m.mode }))}
-                title={m.label}
-                meta={m.tag}
-                desc={m.desc}
-                titleSize={24}
-              />
+              >
+                <span className="font-display">{m.label}</span>
+                {config.gameMode === m.mode && <Check size={16} strokeWidth={2.4} aria-hidden="true" />}
+              </button>
             ))}
           </div>
-        </div>
+          <div className="setup-mode-context">
+            <p id="setup-mode-description">{selectedMode.desc}</p>
+            {isCareer && (
+              <details className="setup-career-guide">
+                <summary>How to play <ChevronDown size={14} aria-hidden="true" /></summary>
+                <div className="setup-career-brief">
+                  <p>Recognize the player before the full career unfolds.</p>
+                  <ol className="setup-career-sequence" aria-label="How Career works">
+                    <li>
+                      <Eye size={20} strokeWidth={2.2} aria-hidden="true" />
+                      <div><strong>Watch</strong><span>A season every 3 seconds</span></div>
+                    </li>
+                    <li>
+                      <BellRing size={20} strokeWidth={2.2} aria-hidden="true" />
+                      <div><strong>Buzz in</strong><span>First to buzz takes the shot</span></div>
+                    </li>
+                    <li>
+                      <UserRoundCheck size={20} strokeWidth={2.2} aria-hidden="true" />
+                      <div><strong>Name him</strong><span>Earlier guesses earn more</span></div>
+                    </li>
+                  </ol>
+                </div>
+              </details>
+            )}
+          </div>
+        </section>
 
         <div className="grid items-start gap-4 lg:grid-cols-[1.1fr_0.9fr]">
           {/* ── Difficulty + eras ── */}
           <div className="flex flex-col gap-4">
             <Group label="Difficulty · pick any">
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              {isCareer && <p className="setup-help">Based on each player’s best season across their full career.</p>}
+              <div className="grid grid-cols-2 gap-2.5">
                 {TIER_OPTIONS.map(({ tier, label, range, desc }) => (
                   <OptionPlane
                     key={tier}
@@ -488,6 +451,7 @@ export default function SetupPage({ params }: SetupPageProps) {
             </Group>
 
             <Group label="Eras">
+              {isCareer && <p className="setup-help">Players who appeared in any selected era. Their entire career stays in play.</p>}
               <div className="flex flex-wrap gap-1.5">
                 {ERAS.map((era) => (
                   <SegBtn
@@ -525,7 +489,7 @@ export default function SetupPage({ params }: SetupPageProps) {
               </FormatRow>
 
               <FormatRow label="Answers">
-                {(
+                {isCareer ? <MonoLabel>Buzz in and type</MonoLabel> : (
                   [
                     { value: 'multiplechoice', label: 'Multiple choice' },
                     { value: 'freetext', label: 'Type it' },
@@ -562,25 +526,31 @@ export default function SetupPage({ params }: SetupPageProps) {
                     ))}
                   </FormatRow>
 
-                  <FormatRow label="Hints">
-                    <Toggle
-                      label="Hints"
-                      on={config.hintsEnabled}
-                      onClick={() => setConfig((c) => ({ ...c, hintsEnabled: !c.hintsEnabled }))}
-                      disabled={!isHost}
-                    />
-                  </FormatRow>
                 </>
               )}
 
-              <FormatRow label="Power plays">
-                <Toggle
-                  label="Power plays"
-                  on={config.powerupsEnabled}
-                  onClick={() => setConfig((c) => ({ ...c, powerupsEnabled: !c.powerupsEnabled }))}
-                  disabled={!isHost}
-                />
-              </FormatRow>
+              {(isClassic || isCareer) && (
+                <FormatRow label="Hints">
+                  <Toggle
+                    label="Hints"
+                    on={config.hintsEnabled}
+                    onClick={() => setConfig((c) => ({ ...c, hintsEnabled: !c.hintsEnabled }))}
+                    disabled={!isHost}
+                  />
+                </FormatRow>
+              )}
+
+              {isClassic && (
+                <FormatRow label="Power plays">
+                  <PowerPlayHelp />
+                  <Toggle
+                    label="Power plays"
+                    on={config.powerupsEnabled}
+                    onClick={() => setConfig((c) => ({ ...c, powerupsEnabled: !c.powerupsEnabled }))}
+                    disabled={!isHost}
+                  />
+                </FormatRow>
+              )}
 
               <FormatRow label="This device plays">
                 <Toggle
@@ -608,6 +578,23 @@ export default function SetupPage({ params }: SetupPageProps) {
 
               {isCareer && (
                 <>
+                  <FormatRow label="Season years">
+                    {[{ value: true, label: 'Show years' }, { value: false, label: 'Hide years' }].map(({ value, label }) => (
+                      <SegBtn
+                        key={label}
+                        on={config.careerShowYears === value}
+                        onClick={() => setConfig((c) => ({ ...c, careerShowYears: value }))}
+                        disabled={!isHost}
+                      >
+                        {label}
+                      </SegBtn>
+                    ))}
+                  </FormatRow>
+                  <p className="setup-help">
+                    {config.careerShowYears
+                      ? 'Years are shown. Era is omitted from hints.'
+                      : 'Seasons stay in order without years. Era is available when hints are on. Years appear after the round.'}
+                  </p>
                   <FormatRow label="Season reveals">
                     <MonoLabel>Full career · First season first · Every 3 seconds</MonoLabel>
                   </FormatRow>
@@ -629,53 +616,31 @@ export default function SetupPage({ params }: SetupPageProps) {
             </div>
           </Group>
         </div>
-      </motion.div>
+      </div>
 
       {/* ── Start bar: the boards at the foot of the screen ── */}
-      <div className="fixed inset-x-0 bottom-0 z-40">
+      <div className="setup-boards fixed inset-x-0 bottom-0 z-40">
         <Kickplate height={4} />
-        <div
-          className="flex flex-wrap items-center gap-4 px-5 py-4 md:px-8"
-          style={{ background: INK }}
-        >
-          {availableCount !== null && (
-            <span
-              className="font-mono"
-              style={{
-                fontSize: 9,
-                letterSpacing: '0.16em',
-                color: '#fff',
-                background: availableCount > 0 ? RED : 'rgba(255,255,255,0.14)',
-                padding: '5px 9px',
-              }}
-            >
-              {availableCount.toLocaleString()} IN POOL
-            </span>
-          )}
-          <span
-            className="font-mono"
-            style={{ fontSize: 10, letterSpacing: '0.14em', color: '#8d9cb0' }}
-          >
-            {configSummary}
-          </span>
-
-          <div className="w-full sm:ml-auto sm:w-auto">
+        <div className="setup-boards-inner">
+          <JumbotronPanel bezel={5} screenPad="10px 14px" className="setup-pool-board">
+            <div role="status" aria-live="polite" aria-atomic="true" aria-busy={poolLoading}>
+              <div className="setup-pool-score">
+                <AnimatedPoolCount count={availableCount} />
+                <span className="font-mono setup-pool-label">{poolLoading ? 'Checking pool' : poolError ? 'Pool unavailable' : 'In pool'}<small>{isCareer ? 'Eligible careers' : 'Season stat lines'}</small></span>
+              </div>
+            </div>
+          </JumbotronPanel>
+          <div className="setup-pool-context">
+            <p role={poolError ? 'alert' : undefined}>{poolMessage}</p>
+            {poolError && <button type="button" onClick={retryPool} className="setup-retry">Retry pool</button>}
+            <span className="font-mono setup-summary">{configSummary}</span>
+          </div>
+          <div className="setup-continue">
             {isHost ? (
-              <Button
-                variant="primary"
-                size="md"
-                onClick={handleStart}
-                disabled={!canStart || starting}
-                className="w-full sm:w-auto"
-              >
-                {startLabel}
-                <ArrowRight size={16} strokeWidth={2.2} />
+              <Button variant="primary" size="md" onClick={handleStart} disabled={!canStart || starting} className="w-full">
+                {startLabel}<ArrowRight size={16} strokeWidth={2.2} />
               </Button>
-            ) : (
-              <MonoLabel size={10} tracking="0.16em" color="#8d9cb0">
-                Waiting for host
-              </MonoLabel>
-            )}
+            ) : <MonoLabel size={10} tracking="0.16em">Waiting for host</MonoLabel>}
           </div>
         </div>
       </div>

@@ -34,6 +34,7 @@ function device(game, id, shared = false) {
   let finalBoard, stateIndex = 0
   const mutations = load('lib/liveblocks/mutations.ts', dep => {
     if (dep === './client') return { useMutation: callback => args => callback({ storage: { get: () => game } }, args) }
+    if (dep === '@/lib/game/room-clock') return load('lib/game/room-clock.ts', require)
     if (dep === '@/types/game') return types
     if (dep === '@/lib/avatar') return { getAvatarUrl: () => '' }
     return require(dep)
@@ -52,8 +53,10 @@ function device(game, id, shared = false) {
     if (dep === '@/lib/liveblocks/mutations') return mutations
     if (dep === '@/lib/guest') return { getOrCreateGuest: () => ({ id }) }
     if (dep === '@/hooks/useHostStateMachine') return { useHostStateMachine: () => {} }
+    if (dep === '@/hooks/useCareerPenalties') return { useCareerPenalties: () => ({}) }
     if (dep === '@/hooks/useQuestionTimeLeft') return { useQuestionTimeLeft: () => 0 }
     if (dep === '@/lib/streaks') return { currentStreak: () => 0, streakLeader: () => null }
+    if (dep === '@/lib/game/room-clock') return load('lib/game/room-clock.ts', require)
     if (dep === '@/types/game') return types
     if (dep === 'framer-motion') return { motion: new Proxy({}, { get: () => components.Div }), AnimatePresence: components.Div }
     if (dep === 'lucide-react' || dep.startsWith('@/components/')) return components

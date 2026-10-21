@@ -13,6 +13,7 @@ interface SideRailProps {
   question: Question | null
   usedHints: HintType[]
   hintsEnabled: boolean
+  showEraHint?: boolean
   streak: { player: Player; streak: number } | null
   /** Host controls pin to the bottom, filling the width with no gap between them. */
   controls?: RailControl[]
@@ -52,6 +53,7 @@ export function SideRail({
   question,
   usedHints,
   hintsEnabled,
+  showEraHint = true,
   streak,
   controls,
 }: SideRailProps) {
@@ -106,7 +108,7 @@ export function SideRail({
           style={{ borderBottom: '1px solid rgba(13,27,42,0.10)' }}
         >
           <MonoLabel size={9}>Hints revealed</MonoLabel>
-          {HINT_ROWS.map((row) => {
+          {HINT_ROWS.filter((row) => row.type !== 'era' || showEraHint).map((row) => {
             const revealed = usedHints.includes(row.type)
             return (
               <div

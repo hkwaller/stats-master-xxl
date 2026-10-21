@@ -13,7 +13,7 @@ import { RinkBg } from '@/components/arcade/RinkBg'
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Eye, RotateCcw, Settings, SkipForward } from 'lucide-react'
+import { ChevronRight, Eye, Pause, Play, RotateCcw, Settings, SkipForward } from 'lucide-react'
 import { useStorage } from '@/lib/liveblocks/client'
 import {
   useAdvanceToNext,
@@ -33,6 +33,7 @@ import {
   useRevealHLAnswers,
   useRevealNextCareerSeason,
   useSkipQuestion,
+  useSetGamePaused,
   useSubmitAnswer,
   useSubmitCareerAnswer,
   useTickCountdown,
@@ -40,6 +41,9 @@ import {
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
 import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
+import { useCareerPenalties } from '@/hooks/useCareerPenalties'
+import { questionPausedAt } from '@/lib/game/room-clock'
+import { GamePausedBanner } from '@/components/game/GamePausedBanner'
 import { RevealResult } from '@/components/game/RevealResult'
 import { CareerAnswerPopover } from '@/components/game/CareerAnswerPopover'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
@@ -95,6 +99,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const activatePowerup = useActivatePowerup()
   const advanceToNext = useAdvanceToNext()
   const skipQuestion = useSkipQuestion()
+  const setGamePaused = useSetGamePaused()
   const revealAnswers = useRevealAnswers()
   const rematch = useRematch()
   const tickCountdown = useTickCountdown()
@@ -124,6 +129,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const isHost = game?.hostId === myId
   const isBoss = game?.bossId === myId
   const isController = isHost || isBoss
+  const isPaused = Boolean(game?.pausedAt)
+  const penalties = useCareerPenalties(game?.careerPenaltyEndsAt, game?.pausedAt, game?.command === 'answering')
+  const lockedOutPlayers = Object.keys(penalties)
   const gameMode = game?.gameMode ?? 'classic'
   const answeredCount = Object.keys(game?.answers ?? {}).length
 
@@ -139,7 +147,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const careerSeasons = (game?.careerSeasons as unknown as Question[]) ?? []
   const revealedSeasonCount = game?.revealedSeasonCount ?? 0
   const buzzedInPlayerId = game?.buzzedInPlayerId ?? ''
-  const lockedOutPlayers = (game?.lockedOutPlayers as unknown as string[]) ?? []
   const h2hCurrentPair = game?.h2hCurrentPair as unknown as H2HPair | null
   const hlCurrentPair = game?.hlCurrentPair as unknown as HLPair | null
   const history = (game?.questionHistory as unknown as QuestionResult[]) ?? []
@@ -182,7 +189,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     game?.command === 'answering',
     questionDurationMs,
     gameMode === 'career' ? game?.careerPausedDurationMs : 0,
-    gameMode === 'career' ? game?.careerPausedAt : undefined,
+    game ? questionPausedAt(game) : undefined,
   )
 
   useEffect(() => {
@@ -273,7 +280,15 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
       tone: 'red' | 'navy'
       onClick: () => void
     }[] = []
-    if (game!.command === 'answering') {
+    if (game!.command === 'answering' || game!.command === 'starting') {
+      out.push({
+        label: isPaused ? 'Resume' : 'Pause',
+        icon: isPaused ? <Play size={14} strokeWidth={2.2} /> : <Pause size={14} strokeWidth={2.2} />,
+        tone: isPaused ? 'red' : 'navy',
+        onClick: () => setGamePaused({ requesterId: myId, paused: !isPaused }),
+      })
+    }
+    if (game!.command === 'answering' && !isPaused) {
       out.push({
         label: 'Reveal',
         icon: <Eye size={14} strokeWidth={2.2} />,
@@ -364,16 +379,21 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
         </header>
       )}
 
+      {isPaused && <GamePausedBanner />}
+
       {/* Above the scuff overlay, which paints in the z-index-0 layer. */}
-      <ProgressTrack
+      {gameMode !== 'career' && <ProgressTrack
         className="relative z-[2]"
         fraction={isAnswering ? questionTimeLeft / (questionDurationMs / 1000) : 0}
         urgent={isAnswering && questionTimeLeft < 5}
-      />
+      />}
 
-      <div
+      <fieldset
+        disabled={isPaused}
         className="relative z-[2] mx-auto flex w-full max-w-[560px] flex-1 flex-col gap-4 px-[18px] pt-[18px]"
         style={{
+          border: 0,
+          minWidth: 0,
           paddingBottom: `calc(${(showPowerupBar ? 112 : 0) + (showCareerBuzzer ? BUZZER_HEIGHT : 0) + (controls.length ? 60 : 0) + 32}px + env(safe-area-inset-bottom, 0px))`,
         }}
       >
@@ -463,16 +483,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               />
             )}
 
-            {isAnswering && game.hintsEnabled && (
-              <div className="on-ice p-4">
-                <HintPanel
-                  question={currentQuestion}
-                  usedHints={sharedHints}
-                  hintsEnabled={game.hintsEnabled}
-                  onRequestHint={handleHint}
-                />
-              </div>
-            )}
           </motion.div>
         )}
 
@@ -496,7 +506,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                 <MonoLabel size={9}>
                   Round {(game.currentQuestionIndex ?? 0) + 1} / {game.questionCount}
                 </MonoLabel>
-                {isAnswering && <Clock seconds={questionTimeLeft} size={38} label={null} />}
               </div>
             </div>
 
@@ -504,6 +513,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               <CareerRevealCard
                 seasons={careerSeasons}
                 revealedCount={isRevealing ? careerSeasons.length : revealedSeasonCount}
+                showYears={isRevealing || game.careerShowYears !== false}
                 buzzedInPlayerName={
                   buzzedInPlayerId && buzzedInPlayerId !== myId
                     ? players.find((p) => p.id === buzzedInPlayerId)?.name
@@ -516,12 +526,26 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
           </motion.div>
         )}
 
+        {isAnswering && (gameMode === 'classic' || gameMode === 'career') && currentQuestion && game.hintsEnabled && (
+          <div className="on-ice p-4">
+            <HintPanel
+              question={currentQuestion}
+              usedHints={sharedHints}
+              hintsEnabled={game.hintsEnabled}
+              showEraHint={gameMode !== 'career' || game.careerShowYears === false}
+              onRequestHint={handleHint}
+            />
+          </div>
+        )}
+
         {/* Keep the fixed buzzer outside the animated card's transformed container. */}
         {isAnswering && gameMode === 'career' && careerSeasons.length > 0 && (
           <BuzzInButton
             playerId={myId}
             buzzedInPlayerId={buzzedInPlayerId}
-            lockedOutPlayers={lockedOutPlayers}
+            penaltySeconds={penalties[myId] ?? 0}
+            penaltyEndsAt={game.careerPenaltyEndsAt?.[myId]}
+            pausedAt={game.pausedAt}
             onBuzzIn={handleBuzzIn}
             onCancel={() => cancelCareerBuzz({ playerId: myId })}
             onSubmitAnswer={handleCareerAnswer}
@@ -621,11 +645,11 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
             <Scoreboard players={players} variant="live" myId={myId} />
           </div>
         )}
-      </div>
+      </fieldset>
 
       {/* Power plays own the bottom edge. */}
       {showPowerupBar && (
-        <div className="fixed inset-x-0 z-40" style={{ bottom: controls.length ? 60 : 0 }}>
+        <fieldset disabled={isPaused} className="fixed inset-x-0 z-40 m-0 border-0 p-0" style={{ bottom: controls.length ? 60 : 0 }}>
           <div className="mx-auto w-full max-w-[560px]">
             <PowerupBar
               charges={myPowerupCharges}
@@ -637,7 +661,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               onActivate={handlePowerup}
             />
           </div>
-        </div>
+        </fieldset>
       )}
 
       {/* Host controls - a flush bar, not a floating dock. */}

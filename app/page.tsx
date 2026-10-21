@@ -23,22 +23,22 @@ const STEPS = [
   {
     num: '01',
     title: 'Open a room',
-    desc: 'Pick a mode, difficulty tiers and era range. Takes about twenty seconds.',
+    desc: 'Choose Classic, Career, Head-to-Head or Higher / Lower, then adjust the game settings.',
   },
   {
     num: '02',
     title: 'Put it on the TV',
-    desc: 'The board goes on the big screen. Everyone scans the code and their phone becomes a buzzer.',
+    desc: 'Share the board on a big screen. Friends scan the QR code or enter the room code to play on their phones.',
   },
   {
     num: '03',
-    title: 'Read the line',
-    desc: 'Five stats light up one column at a time. Answer early, score higher - speed is worth up to 50 points.',
+    title: 'Make your call',
+    desc: 'Identify a skater, follow a career, match a stat line or call higher or lower. Every mode brings a different challenge.',
   },
   {
     num: '04',
-    title: 'Settle it',
-    desc: 'Streaks multiply, power plays double the round, and a wrong answer in boss mode costs you two rounds.',
+    title: 'Chase the lead',
+    desc: 'Score points, climb the leaderboard and see who comes out on top when the final round ends.',
   },
 ]
 
@@ -47,7 +47,7 @@ const MODES = [
     label: 'Classic',
     tag: 'Most played',
     edge: RED,
-    desc: 'One season stat line. Four names, or type it blind for more points.',
+    desc: 'One season stat line. Choose from four names or type your answer.',
   },
   {
     label: 'Career',
@@ -159,20 +159,20 @@ export default function LandingPage() {
               className="font-display m-0 text-[clamp(44px,6.1vw,78px)]"
               style={{ fontWeight: 800, lineHeight: 0.86, letterSpacing: '-0.005em' }}
             >
-              FIVE STATS.
+              KNOW HOCKEY.
               <br />
-              ONE LEGEND.
+              PICK YOUR MODE.
               <br />
-              <span style={{ color: RED }}>TWELVE SECONDS.</span>
+              <span style={{ color: RED }}>PROVE IT.</span>
             </h1>
 
             <p
               className="m-0 max-w-[480px]"
               style={{ fontSize: 16, lineHeight: 1.6, color: '#55677d' }}
             >
-              One screen shows the board. Everyone else plays on their phone. Guess the NHL skater
-              from a season stat line before the room beats you to it - 46,704 real seasons, 1917 to
-              2025.
+              Identify skaters, uncover careers, match stat lines or call higher or lower. Four ways
+              to test your NHL knowledge with friends, using real stats from 1917 to 2025. Share the
+              board on a big screen and play on your phones, or try the daily challenge solo.
             </p>
 
             <div className="flex flex-wrap items-stretch gap-3">
@@ -286,7 +286,7 @@ export default function LandingPage() {
               HOW A GAME RUNS
             </h2>
             <MonoLabel size={10} tracking="0.2em">
-              Roughly 6 minutes for 10 questions
+              Choose your mode, era and pace
             </MonoLabel>
           </div>
 

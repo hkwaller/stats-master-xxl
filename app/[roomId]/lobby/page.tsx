@@ -474,12 +474,16 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                 },
                 {
                   key: 'Answers',
-                  value: game?.answerMode === 'freetext' ? 'Type it' : 'Multiple choice',
+                  value: game?.gameMode === 'career' ? 'Buzz in and type' : game?.answerMode === 'freetext' ? 'Type it' : 'Multiple choice',
                 },
                 {
                   key: 'Reveal',
-                  value: game?.revealMode === 'timed' ? 'Column by column' : 'All at once',
+                  value: game?.gameMode === 'career' ? 'First season first · Every 3 seconds' : game?.revealMode === 'timed' ? 'Column by column' : 'All at once',
                 },
+                ...(game?.gameMode === 'career' ? [{
+                  key: 'Season years',
+                  value: game.careerShowYears === false ? 'Hidden' : 'Shown',
+                }] : []),
               ].map((row) => (
                 <div
                   key={row.key}

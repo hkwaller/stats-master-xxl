@@ -78,15 +78,15 @@ export function useHostStateMachine(
 
   // Countdown ticker
   useEffect(() => {
-    if (!isHost || !game) return
+    if (!isHost || !game || game.pausedAt) return
     if (game.command !== 'starting' || game.countdownTime <= 0) return
     const timer = setTimeout(() => tickCountdown(myId), 1000)
     return () => clearTimeout(timer)
-  }, [isHost, game?.command, game?.countdownTime, myId, tickCountdown])
+  }, [isHost, game?.pausedAt, game?.command, game?.countdownTime, myId, tickCountdown])
 
   // Classic: launch first/next question
   useEffect(() => {
-    if (!isHost || !game || gameMode !== 'classic') return
+    if (!isHost || !game || game.pausedAt || gameMode !== 'classic') return
     if (game.command !== 'question' && game.command !== 'next') return
     const sequence = (game.questionSequence as unknown as Question[]) ?? []
     const nextIndex = (game.currentQuestionIndex ?? -1) + 1
@@ -94,19 +94,19 @@ export function useHostStateMachine(
     const nextQ = sequence[nextIndex]
     nextQuestion({ requesterId: myId, choices: nextQ.choices ?? [] })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, game?.command, gameMode])
+  }, [isHost, game?.pausedAt, game?.command, gameMode])
 
   // Career: launch next career round
   useEffect(() => {
-    if (!isHost || !game || gameMode !== 'career' || needsCareerRefresh) return
+    if (!isHost || !game || game.pausedAt || gameMode !== 'career' || needsCareerRefresh) return
     if (game.command !== 'question' && game.command !== 'next') return
     nextCareerRound({ requesterId: myId })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, game?.command, gameMode, needsCareerRefresh])
+  }, [isHost, game?.pausedAt, game?.command, gameMode, needsCareerRefresh])
 
   // Career: reveal time pauses while the answering slot is occupied.
   useEffect(() => {
-    if (!isHost || !game || gameMode !== 'career' || needsCareerRefresh) return
+    if (!isHost || !game || game.pausedAt || gameMode !== 'career' || needsCareerRefresh) return
     if (game.command !== 'answering') return
     if (careerSeasons.length === 0 || game.buzzedInPlayerId) return
 
@@ -123,29 +123,29 @@ export function useHostStateMachine(
     }, Math.max(0, deadline - Date.now()))
 
     return () => clearTimeout(timer)
-  }, [isHost, game?.command, game?.questionStartsAt, gameMode, revealedSeasonCount,
+  }, [isHost, game?.pausedAt, game?.command, game?.questionStartsAt, gameMode, revealedSeasonCount,
     careerSeasons.length, myId, revealNextCareerSeason, revealCareerAnswer, needsCareerRefresh,
     game?.buzzedInPlayerId, game?.careerPausedDurationMs])
 
   // H2H: launch next round
   useEffect(() => {
-    if (!isHost || !game || gameMode !== 'h2h') return
+    if (!isHost || !game || game.pausedAt || gameMode !== 'h2h') return
     if (game.command !== 'question' && game.command !== 'next') return
     nextH2HRound({ requesterId: myId })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, game?.command, gameMode])
+  }, [isHost, game?.pausedAt, game?.command, gameMode])
 
   // HL: launch next round
   useEffect(() => {
-    if (!isHost || !game || gameMode !== 'higher-lower') return
+    if (!isHost || !game || game.pausedAt || gameMode !== 'higher-lower') return
     if (game.command !== 'question' && game.command !== 'next') return
     nextHLRound({ requesterId: myId })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, game?.command, gameMode])
+  }, [isHost, game?.pausedAt, game?.command, gameMode])
 
   // Auto-reveal when all connected players have answered (non-career)
   useEffect(() => {
-    if (!isHost || !game) return
+    if (!isHost || !game || game.pausedAt) return
     if (gameMode === 'career') return
     if (game.command !== 'answering') return
     const allPlayers = (game.players as unknown as Player[]) ?? []
@@ -160,5 +160,5 @@ export function useHostStateMachine(
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, game?.command, answeredCount, gameMode, myId])
+  }, [isHost, game?.pausedAt, game?.command, answeredCount, gameMode, myId])
 }

@@ -98,6 +98,7 @@ export type GameState = {
   players: Player[]
 
   command: GameCommand
+  pausedAt?: string // controller pause timestamp; empty when running
   countdownTime: number
   reveal: boolean
 
@@ -124,6 +125,7 @@ export type GameState = {
   careerRevealOrder: CareerRevealOrder
   careerMinSeasons: number
   careerMaxReveals: number
+  careerShowYears: boolean
 
   // Higher/Lower setup
   hlComparisonField: HLComparisonField
@@ -165,7 +167,8 @@ export type GameState = {
   careerPausedDurationMs?: number // accumulated answering time excluded from reveal time
   buzzedInPlayerId: string // '' if nobody has buzzed in
   buzzedInSeasonCount: number // revealedSeasonCount at time of buzz-in (for scoring)
-  lockedOutPlayers: string[] // players who guessed wrong this round
+  lockedOutPlayers: string[] // legacy whole-round lockouts; no longer used
+  careerPenaltyEndsAt?: Record<string, number> // playerId → penalty expiry timestamp
 
   // ─── Head-to-Head Mode ────────────────────────────────────────────────────
   h2hPairs: H2HPair[] // parallel to questionSequence
@@ -206,6 +209,7 @@ export type GameSetupConfig = Pick<
   | 'careerRevealOrder'
   | 'careerMinSeasons'
   | 'careerMaxReveals'
+  | 'careerShowYears'
   | 'hlComparisonField'
   | 'hostPlays'
 >
@@ -223,6 +227,7 @@ export const DEFAULT_SETUP: GameSetupConfig = {
   careerRevealOrder: 'chronological',
   careerMinSeasons: 5,
   careerMaxReveals: 8,
+  careerShowYears: true,
   hlComparisonField: 'points',
   hostPlays: false,
 }
@@ -250,6 +255,7 @@ export const CAREER_SCORE_TIERS = {
   tier4: 50, // last 25%
 }
 export const CAREER_REVEAL_INTERVAL_MS = 3_000
+export const CAREER_PENALTY_MS = 10_000
 
 // Head-to-Head scoring
 export const H2H_SCORE_CORRECT = 100

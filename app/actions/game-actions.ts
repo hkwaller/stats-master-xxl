@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import {
   getAvailableQuestionCount,
   getCareerPlayerCount,
+  getCareerEligibility,
   getQuestionsByTiers,
 } from "@/lib/data/database";
 import { generateChoices } from "@/lib/data/choices";
@@ -65,4 +66,9 @@ const getCachedDailyChallenge = unstable_cache(
 /** Returns the same question for every user on the same UTC day. No repeats for 16+ years. */
 export async function getDailyChallenge(): Promise<Question | null> {
   return getCachedDailyChallenge(new Date().toISOString().slice(0, 10));
+}
+
+/** One snapshot per setup visit; settings filter this locally without network latency. */
+export async function loadCareerPool() {
+  return getCareerEligibility();
 }

@@ -13,7 +13,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Eye, SkipForward } from 'lucide-react'
+import { ChevronRight, Eye, Pause, Play, SkipForward } from 'lucide-react'
 import { useStorage } from '@/lib/liveblocks/client'
 import {
   useAdvanceToNext,
@@ -29,11 +29,15 @@ import {
   useRevealHLAnswers,
   useRevealNextCareerSeason,
   useSkipQuestion,
+  useSetGamePaused,
   useTickCountdown,
 } from '@/lib/liveblocks/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
 import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
+import { useCareerPenalties } from '@/hooks/useCareerPenalties'
+import { questionPausedAt } from '@/lib/game/room-clock'
+import { GamePausedBanner } from '@/components/game/GamePausedBanner'
 import { StatsCard } from '@/components/game/StatsCard'
 import { Scorebug } from '@/components/game/Scorebug'
 import { SideRail, type RailControl } from '@/components/game/SideRail'
@@ -122,6 +126,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const revealHLAnswers = useRevealHLAnswers()
   const advanceToNext = useAdvanceToNext()
   const skipQuestion = useSkipQuestion()
+  const setGamePaused = useSetGamePaused()
   const rematch = useRematch()
 
   useEffect(() => {
@@ -133,6 +138,9 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const isHost = game?.hostId === myId
   const isBoss = game?.bossId === myId
   const isController = isHost || isBoss
+  const isPaused = Boolean(game?.pausedAt)
+  const penalties = useCareerPenalties(game?.careerPenaltyEndsAt, game?.pausedAt, game?.command === 'answering')
+  const lockedOutPlayers = Object.keys(penalties)
 
   useHostStateMachine(isHost, myId, game as unknown as import('@/types/game').GameState | null, {
     tickCountdown,
@@ -159,7 +167,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const timeLeft = useQuestionTimeLeft(
     game?.questionStartsAt, game?.command === 'answering', questionDurationMs,
     game?.gameMode === 'career' ? game.careerPausedDurationMs : 0,
-    game?.gameMode === 'career' ? game.careerPausedAt : undefined,
+    game ? questionPausedAt(game) : undefined,
   )
 
   if (!game) return null
@@ -179,7 +187,6 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const careerSeasons = (game.careerSeasons as unknown as Question[]) ?? []
   const revealedSeasonCount = game.revealedSeasonCount ?? 0
   const buzzedInPlayerId = game.buzzedInPlayerId ?? ''
-  const lockedOutPlayers = (game.lockedOutPlayers as unknown as string[]) ?? []
   const buzzedInPlayer = players.find((p) => p.id === buzzedInPlayerId)
 
   const h2hCurrentPair = game.h2hCurrentPair as unknown as H2HPair | null
@@ -198,7 +205,15 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   // Host controls live at the foot of the rail, not in a floating dock.
   const controls: RailControl[] = []
   if (isController) {
-    if (game.command === 'answering') {
+    if (game.command === 'answering' || game.command === 'starting') {
+      controls.push({
+        label: isPaused ? 'Resume' : 'Pause',
+        icon: isPaused ? <Play size={14} strokeWidth={2.2} /> : <Pause size={14} strokeWidth={2.2} />,
+        tone: isPaused ? 'red' : 'navy',
+        onClick: () => setGamePaused({ requesterId: myId, paused: !isPaused }),
+      })
+    }
+    if (game.command === 'answering' && !isPaused) {
       controls.push({
         label: 'Reveal',
         icon: <Eye size={14} strokeWidth={2.2} />,
@@ -277,6 +292,8 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
       >
         {/* ── Main column ── */}
         <div className="flex min-w-0 flex-col px-[26px] pt-[26px] pb-[26px]">
+          {isPaused && <GamePausedBanner />}
+
           {/* Title row */}
           <div className="mb-3.5 flex items-end justify-between gap-5">
             <div className="flex flex-col gap-1.5">
@@ -299,14 +316,14 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                   : (MODE_TITLES[gameMode] ?? MODE_TITLES.classic)}
               </h1>
             </div>
-            {game.command === 'answering' && <Clock seconds={timeLeft} size={70} />}
+            {game.command === 'answering' && gameMode !== 'career' && <Clock seconds={timeLeft} size={70} />}
           </div>
 
-          <ProgressTrack
+          {gameMode !== 'career' && <ProgressTrack
             fraction={game.command === 'answering' ? timeLeft / (questionDurationMs / 1000) : 0}
             urgent={game.command === 'answering' && timeLeft < 5}
             className="mb-[22px]"
-          />
+          />}
 
           {/* Puck-drop countdown */}
           <AnimatePresence>
@@ -395,6 +412,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                 size="tv"
                 seasons={careerSeasons}
                 revealedCount={isRevealing ? careerSeasons.length : revealedSeasonCount}
+                showYears={isRevealing || game.careerShowYears !== false}
                 buzzedInPlayerName={buzzedInPlayer?.name}
                 lockedOutCount={lockedOutPlayers.length}
               />
@@ -417,7 +435,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
 
           {/* Reveal band - the answer, stated plainly under the board. */}
           <AnimatePresence>
-            {isRevealing && gameMode !== 'career' && (
+            {isRevealing && (gameMode === 'h2h' || gameMode === 'higher-lower') && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -454,6 +472,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           question={currentQuestion}
           usedHints={(game.hintsUsed as unknown as HintType[]) ?? []}
           hintsEnabled={Boolean(game.hintsEnabled)}
+          showEraHint={gameMode !== 'career' || game.careerShowYears === false}
           streak={streakLeader(history, players)}
           controls={controls}
         />
@@ -468,11 +487,12 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           )}
         />
       </div>
-      {isRevealing && gameMode === 'career' && currentQuestion && (
+      {isRevealing && (gameMode === 'career' || gameMode === 'classic') && currentQuestion && (
         <CareerAnswerPopover
-          key={`career-answer-${game.currentQuestionIndex}`}
+          key={`${gameMode}-answer-${game.currentQuestionIndex}`}
           question={currentQuestion}
-          seasons={careerSeasons}
+          seasons={gameMode === 'career' ? careerSeasons : [currentQuestion]}
+          scope={gameMode === 'career' ? 'career' : 'season'}
           result={undefined}
           onNext={isController ? () => advanceToNext(myId) : undefined}
           tv

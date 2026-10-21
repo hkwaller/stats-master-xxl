@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useLayoutEffect, useId, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePlayerSearch } from '@/hooks/usePlayerSearch'
 
@@ -44,6 +44,10 @@ export function PlayerNameInput({
   autoFocus = false,
 }: PlayerNameInputProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const anchorRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const listId = useId()
+  const [placement, setPlacement] = useState({ above: false, maxHeight: 320 })
 
   const {
     suggestions,
@@ -56,13 +60,52 @@ export function PlayerNameInput({
     handleBlur,
   } = usePlayerSearch({ value, setValue, onSubmit })
 
+  const isOpen = showSuggestions && suggestions.length > 0 && !disabled
+  useLayoutEffect(() => {
+    if (!isOpen) return
+    function measure() {
+      const rect = anchorRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const viewport = window.visualViewport
+      const top = viewport?.offsetTop ?? 0
+      const bottom = top + (viewport?.height ?? window.innerHeight)
+      const below = Math.max(0, bottom - rect.bottom - 12)
+      const above = Math.max(0, rect.top - top - 12)
+      const desired = Math.min(320, suggestions.length * 54)
+      const openAbove = below < desired && above > below
+      const maxHeight = Math.min(320, openAbove ? above : below)
+      setPlacement(previous => previous.above === openAbove && previous.maxHeight === maxHeight
+        ? previous : { above: openAbove, maxHeight })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    window.visualViewport?.addEventListener('resize', measure)
+    window.visualViewport?.addEventListener('scroll', measure)
+    const observer = new ResizeObserver(measure)
+    if (anchorRef.current) observer.observe(anchorRef.current)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+      window.visualViewport?.removeEventListener('resize', measure)
+      window.visualViewport?.removeEventListener('scroll', measure)
+      observer.disconnect()
+    }
+  }, [isOpen, suggestions.length])
+
+  useLayoutEffect(() => {
+    if (isOpen && activeIndex >= 0) {
+      listRef.current?.children[activeIndex]?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [isOpen, activeIndex])
+
   function handleSubmit() {
     if (!value.trim()) return
     onSubmit(value.trim())
   }
 
   return (
-    <div className="relative">
+    <div ref={anchorRef} className={`relative min-w-0 ${isOpen ? 'z-50' : ''}`}>
       <div className="flex">
         <input
           ref={inputRef}
@@ -74,6 +117,12 @@ export function PlayerNameInput({
           disabled={disabled}
           placeholder={placeholder}
           autoComplete="off"
+          role="combobox"
+          aria-label="Player name"
+          aria-autocomplete="list"
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? listId : undefined}
+          aria-activedescendant={isOpen && activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
           autoFocus={autoFocus}
           className="min-w-0 flex-1 focus:outline-none disabled:opacity-50"
           style={{
@@ -112,20 +161,34 @@ export function PlayerNameInput({
       </div>
 
       <AnimatePresence>
-        {showSuggestions && suggestions.length > 0 && !disabled && (
+        {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            ref={listRef}
+            id={listId}
+            role="listbox"
+            aria-label="Player suggestions"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.14, ease: 'easeOut' }}
-            className="on-ice absolute inset-x-0 top-full z-20 mt-1 overflow-hidden"
+            className="on-ice absolute inset-x-0 z-50 overflow-y-auto overscroll-contain"
+            style={{
+              top: placement.above ? undefined : 'calc(100% + 4px)',
+              bottom: placement.above ? 'calc(100% + 4px)' : undefined,
+              maxHeight: placement.maxHeight,
+            }}
           >
             {suggestions.map((name, i) => (
               <button
                 key={name}
                 type="button"
-                onMouseDown={() => handleSuggestionPick(name)}
-                className="w-full px-4 py-3 text-left transition-colors"
+                id={`${listId}-${i}`}
+                role="option"
+                aria-selected={i === activeIndex}
+                tabIndex={-1}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => handleSuggestionPick(name)}
+                className="block min-h-11 w-full px-4 py-3 text-left break-words transition-colors"
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,

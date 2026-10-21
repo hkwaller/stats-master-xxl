@@ -13,6 +13,7 @@ interface CareerRevealCardProps {
   size?: 'compact' | 'tv'
   seasons: Question[] // full career, earliest season first
   revealedCount: number // how many have been revealed so far
+  showYears?: boolean
   buzzedInPlayerName?: string
   lockedOutCount?: number
 }
@@ -34,7 +35,7 @@ const COLUMNS: {
 /**
  * A career as a stat sheet, with each revealed season appended in order.
  */
-function SeasonTable({ rows }: { rows: Question[] }) {
+function SeasonTable({ rows, showYears }: { rows: Question[]; showYears: boolean }) {
   return (
     <table className="w-full table-fixed border-collapse" style={{ minWidth: 320 }}>
       <colgroup>
@@ -65,7 +66,7 @@ function SeasonTable({ rows }: { rows: Question[] }) {
         </tr>
       </thead>
       <tbody>
-        {rows.map((season) => (
+        {rows.map((season, index) => (
           <tr key={`${season.playerId}:${season.seasonId}`} className={`career-season-row ${season === rows[rows.length - 1] ? 'career-season-latest' : ''}`}>
             {COLUMNS.map((c) => (
               <td
@@ -85,7 +86,7 @@ function SeasonTable({ rows }: { rows: Question[] }) {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {String(season[c.key] ?? '-')}
+                {c.key === 'season' && !showYears ? `Season ${index + 1}` : String(season[c.key] ?? '-')}
               </td>
             ))}
           </tr>
@@ -99,6 +100,7 @@ export function CareerRevealCard({
   size = 'compact',
   seasons,
   revealedCount,
+  showYears = true,
   buzzedInPlayerName,
   lockedOutCount = 0,
 }: CareerRevealCardProps) {
@@ -153,7 +155,7 @@ export function CareerRevealCard({
         className="career-season-scroll overflow-auto overscroll-contain"
         style={{ height: 'var(--career-sheet-height, min(40vh, 360px))' }}
       >
-        <SeasonTable rows={visibleSeasons} />
+        <SeasonTable rows={visibleSeasons} showYears={showYears} />
       </div>
 
       <div
@@ -161,7 +163,7 @@ export function CareerRevealCard({
         style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 12 }}
       >
         <MonoLabel size={size === 'tv' ? 12 : 9} tracking="0.18em">
-          {revealedCount} / {seasons.length} seasons revealed
+          {visibleSeasons.length} {visibleSeasons.length === 1 ? 'season' : 'seasons'} revealed
         </MonoLabel>
         {lockedOutCount > 0 && (
           <MonoLabel size={size === 'tv' ? 12 : 9} tracking="0.18em" color={RED}>

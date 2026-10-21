@@ -10,6 +10,7 @@ interface HintPanelProps {
   usedHints: HintType[]
   hintsEnabled: boolean
   onRequestHint: (type: HintType) => void
+  showEraHint?: boolean
 }
 
 const HINTS: { type: HintType; label: string; getValue: (q: Question) => string }[] = [
@@ -30,23 +31,25 @@ function positionLabel(code: string): string {
 }
 
 /**
- * Key/value rows, hairline-divided. A locked row reads LOCKED in dead ink and
- * is the button; once revealed it becomes plain text. Hints are shared, so a
+ * Key/value rows, hairline-divided. Each hidden hint has a Reveal button;
+ * once revealed it becomes plain text. Hints are shared, so a
  * reveal lands for the whole room.
  */
-export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint }: HintPanelProps) {
+export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint, showEraHint = true }: HintPanelProps) {
   if (!hintsEnabled) return null
+  const availableHints = HINTS.filter((hint) => hint.type !== 'era' || showEraHint)
+  const revealedCount = availableHints.filter((hint) => usedHints.includes(hint.type)).length
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between">
         <MonoLabel size={9}>Hints</MonoLabel>
         <MonoLabel size={9} tracking="0.14em">
-          {usedHints.length} of {HINTS.length} revealed · shared
+          {revealedCount} of {availableHints.length} revealed · shared
         </MonoLabel>
       </div>
 
-      {HINTS.map((hint) => {
+      {availableHints.map((hint) => {
         const revealed = usedHints.includes(hint.type)
 
         return (
@@ -67,6 +70,7 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint }: 
               <button
                 type="button"
                 onClick={() => onRequestHint(hint.type)}
+                aria-label={`Reveal ${hint.label.toLowerCase()} hint for everyone`}
                 className="btn-ice font-display"
                 style={{
                   border: 'none',
@@ -81,7 +85,7 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint }: 
                   textDecorationColor: 'rgba(13,27,42,0.2)',
                 }}
               >
-                LOCKED
+                Reveal
               </button>
             )}
           </div>

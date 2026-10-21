@@ -17,6 +17,7 @@ import type {
 } from '@/types/game'
 import {
   CAREER_REVEAL_INTERVAL_MS,
+  CAREER_PENALTY_MS,
   CAREER_SCORE_TIERS,
   H2H_SCORE_CORRECT,
   H2H_SCORE_SPEED_MAX,
@@ -29,6 +30,7 @@ import {
   SCORE_SPEED_WINDOW_MS,
 } from '@/types/game'
 import { getAvatarUrl } from '@/lib/avatar'
+import { questionPausedAt, resumedTiming } from '@/lib/game/room-clock'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -178,12 +180,12 @@ export function useSaveSettings() {
 
       game.set('gameMode', config.gameMode as unknown as GameMode)
       game.set('questionCount', config.questionCount)
-      game.set('answerMode', config.answerMode)
+      game.set('answerMode', config.gameMode === 'career' ? 'freetext' : config.answerMode)
       game.set('difficultyTiers', config.difficultyTiers as unknown as DifficultyTier[])
       game.set('eras', config.eras as unknown as string[])
       game.set('revealMode', config.revealMode)
       game.set('hintsEnabled', config.hintsEnabled)
-      game.set('powerupsEnabled', config.powerupsEnabled)
+      game.set('powerupsEnabled', config.gameMode === 'classic' && config.powerupsEnabled)
       game.set('rookiesOnly', config.rookiesOnly)
       game.set(
         'careerRevealOrder',
@@ -191,6 +193,7 @@ export function useSaveSettings() {
       )
       game.set('careerMinSeasons', config.careerMinSeasons)
       game.set('careerMaxReveals', config.careerMaxReveals)
+      game.set('careerShowYears', config.careerShowYears !== false)
       game.set(
         'hlComparisonField',
         config.hlComparisonField as unknown as import('@/types/game').HLComparisonField,
@@ -247,6 +250,7 @@ export function useStartGame() {
 
       game.set('questionSequence', questionSequence as unknown as Question[])
       game.set('currentQuestionIndex', -1)
+      game.set('pausedAt', '')
       game.set('command', 'starting')
       game.set('countdownTime', 3)
       game.set('bossToken', bossToken)
@@ -275,6 +279,7 @@ export function useStartGame() {
       game.set('buzzedInPlayerId', '')
       game.set('buzzedInSeasonCount', 0)
       game.set('lockedOutPlayers', [] as unknown as string[])
+      game.set('careerPenaltyEndsAt', {})
       game.set('h2hCurrentPair', null)
       game.set('hlCurrentPair', null)
       game.set('questionHistory', [] as unknown as QuestionResult[])
@@ -283,12 +288,35 @@ export function useStartGame() {
   )
 }
 
+// ─── Controller pause ─────────────────────────────────────────────────────────
+
+export function useSetGamePaused() {
+  return useMutation(({ storage }, { requesterId, paused }: { requesterId: string; paused: boolean }) => {
+    const game = getGame(storage)
+    if (!game || !requesterId) return
+    if (requesterId !== game.get('hostId') && requesterId !== game.get('bossId')) return
+    if (game.get('command') !== 'answering' && game.get('command') !== 'starting') return
+    const pausedAt = game.get('pausedAt')
+    if (paused === Boolean(pausedAt)) return
+    if (paused) {
+      game.set('pausedAt', new Date(Date.now()).toISOString())
+    } else {
+      game.update(resumedTiming({
+        pausedAt,
+        questionStartsAt: game.get('questionStartsAt'),
+        careerPausedAt: game.get('careerPausedAt'),
+        careerPenaltyEndsAt: game.get('careerPenaltyEndsAt'),
+      }, Date.now()))
+    }
+  }, [])
+}
+
 // ─── Tick Countdown ──────────────────────────────────────────────────────────
 
 export function useTickCountdown() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     if (requesterId !== hostId) return
@@ -309,7 +337,7 @@ export function useNextQuestion() {
   return useMutation(
     ({ storage }, { requesterId, choices }: { requesterId: string; choices: string[] }) => {
       const game = getGame(storage)
-      if (!game) return
+      if (!game || game.get('pausedAt')) return
 
       const hostId = game.get('hostId') as string
       const bossId = game.get('bossId') as string
@@ -350,7 +378,7 @@ export function useNextQuestion() {
 export function useRevealNextColumn() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     if (requesterId !== hostId) return
@@ -370,7 +398,7 @@ export function useRevealNextColumn() {
 export function useSubmitAnswer() {
   return useMutation(({ storage }, { playerId, answer }: { playerId: string; answer: string }) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const command = game.get('command') as string
     if (command !== 'answering') return
@@ -398,7 +426,7 @@ export function useSubmitAnswer() {
 export function useRevealAnswers() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     const bossId = game.get('bossId') as string
@@ -453,7 +481,7 @@ export function useRevealAnswers() {
 export function useAdvanceToNext() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     const bossId = game.get('bossId') as string
@@ -478,7 +506,7 @@ export function useAdvanceToNext() {
 export function useSkipQuestion() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     const bossId = game.get('bossId') as string
@@ -504,10 +532,11 @@ export function useSkipQuestion() {
 export function useRequestHint() {
   return useMutation(({ storage }, { hintType }: { hintType: string }) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hintsEnabled = game.get('hintsEnabled') as boolean
     if (!hintsEnabled) return
+    if (hintType === 'era' && game.get('gameMode') === 'career' && game.get('careerShowYears') !== false) return
 
     const hintsUsed = (game.get('hintsUsed') as unknown as string[]) || []
     if (hintsUsed.includes(hintType)) return
@@ -522,7 +551,7 @@ export function useActivatePowerup() {
   return useMutation(
     ({ storage }, { playerId, powerupType }: { playerId: string; powerupType: PowerupType }) => {
       const game = getGame(storage)
-      if (!game) return
+      if (!game || game.get('pausedAt')) return
 
       const powerupsEnabled = game.get('powerupsEnabled') as boolean
       if (!powerupsEnabled) return
@@ -625,6 +654,7 @@ export function useRematch() {
       players.set(i, { ...p, score: 0 })
     })
 
+    game.set('pausedAt', '')
     game.set('command', 'rematch')
     game.set('currentQuestion', null)
     game.set('currentQuestionIndex', -1)
@@ -652,6 +682,7 @@ export function useRematch() {
     game.set('buzzedInPlayerId', '')
     game.set('buzzedInSeasonCount', 0)
     game.set('lockedOutPlayers', [] as unknown as string[])
+    game.set('careerPenaltyEndsAt', {})
     game.set('h2hCurrentPair', null)
     game.set('hlCurrentPair', null)
   }, [])
@@ -678,7 +709,7 @@ export function useRefreshCareerData() {
     game.set('careerSeasons', current.seasons)
     game.set('currentQuestion', current.seasons[0])
     // Preserve the round's elapsed time and scoring history when restoring it.
-    const pausedAt = game.get('careerPausedAt') as string | undefined
+    const pausedAt = questionPausedAt({ gameMode: 'career', pausedAt: game.get('pausedAt'), careerPausedAt: game.get('careerPausedAt') })
     const clockNow = pausedAt ? new Date(pausedAt).getTime() : Date.now()
     const elapsed = clockNow - new Date(game.get('questionStartsAt') as string).getTime()
       - ((game.get('careerPausedDurationMs') as number) ?? 0)
@@ -691,7 +722,7 @@ export function useRefreshCareerData() {
 export function useNextCareerRound() {
   return useMutation(({ storage }, { requesterId }: { requesterId: string }) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     const bossId = game.get('bossId') as string
@@ -723,6 +754,7 @@ export function useNextCareerRound() {
     game.set('buzzedInPlayerId', '')
     game.set('buzzedInSeasonCount', 0)
     game.set('lockedOutPlayers', [] as unknown as string[])
+    game.set('careerPenaltyEndsAt', {})
     game.set('answers', {} as unknown as Record<string, string>)
     game.set('answeredAt', {} as unknown as Record<string, number>)
     game.set('hintsUsed', [] as unknown as string[])
@@ -735,7 +767,7 @@ export function useNextCareerRound() {
 export function useRevealNextCareerSeason() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     if (requesterId !== hostId) return
@@ -756,11 +788,11 @@ export function useRevealNextCareerSeason() {
   }, [])
 }
 
-/** Any non-locked-out player can buzz in to claim the answering slot */
+/** Any player with no active penalty can claim the answering slot. */
 export function useBuzzIn() {
   return useMutation(({ storage }, { playerId }: { playerId: string }) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const command = game.get('command') as string
     if (command !== 'answering') return
@@ -771,8 +803,8 @@ export function useBuzzIn() {
     const buzzedInPlayerId = game.get('buzzedInPlayerId') as string
     if (buzzedInPlayerId) return // already someone buzzing
 
-    const lockedOutPlayers = (game.get('lockedOutPlayers') as unknown as string[]) || []
-    if (lockedOutPlayers.includes(playerId)) return
+    const penalties = game.get('careerPenaltyEndsAt') ?? {}
+    if ((penalties[playerId] ?? 0) > Date.now()) return
 
     const revealedSeasonCount = (game.get('revealedSeasonCount') as number) ?? 0
 
@@ -786,7 +818,7 @@ export function useBuzzIn() {
 export function useCancelCareerBuzz() {
   return useMutation(({ storage }, { playerId }: { playerId: string }) => {
     const game = getGame(storage)
-    if (!game || game.get('gameMode') !== 'career' || game.get('command') !== 'answering') return
+    if (!game || game.get('pausedAt') || game.get('gameMode') !== 'career' || game.get('command') !== 'answering') return
     if (!playerId || game.get('buzzedInPlayerId') !== playerId) return
     resumeCareerClock(game)
     game.set('buzzedInPlayerId', '')
@@ -802,11 +834,11 @@ function resumeCareerClock(game: LiveObject<GameState>) {
   game.set('careerPausedAt', '')
 }
 
-/** Buzzer submits their answer - scores if correct, locked out if wrong */
+/** Buzzer submits their answer - scores if correct, ten-second penalty if wrong. */
 export function useSubmitCareerAnswer() {
   return useMutation(({ storage }, { playerId, answer }: { playerId: string; answer: string }) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const command = game.get('command') as string
     if (command !== 'answering') return
@@ -863,10 +895,10 @@ export function useSubmitCareerAnswer() {
       game.set('buzzedInPlayerId', '')
       game.set('command', 'revealing')
     } else {
-      // Wrong - lock out this player and clear buzz slot
-      const lockedOutPlayers = (game.get('lockedOutPlayers') as unknown as string[]) || []
-      game.set('lockedOutPlayers', [...lockedOutPlayers, playerId] as unknown as string[])
+      const penalties = game.get('careerPenaltyEndsAt') ?? {}
+      game.set('careerPenaltyEndsAt', { ...penalties, [playerId]: Date.now() + CAREER_PENALTY_MS })
       game.set('buzzedInPlayerId', '')
+      game.set('buzzedInSeasonCount', 0)
 
     }
   }, [])
@@ -876,10 +908,11 @@ export function useSubmitCareerAnswer() {
 export function useRevealCareerAnswer() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
-    if (requesterId !== hostId) return
+    const bossId = game.get('bossId') as string
+    if (requesterId !== hostId && requesterId !== bossId) return
 
     const command = game.get('command') as string
     if (command !== 'answering') return
@@ -919,7 +952,7 @@ export function useRevealCareerAnswer() {
 export function useNextH2HRound() {
   return useMutation(({ storage }, { requesterId }: { requesterId: string }) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     const bossId = game.get('bossId') as string
@@ -955,7 +988,7 @@ export function useNextH2HRound() {
 export function useRevealH2HAnswers() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     const bossId = game.get('bossId') as string
@@ -1010,7 +1043,7 @@ export function useRevealH2HAnswers() {
 export function useNextHLRound() {
   return useMutation(({ storage }, { requesterId }: { requesterId: string }) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     const bossId = game.get('bossId') as string
@@ -1046,7 +1079,7 @@ export function useNextHLRound() {
 export function useRevealHLAnswers() {
   return useMutation(({ storage }, requesterId: string) => {
     const game = getGame(storage)
-    if (!game) return
+    if (!game || game.get('pausedAt')) return
 
     const hostId = game.get('hostId') as string
     const bossId = game.get('bossId') as string

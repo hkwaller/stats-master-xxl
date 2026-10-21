@@ -90,9 +90,9 @@ export default function OpengraphImage() {
             letterSpacing: '-0.02em',
           }}
         >
-          <span>FIVE STATS.</span>
-          <span>ONE LEGEND.</span>
-          <span style={{ color: '#cf0a2c' }}>TWELVE SECONDS.</span>
+          <span>KNOW HOCKEY.</span>
+          <span>PICK YOUR MODE.</span>
+          <span style={{ color: '#cf0a2c' }}>PROVE IT.</span>
         </div>
 
         <div
@@ -104,7 +104,7 @@ export default function OpengraphImage() {
             maxWidth: 880,
           }}
         >
-          Guess the NHL skater from a season stat line before the room beats you to it.
+          Classic, Career, Head-to-Head or Higher / Lower. Bring your hockey knowledge.
         </div>
       </div>
 

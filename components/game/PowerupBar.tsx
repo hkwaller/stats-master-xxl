@@ -5,6 +5,8 @@ import { AnimatePresence } from 'framer-motion'
 import { Scissors, Snowflake, Zap } from 'lucide-react'
 import type { AnswerMode, PowerupType, RevealMode } from '@/types/game'
 import { Button, Modal, MonoLabel } from '@/components/design-system'
+import { PowerPlayHelp } from '@/components/game/PowerPlayHelp'
+import { POWERUP_DETAILS } from '@/lib/game/powerups'
 
 const INK = '#0d1b2a'
 const RED = '#cf0a2c'
@@ -31,8 +33,8 @@ const POWERUPS: {
   {
     type: 'eliminate',
     short: 'Cut',
-    label: 'Eliminate',
-    description: 'Remove 2 wrong choices from the board',
+    label: POWERUP_DETAILS.eliminate.label,
+    description: POWERUP_DETAILS.eliminate.description,
     icon: <Scissors size={18} strokeWidth={2} />,
     availableIn: (mode) => mode === 'multiplechoice',
   },
@@ -40,7 +42,7 @@ const POWERUPS: {
     type: 'doubledown',
     short: 'Double',
     label: 'Double Down',
-    description: '2× points if correct - lose 50 if wrong',
+    description: POWERUP_DETAILS.doubledown.description,
     icon: (
       <span className="font-display" style={{ fontWeight: 800, fontSize: 22, lineHeight: 1 }}>
         ×2
@@ -52,7 +54,7 @@ const POWERUPS: {
     type: 'freeze',
     short: 'Freeze',
     label: 'Freeze',
-    description: 'Stop the reveal timer - lock the columns',
+    description: POWERUP_DETAILS.freeze.description,
     icon: <Snowflake size={18} strokeWidth={2} />,
     availableIn: (_, revealMode) => revealMode === 'timed',
   },
@@ -60,7 +62,7 @@ const POWERUPS: {
     type: 'extrahint',
     short: 'Rush',
     label: 'Rush',
-    description: 'Reveal the next stat column immediately',
+    description: POWERUP_DETAILS.extrahint.description,
     icon: <Zap size={18} strokeWidth={2} />,
     availableIn: (_, revealMode) => revealMode === 'timed',
   },
@@ -88,9 +90,10 @@ export function PowerupBar({
     <>
       <div className="on-ice-header" style={{ boxShadow: '0 -1px 0 rgba(13,27,42,0.10)' }}>
         <div className="flex items-center justify-between px-[18px] pt-3 pb-2">
-          <MonoLabel size={9} tracking="0.22em">
-            Power plays
-          </MonoLabel>
+          <div className="flex items-center gap-1">
+            <MonoLabel size={9} tracking="0.22em">Power plays</MonoLabel>
+            <PowerPlayHelp />
+          </div>
           {status && (
             <MonoLabel size={9} tracking="0.14em" color={RED}>
               {status}
@@ -110,6 +113,8 @@ export function PowerupBar({
               <button
                 key={pu.type}
                 type="button"
+                title={`${pu.label}: ${pu.description}${POWERUP_DETAILS[pu.type].requirement ? ` ${POWERUP_DETAILS[pu.type].requirement}` : ''}`}
+                aria-label={`${pu.label}: ${pu.description} ${charge} ${charge === 1 ? 'use' : 'uses'} remaining.${available ? '' : ` ${POWERUP_DETAILS[pu.type].requirement}`}`}
                 disabled={!canUse}
                 onClick={() => canUse && setConfirming(pu.type)}
                 className="btn-ice flex flex-col items-center justify-center gap-1.5"
