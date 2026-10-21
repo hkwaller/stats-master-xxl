@@ -35,7 +35,7 @@ export default function ConnectPage({ params }: ConnectPageProps) {
     params.then(({ roomId }) => setRoomId(roomId))
     const guest = getOrCreateGuest()
     setGuestId(guest.id)
-    setName(guest.name)
+    setName(guest.name ?? '')
   }, [params])
 
   function handleJoin() {
@@ -46,7 +46,11 @@ export default function ConnectPage({ params }: ConnectPageProps) {
     if (bossToken) {
       claimBoss({ playerId: guestId, token: bossToken })
     }
-    router.push(`/${roomId}/player/${guestId}`)
+    router.push(
+      searchParams.get('returnTo') === 'lobby'
+        ? `/${roomId}/lobby`
+        : `/${roomId}/player/${guestId}`,
+    )
   }
 
   const avatarUrl = guestId ? getAvatarUrl(guestId) : ''

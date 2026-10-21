@@ -30,7 +30,7 @@ export function RevealResult({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className="on-ice flex flex-col gap-4 p-5"
-      style={{ borderLeft: `5px solid ${isCorrect ? RED : '#b3c0cf'}` }}
+      style={{ borderTop: `4px solid ${isCorrect ? RED : '#b3c0cf'}` }}
     >
       <div className="flex items-baseline justify-between gap-3">
         <span
@@ -66,7 +66,7 @@ export function RevealResult({
       >
         <MonoLabel size={9}>The answer was</MonoLabel>
         <span
-          className="font-display"
+          className="reveal-name font-display"
           style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
         >
           {question.firstName} {question.lastName}

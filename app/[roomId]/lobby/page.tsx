@@ -1,5 +1,7 @@
 'use client'
 
+import { RinkBg } from '@/components/arcade/RinkBg'
+
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
@@ -48,15 +50,19 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   }, [params])
 
   useEffect(() => {
-    if (!game || hasJoined) return
+    if (!game || !roomId || hasJoined) return
     const g = getOrCreateGuest()
-    setMyId(g.id)
     const isHost = game.hostId === g.id || game.hostId === ''
     if (!isHost || game.hostPlays !== false) {
+      if (!g.name?.trim()) {
+        router.replace(`/${roomId}/connect?returnTo=lobby`)
+        return
+      }
       joinGame({ id: g.id, name: g.name })
     }
+    setMyId(g.id)
     setHasJoined(true)
-  }, [game, joinGame, hasJoined])
+  }, [game, roomId, joinGame, hasJoined, router])
 
   useEffect(() => {
     if (!game || !roomId || !myId) return
@@ -217,6 +223,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
 
   return (
     <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+      <RinkBg intensity={0.65} />
       {/* ── Header ── */}
       <header className="on-ice-header relative z-20">
         <div className="flex h-[60px] items-center justify-between px-5 md:px-8">
@@ -341,7 +348,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
             <div className="on-ice flex flex-col">
               <div className="flex items-baseline justify-between px-5 pt-5 pb-3">
                 <MonoLabel size={10} tracking="0.22em">
-                  On the bench
+                  Starting lineup
                 </MonoLabel>
                 <MonoLabel size={9} tracking="0.16em">
                   Tap a name to make them boss
@@ -351,14 +358,14 @@ export default function LobbyPage({ params }: LobbyPageProps) {
               {players.map((player, i) => (
                 <div
                   key={player.id}
-                  className="relative flex items-center gap-3 px-5 py-3"
+                  className="lineup-row relative flex items-center gap-3 px-5 py-3"
                   style={{
                     borderBottom: '1px solid rgba(13,27,42,0.09)',
                     borderLeft: `5px solid ${player.isBoss ? RED : INK}`,
                     background: player.isBoss ? 'rgba(207,10,44,0.06)' : 'transparent',
                   }}
                 >
-                  <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#55677d' }}>
+                  <span className="jersey-number" aria-label={`Lineup number ${i + 1}`}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <Avatar url={player.avatarUrl} name={player.name} size={30} />
@@ -375,9 +382,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                   </span>
 
                   {player.isHost && (
-                    <MonoLabel size={9} tracking="0.14em">
-                      Host
-                    </MonoLabel>
+                    <span className="captain-patch" title="Host · Captain" aria-label="Host · Captain">C</span>
                   )}
                   {player.isBoss && (
                     <span

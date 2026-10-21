@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid'
 import { Play } from 'lucide-react'
 import { SignInButton, useAuth, UserButton } from '@clerk/nextjs'
 import { Button, Kickplate, MonoLabel } from '@/components/design-system'
-import { PuckMark, FaceoffCircle } from '@/components/arcade'
+import { PuckMark, RinkBg } from '@/components/arcade'
 import { DailyChallenge } from '@/components/game/DailyChallenge'
 
 const INK = '#0d1b2a'
@@ -142,39 +142,21 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section
-        className="ice-bg relative px-5 pt-12 pb-14 md:px-[34px] md:pt-16 md:pb-[58px]"
+        className="ice-bg rinkside-hero relative px-5 pt-12 pb-14 md:px-[34px] md:pt-16 md:pb-[58px]"
         style={{ overflow: 'hidden' }}
       >
-        <FaceoffCircle size={620} color="rgba(207,10,44,0.10)" style={{ left: -180, top: -120 }} />
-        <FaceoffCircle
-          size={560}
-          color="rgba(11,83,201,0.10)"
-          style={{ right: -140, bottom: -260 }}
-        />
+        <RinkBg intensity={1.15} />
 
-        <div className="relative z-[2] mx-auto grid max-w-[1180px] items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-[52px]">
+        <div className="relative z-[2] mx-auto grid max-w-[1180px] items-center gap-10 min-[1100px]:grid-cols-[1fr_1fr] min-[1100px]:gap-12">
           {/* Left - the pitch */}
           <motion.div
             initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="flex min-w-0 flex-col gap-6"
+            className="hero-pitch flex min-w-0 flex-col gap-6"
           >
-            <span
-              className="font-mono self-start"
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.26em',
-                color: '#fff',
-                background: INK,
-                padding: '7px 12px',
-              }}
-            >
-              MULTIPLAYER · 2–8 PLAYERS · FREE
-            </span>
-
             <h1
-              className="font-display m-0 text-[clamp(44px,9vw,84px)] xl:whitespace-nowrap"
+              className="font-display m-0 text-[clamp(44px,6.1vw,78px)]"
               style={{ fontWeight: 800, lineHeight: 0.86, letterSpacing: '-0.005em' }}
             >
               FIVE STATS.
@@ -251,12 +233,12 @@ export default function LandingPage() {
               </p>
             )}
 
-            <div className="flex flex-wrap gap-[30px] pt-1.5">
+            <div className="rink-facts flex flex-wrap gap-6">
               {HERO_STATS.map((s) => (
                 <div
                   key={s.label}
                   className="flex flex-col gap-1.5 pl-3"
-                  style={{ borderLeft: '4px solid rgba(11,83,201,0.5)' }}
+                  style={{ borderLeft: '1px solid var(--color-hairline)' }}
                 >
                   <span
                     className="font-display tabular-nums"
@@ -278,11 +260,9 @@ export default function LandingPage() {
             initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.4, ease: 'easeOut' }}
-            className="flex min-w-0 flex-col gap-3.5 pt-10 lg:pt-0"
+            className="centre-ice-challenge flex min-w-0 flex-col gap-3.5"
           >
-            <MonoLabel size={10} tracking="0.2em">
-              One free guess, every day
-            </MonoLabel>
+
             <DailyChallenge />
             <p className="m-0" style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>
               Same skater for everyone. New challenge at midnight UTC. No room needed.
@@ -355,8 +335,8 @@ export default function LandingPage() {
             {MODES.map((m) => (
               <div
                 key={m.label}
-                className="on-ice flex flex-col gap-2 p-6"
-                style={{ borderLeft: `6px solid ${m.edge}` }}
+                className="mode-nameplate on-ice flex flex-col gap-2 p-6"
+                style={{ borderTopColor: m.edge }}
               >
                 <div className="flex flex-wrap items-baseline gap-2.5">
                   <span
@@ -416,10 +396,10 @@ export default function LandingPage() {
         className="flex flex-wrap items-center justify-between gap-5 px-5 py-6 md:px-[34px]"
         style={{ background: INK }}
       >
-        <MonoLabel size={9} tracking="0.16em">
+        <MonoLabel size={9} tracking="0.16em" color="var(--color-ice-2)">
           Stats Master · Amalies Utviklingsfabrikk
         </MonoLabel>
-        <MonoLabel size={9} tracking="0.16em">
+        <MonoLabel size={9} tracking="0.16em" color="var(--color-ice-2)">
           Season data 1917–2025 · Not affiliated with any league
         </MonoLabel>
         <nav aria-label="Legal and Playam" className="text-white">

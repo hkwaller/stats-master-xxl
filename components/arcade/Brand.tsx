@@ -10,24 +10,11 @@ interface PuckMarkProps {
 /** The puck seen edge-on: a navy disc crossed by an ice-coloured bar. */
 export function PuckMark({ size = 28, light = false, className = '' }: PuckMarkProps) {
   return (
-    <div
-      aria-hidden="true"
-      className={`grid shrink-0 place-items-center rounded-full ${className}`}
-      style={{
-        width: size,
-        height: size,
-        background: light ? '#ffffff' : '#0d1b2a',
-      }}
-    >
-      <div
-        style={{
-          width: size * 0.535,
-          height: Math.max(2, Math.round(size * 0.107)),
-          borderRadius: 2,
-          background: light ? '#0d1b2a' : '#eef3f9',
-        }}
-      />
-    </div>
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 40 40" fill="none" className={`shrink-0 ${className}`}>
+      <path d="M5 16v9c0 6 30 6 30 0v-9" fill={light ? 'var(--color-ice-0)' : 'var(--color-ink)'} />
+      <ellipse cx="20" cy="16" rx="15" ry="7" fill={light ? 'var(--color-ice-0)' : 'var(--color-ink)'} stroke={light ? 'var(--color-ink)' : 'var(--color-ice-0)'} strokeWidth="1.5" />
+      <path d="M9 25c7 3 15 3 22 0" stroke={light ? 'var(--color-ink)' : 'var(--color-ice-0)'} strokeWidth="1.5" />
+    </svg>
   )
 }
 

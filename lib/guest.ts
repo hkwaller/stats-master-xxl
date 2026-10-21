@@ -7,16 +7,6 @@ export type Guest = {
   name: string
 }
 
-const ADJECTIVES = ['Icy', 'Slapshot', 'Frosty', 'Power', 'Lightning', 'Blazing', 'Iron', 'Mighty']
-const NOUNS = ['Puck', 'Blade', 'Stick', 'Wrist', 'Glove', 'Cage', 'Rink', 'Crease']
-
-export function generateGuestName(): string {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-  const num = Math.floor(Math.random() * 9000) + 1000
-  return `${adj}${noun}${num}`
-}
-
 export function getGuestId(): string {
   if (typeof window === 'undefined') return ''
   const stored = localStorage.getItem(GUEST_KEY)
@@ -42,7 +32,7 @@ export function getOrCreateGuest(): Guest {
     }
   }
 
-  const guest: Guest = { id: uuid(), name: generateGuestName() }
+  const guest: Guest = { id: uuid(), name: '' }
   localStorage.setItem(GUEST_KEY, JSON.stringify(guest))
   return guest
 }

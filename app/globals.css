@@ -47,31 +47,17 @@ body {
 
 /* ── Ice page surface ───────────────────────────────────────────────────────
    The page IS the rink: white to pale blue, with faint diagonal skate scuffs.
-   `.ice-bg` paints the gradient; `.ice-bg::before` lays the scuffs over it. */
-.ice-bg {
-  position: relative;
-  background: linear-gradient(178deg, #ffffff 0%, #eef3f9 38%, #e4ecf5 100%);
-}
-
-.ice-bg::before {
+   `.ice-bg` paints the gradient; `/* Broad, irregular skate cuts; no repeating wallpaper pattern. */
+.ice-bg::before, .ice-scuffs {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   background-image:
-    repeating-linear-gradient(102deg, rgba(11, 83, 201, 0.035) 0 1px, transparent 1px 9px),
-    repeating-linear-gradient(-61deg, rgba(11, 83, 201, 0.028) 0 1px, transparent 1px 14px);
-}
-
-/* Scuffs on their own element, for sections that need them without the gradient. */
-.ice-scuffs {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    repeating-linear-gradient(102deg, rgba(11, 83, 201, 0.035) 0 1px, transparent 1px 9px),
-    repeating-linear-gradient(-61deg, rgba(11, 83, 201, 0.028) 0 1px, transparent 1px 14px);
+    linear-gradient(153deg, transparent 28%, rgba(85,103,125,.06) 28.1%, transparent 28.3%),
+    linear-gradient(26deg, transparent 63%, rgba(85,103,125,.05) 63.1%, transparent 63.3%),
+    linear-gradient(148deg, transparent 72%, rgba(255,255,255,.8) 72.1%, transparent 72.4%);
 }
 
 /* ── Planes on the ice ──────────────────────────────────────────────────────
@@ -570,4 +556,110 @@ input:focus {
   .career-answer-correct[open] .career-answer-light { animation: none; }
   .career-answer-next svg { transition: none; }
   .career-answer-next:hover svg { transform: none; }
+}
+
+/* Rinkside: painted ice, dasher boards, jersey lettering and broadcast cells. */
+::selection { background: var(--color-red); color: var(--color-ice-0); }
+html { scrollbar-color: var(--color-ink-2) var(--color-ice-2); }
+input { caret-color: var(--color-red); }
+a { text-underline-offset: .2em; }
+.rink-markings {
+  position: absolute;
+  width: 100%;
+  height: min(100%, 960px);
+  min-height: 600px;
+  opacity: calc(.34 * var(--rink-intensity, 1));
+}
+.rink-boards { stroke: var(--color-ink-2); stroke-width: 3; }
+.rink-blue { stroke: var(--color-blue-line); }
+.rink-red { stroke: var(--color-red); color: var(--color-red); }
+.rink-blue-fill { fill: var(--color-blue-line); }
+.rink-red-fill { fill: var(--color-red); }
+.rink-crease { fill: var(--color-blue-line); fill-opacity: .18; stroke: var(--color-red); stroke-width: 2; }
+.rinkside-hero { border-bottom: 8px solid var(--color-blue-line); }
+.rinkside-hero .rink-markings { height: 100%; min-height: 0; }
+.hero-pitch { padding-block: 18px; }
+.hero-pitch h1 { text-wrap: balance; }
+.hero-pitch p { color: var(--color-ink) !important; }
+.rink-facts { padding-top: 22px; border-top: 3px double var(--color-blue-line); }
+.centre-ice-challenge { position: relative; padding-block: 24px; }
+.centre-ice-challenge > p { color: var(--color-ink) !important; background: var(--color-ice-0); padding: 10px 14px; margin: 0; }
+.on-ice-header { border-top: 4px solid var(--color-red); }
+.mode-nameplate { position: relative; border-left: 0 !important; border-top: 4px solid var(--color-ink); }
+.mode-nameplate::after { content: ''; width: 52px; height: 7px; background: var(--color-red); margin-top: 14px; }
+.lineup-row { border-left: 0 !important; }
+.jersey-number {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-ink);
+  border-bottom: 3px double var(--color-red);
+  font-variant-numeric: tabular-nums;
+}
+.captain-patch {
+  display: inline-grid;
+  place-items: center;
+  width: 25px;
+  height: 29px;
+  border: 2px solid currentColor;
+  font: 800 20px/1 var(--font-display);
+  color: var(--color-ink);
+}
+.broadcast-score {
+  display: inline-grid;
+  place-items: center;
+  min-width: 50px;
+  padding: 9px 10px;
+  background: var(--color-ink);
+  color: var(--color-ice-0) !important;
+}
+.broadcast-score[data-leader='true'] { background: var(--color-red); }
+.standings-row { grid-template-columns: 36px 26px minmax(0,1fr) auto !important; }
+.standings-row .jersey-number { width: 30px; min-height: 36px; font-size: 28px; }
+.score-change { animation: score-arrival 260ms ease-out; }
+.reveal-name { animation: name-reveal 380ms cubic-bezier(.16,1,.3,1); }
+.final-board { background: linear-gradient(180deg, transparent 70%, var(--color-ice-0)); }
+.final-board h1 { font-size: clamp(44px, 8vw, 84px) !important; }
+.final-board .jumbo-body { position: relative; }
+.final-board .jumbo-body::before { content: ''; position: absolute; top: -8px; left: 0; right: 0; height: 4px; background: var(--color-red); }
+@keyframes score-arrival { from { transform: translateY(5px); } to { transform: translateY(0); } }
+@keyframes name-reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+@media (min-width: 1100px) {
+  .rinkside-hero { padding-top: 64px; padding-bottom: 64px; }
+  .centre-ice-challenge { padding: 36px 0; }
+}
+@media (max-width: 639px) {
+  .rinkside-hero { padding-top: 24px; padding-bottom: 28px; }
+  .rinkside-hero .rink-markings { width: 180%; left: -40%; opacity: .2; }
+  .hero-pitch { gap: 22px; }
+  .rink-facts { gap: 20px; }
+  .centre-ice-challenge { padding-block: 0; }
+  .final-board > div { margin-left: 16px; margin-right: 16px; }
+  .final-board > div:first-child { margin: 0; padding: 28px 16px 0; }
+  .final-board .result-row { grid-template-columns: 24px 28px minmax(0,1fr) auto !important; gap: 10px; padding: 14px 10px; }
+  .result-row .result-meta { display: none; }
+  .final-board .winner-name { font-size: 38px !important; overflow-wrap: anywhere; }
+  .final-board .winner-score { font-size: 60px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .score-change, .reveal-name { animation: none; }
+}
+@media (min-width: 1100px) {
+  .rinkside-hero .rink-markings {
+    mask-image: linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.35) 36%, #000 58%);
+  }
+}
+@media (max-width: 639px) {
+  .hero-pitch > .flex.flex-wrap.items-stretch { display: grid; grid-template-columns: 1fr; }
+  .hero-pitch > .flex.flex-wrap.items-stretch > div { min-height: 52px; }
+  .rink-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .rink-facts > div { padding-left: 8px; }
+  .rink-facts .font-display { font-size: 28px !important; }
+  .rink-facts .font-mono { letter-spacing: .08em !important; line-height: 1.4 !important; }
 }

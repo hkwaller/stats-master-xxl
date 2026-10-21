@@ -1,5 +1,7 @@
 'use client'
 
+import { RinkBg } from '@/components/arcade/RinkBg'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -381,6 +383,7 @@ export default function SetupPage({ params }: SetupPageProps) {
 
   return (
     <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+      <RinkBg intensity={0.65} />
       {/* ── Header ── */}
       <header className="on-ice-header relative z-20">
         <div className="flex h-[60px] items-center justify-between px-5 md:px-8">

@@ -1,5 +1,7 @@
 'use client'
 
+import { RinkBg } from '@/components/arcade/RinkBg'
+
 // Future monetization boundary: only after the entire session has completed and final results are visible.
 // Consult playam-monetization.monetizationBreakReached; no ad SDK or event is invoked here.
 
@@ -305,6 +307,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   if (game.command === 'finished') {
     return (
       <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+      <RinkBg intensity={0.65} />
         <div className="relative z-[2] mx-auto flex w-full max-w-[860px] flex-1 flex-col pb-10">
           <FinalBoard
             players={players}
@@ -331,6 +334,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
   return (
     <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+      <RinkBg intensity={0.65} />
       {isActive && me ? (
         <PlayerScorebug
           questionLabel={`Q ${String((game.currentQuestionIndex ?? 0) + 1).padStart(2, '0')} / ${String(game.questionCount).padStart(2, '0')}`}

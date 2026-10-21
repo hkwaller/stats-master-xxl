@@ -55,7 +55,7 @@ Normalize: lowercase + trim + collapse spaces. Accept full name OR last name onl
 
 Broadcast-hockey visual system. Tokens live in the `@theme` block in `app/globals.css`; never hardcode a colour that has a token.
 
-- **Ice is the page.** `.ice-bg` paints the white-to-pale-blue gradient and lays skate scuffs over it via `::before` (z-index 0), so page content needs `relative z-[2]`. `RinkBg` adds the rink geometry (blue lines, centre line, faceoff circle).
+- **Ice is the page.** `.ice-bg` paints the white-to-pale-blue gradient and sparse skate cuts via `::before` (z-index 0), so page content needs `relative z-[2]`. `RinkBg` draws a complete rink with blue lines, centre line, faceoff circles, goal lines and creases. See `DESIGN.md` for the approved rinkside refinement.
 - **Planes, not boxes.** UI sits _on_ the ice as flat white planes: `.on-ice` (ambient shadow) or `.on-ice-header`. Square corners everywhere - no radius, no outlines. Separation comes from hairlines (`rgba(13,27,42,0.10)`) and a 5–6px coloured left edge marker.
 - **Ink and one accent.** Navy `#0d1b2a` is the ink, `#55677d` the lightest permitted secondary on white. Red `#cf0a2c` is the only accent - leader, live, primary action. Amber `#f2b21c` is trim only: the `Kickplate` under header bars.
 - **The jumbotron is the one dark object** and the only place amber LED type appears. Use `Jumbotron` (5-cell stat line) or `JumbotronPanel` (free-form).

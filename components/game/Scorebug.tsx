@@ -106,7 +106,9 @@ export function Scorebug({
                   {p.name}
                 </span>
                 <span
-                  className="font-display tabular-nums"
+                  key={p.score ?? 0}
+                  data-leader={isLeader}
+                  className="broadcast-score score-change font-display tabular-nums"
                   style={{
                     fontWeight: 800,
                     fontSize: 22,

@@ -44,7 +44,7 @@ function LiveScoreboard({ players, myId }: { players: Player[]; myId?: string })
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
-              className="grid items-center gap-3 px-3 py-2.5"
+              className="standings-row grid items-center gap-3 px-3 py-2.5"
               style={{
                 gridTemplateColumns: '18px 26px 1fr auto',
                 background: isLeader ? 'rgba(207,10,44,0.07)' : 'transparent',
@@ -53,8 +53,7 @@ function LiveScoreboard({ players, myId }: { players: Player[]; myId?: string })
               }}
             >
               <span
-                className="font-mono"
-                style={{ fontSize: 10, color: isLeader ? RED : '#55677d' }}
+                className="jersey-number"
               >
                 {String(i + 1).padStart(2, '0')}
               </span>
@@ -71,7 +70,9 @@ function LiveScoreboard({ players, myId }: { players: Player[]; myId?: string })
                 {player.name}
               </span>
               <span
-                className="font-display tabular-nums"
+                key={player.score ?? 0}
+                className="broadcast-score score-change font-display tabular-nums"
+                data-leader={isLeader}
                 style={{
                   fontWeight: 800,
                   fontSize: 22,
@@ -122,7 +123,7 @@ function ResultRows({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06, duration: 0.2, ease: 'easeOut' }}
-            className="grid items-center gap-[18px] px-5 py-4"
+            className="result-row grid items-center gap-[18px] px-5 py-4"
             style={{
               gridTemplateColumns: '30px 34px 1fr auto 82px',
               background: isWinner ? 'rgba(207,10,44,0.07)' : '#ffffff',
@@ -144,7 +145,7 @@ function ResultRows({
             >
               {p.name}
             </span>
-            <MonoLabel size={9} tracking="0.14em">{metaLine(history, p.id)}</MonoLabel>
+            <MonoLabel className="result-meta" size={9} tracking="0.14em">{metaLine(history, p.id)}</MonoLabel>
             <span
               className="font-display tabular-nums text-right"
               style={{
@@ -190,7 +191,7 @@ export function FinalBoard({
   const winner = sorted[0]
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="final-board flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-2 px-10 pt-11">
         {eyebrow && <MonoLabel size={10} tracking="0.3em">{eyebrow}</MonoLabel>}
         <GameHeading size={84} style={{ lineHeight: 0.88 }}>
@@ -209,7 +210,7 @@ export function FinalBoard({
                 WINNER
               </span>
               <span
-                className="led-glow"
+                className="winner-name reveal-name led-glow"
                 style={{
                   fontFamily: 'var(--font-led)',
                   fontWeight: 700,
@@ -224,7 +225,7 @@ export function FinalBoard({
               </span>
             </div>
             <span
-              className="led-glow tabular-nums"
+              className="winner-score led-glow tabular-nums"
               style={{
                 fontFamily: 'var(--font-led)',
                 fontWeight: 700,
