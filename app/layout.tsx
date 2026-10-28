@@ -118,11 +118,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           appearance={{
             variables: {
               colorPrimary: 'var(--color-red)',
-              colorText: 'var(--color-ink)',
-              colorTextSecondary: 'var(--color-ink-2)',
+              colorForeground: 'var(--color-ink)',
+              colorMutedForeground: 'var(--color-ink-2)',
               colorBackground: 'var(--color-ice-0)',
-              colorInputBackground: 'var(--color-ice-0)',
-              colorInputText: 'var(--color-ink)',
+              colorInput: 'var(--color-ice-0)',
+              colorInputForeground: 'var(--color-ink)',
               colorDanger: 'var(--color-red)',
               borderRadius: '0px',
               fontFamily: 'var(--font-body)',
