@@ -1,0 +1,27 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "statsmaster.site"
+        }
+      ],
+      "destination": "https://statsmaster.playam.app/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.statsmaster.site"
+        }
+      ],
+      "destination": "https://statsmaster.playam.app/:path*",
+      "permanent": true
+    }
+  ]
+}
