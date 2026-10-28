@@ -105,19 +105,54 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        className={`${bigShoulders.variable} ${archivo.variable} ${barlowCondensed.variable} ${jetbrainsMono.variable}`}
-      >
-        <body>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-          />
+    <html
+      lang="en"
+      className={`${bigShoulders.variable} ${archivo.variable} ${barlowCondensed.variable} ${jetbrainsMono.variable}`}
+    >
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <ClerkProvider
+          appearance={{
+            variables: {
+              colorPrimary: 'var(--color-red)',
+              colorText: 'var(--color-ink)',
+              colorTextSecondary: 'var(--color-ink-2)',
+              colorBackground: 'var(--color-ice-0)',
+              colorInputBackground: 'var(--color-ice-0)',
+              colorInputText: 'var(--color-ink)',
+              colorDanger: 'var(--color-red)',
+              borderRadius: '0px',
+              fontFamily: 'var(--font-body)',
+            },
+            elements: {
+              cardBox: { borderRadius: 0 },
+              card: {
+                borderTop: '4px solid var(--color-red)',
+                boxShadow: '0 8px 24px var(--color-hairline)',
+              },
+              headerTitle: {
+                fontFamily: 'var(--font-display)',
+                fontSize: '2rem',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+              },
+              formFieldInput: { minHeight: '44px' },
+              formButtonPrimary: {
+                minHeight: '44px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+              },
+              footer: { background: 'var(--color-ice-1)' },
+              footerActionLink: { fontWeight: 700 },
+            },
+          }}
+        >
           <Providers>{children}</Providers>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   )
 }
