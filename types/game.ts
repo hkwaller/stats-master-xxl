@@ -85,26 +85,23 @@ export type Player = {
   isConnected: boolean
 }
 
-// ─── Game State (stored in Liveblocks under key "game") ───────────────────────
+// ─── Game State (persisted by the room Durable Object) ───────────────────────
 
 export type GameState = {
   roomId: string
+  session: string // changes on rematch to reject queued actions from the previous game
   hostId: string
   bossId: string // '' if no boss set
   bossToken: string // random token for boss claim URL
   hostPlays: boolean // whether the host also joins as a scoring player
 
-  // Players - stored as LiveList<Player> in Liveblocks
+  // Players in the room
   players: Player[]
 
   command: GameCommand
   pausedAt?: string // controller pause timestamp; empty when running
   countdownTime: number
   reveal: boolean
-
-  // Monetization: true when the host is ad-free at game start - suppresses
-  // in-game ads for everyone in the room (host's Pro perk). Reset on rematch.
-  hostAdFree: boolean
 
   // ─── Game Mode ─────────────────────────────────────────────────────────────
   gameMode: GameMode
@@ -186,7 +183,7 @@ export type QuestionResult = {
   playerAnswers: Record<string, { answer: string; points: number; correct: boolean }>
 }
 
-// ─── Liveblocks Presence ─────────────────────────────────────────────────────
+// ─── Room Presence ─────────────────────────────────────────────────────
 
 export type UserPresence = {
   isConnected: boolean

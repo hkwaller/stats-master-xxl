@@ -1,4 +1,4 @@
-import type { GameState } from '@/types/game'
+import type { GameState } from '../../types/game'
 
 /** Career possession and a controller pause can overlap; use the first stop. */
 export function questionPausedAt(game: Pick<GameState, 'gameMode' | 'pausedAt' | 'careerPausedAt'>): string | undefined {

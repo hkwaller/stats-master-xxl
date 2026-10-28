@@ -7,10 +7,9 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { nanoid } from 'nanoid'
 import { QRCodeSVG } from 'qrcode.react'
-import { useStorage } from '@/lib/liveblocks/client'
-import { useAssignBoss, useJoinGame, useStartGame } from '@/lib/liveblocks/mutations'
+import { useStorage } from '@/lib/party/client'
+import { useAssignBoss, useJoinGame, useStartGame } from '@/lib/party/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
-import { useAdFree } from '@/hooks/useAdFree'
 import { Check, Copy, Settings } from 'lucide-react'
 import { Avatar, Button, Kickplate, Modal, MonoLabel } from '@/components/design-system'
 import { PuckMark, JumbotronPanel } from '@/components/arcade'
@@ -35,7 +34,6 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   const [pendingBossId, setPendingBossId] = useState('')
 
   const game = useStorage((root) => root.game)
-  const { adFree } = useAdFree()
   const joinGame = useJoinGame()
   const startGame = useStartGame()
   const assignBoss = useAssignBoss()
@@ -178,7 +176,6 @@ export default function LobbyPage({ params }: LobbyPageProps) {
         careerData,
         h2hPairs,
         hlPairs,
-        hostAdFree: adFree,
       })
 
       const hostPlays = game?.hostPlays !== false

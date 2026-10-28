@@ -8,7 +8,7 @@ Complete visual redesign of Stats Master moving from the current brutalist aesth
 
 The files under `reference/` are **design references created in HTML/React (Babel in-browser)** - prototypes showing intended look and behaviour, not production code to copy directly.
 
-The task is to **recreate these designs in the existing Stats Master codebase** (Next.js 15 App Router + React 19 + Tailwind v4, Liveblocks for realtime, Supabase for data - see `stats-master/CLAUDE.md` and `package.json`). Replace the current brutalist design-system (`components/design-system.tsx`) and the token block in `app/globals.css` with the tokens and components described below. Keep all existing business logic, hooks, state machines and Liveblocks wiring intact - this is a pure visual / component refresh.
+The task is to **recreate these designs in the existing Stats Master codebase** (Next.js 15 App Router + React 19 + Tailwind v4, PartyServer for realtime, Supabase for data - see `stats-master/CLAUDE.md` and `package.json`). Replace the current brutalist design-system (`components/design-system.tsx`) and the token block in `app/globals.css` with the tokens and components described below. Keep all existing business logic, hooks, state machines and PartyServer wiring intact - this is a pure visual / component refresh.
 
 Only **Direction C - "Arcade"** should be implemented. Directions A and B are present in the reference files for context; ignore them.
 
@@ -316,7 +316,7 @@ All animations should check `prefers-reduced-motion`.
 
 ## State Management
 
-No changes expected. The existing state machine in `hooks/useHostStateMachine.ts` and Liveblocks rooms remain the source of truth. Replace the visual layer only.
+No changes expected. The existing state machine in `hooks/useHostStateMachine.ts` and PartyServer rooms remain the source of truth. Replace the visual layer only.
 
 The only new visual state is the Zamboni transition flag, which can be local to the game component (set true on `currentQuestionIndex` change, auto-cleared after 1.2 s).
 

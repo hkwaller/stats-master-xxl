@@ -5,7 +5,7 @@ const path = require('node:path')
 const ts = require('typescript')
 const React = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
-const { LiveList, LiveObject } = require('@liveblocks/client')
+const { TestList, TestRecord } = require('./helpers/game-rules.cjs')
 
 function load(file, mocks = {}) {
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
@@ -28,7 +28,7 @@ const clock = load('lib/game/room-clock.ts')
 
 function room(overrides = {}) {
   const question = { id: 'q', playerId: 1, firstName: 'Paul', lastName: 'Coffey', difficulty: 'easy' }
-  const game = new LiveObject({
+  const game = new TestRecord({
     hostId: 'host', bossId: 'boss', command: 'answering', gameMode: 'career',
     questionCount: 2, currentQuestionIndex: 0, currentQuestion: question,
     questionSequence: [question, question], questionStartsAt: iso(100_000), pausedAt: '',
@@ -36,12 +36,12 @@ function room(overrides = {}) {
     careerSeasons: Array(10).fill(question), revealedSeasonCount: 1,
     careerPausedAt: '', careerPausedDurationMs: 0, careerPenaltyEndsAt: {},
     buzzedInPlayerId: '', buzzedInSeasonCount: 0, lockedOutPlayers: [],
-    answers: {}, answeredAt: {}, questionHistory: [], playedQuestions: new LiveList([]),
-    players: new LiveList(['host', 'boss', 'player'].map(id => ({ id, name: id, score: 0, isConnected: true }))),
+    answers: {}, answeredAt: {}, questionHistory: [], playedQuestions: new TestList([]),
+    players: new TestList(['host', 'boss', 'player'].map(id => ({ id, name: id, score: 0, isConnected: true }))),
     ...overrides,
   })
-  const mutations = load('lib/liveblocks/mutations.ts', {
-    './client': { useMutation: callback => args => callback({ storage: { get: () => game } }, args) },
+  const mutations = load('lib/party/mutations.ts', {
+    './client': { useAction: type => require('./helpers/game-rules.cjs').actionFor(type, () => game) },
     '@/lib/avatar': { getAvatarUrl: () => '' },
   })
   return { game, mutations }
@@ -106,7 +106,7 @@ test('wrong guesses expire after ten seconds, allowing another attempt and a cor
   assert.equal(game.get('buzzedInPlayerId'), 'player')
   at(115_000, () => m.useSubmitCareerAnswer()({ playerId: 'player', answer: 'Coffey' }))
   assert.equal(game.get('command'), 'revealing')
-  assert.equal(game.get('players').get(2).score, 150)
+  assert.equal(game.get('players').at(2).score, 150)
   assert.equal(game.get('questionHistory')[0].playerAnswers.player.correct, true)
 })
 
@@ -195,8 +195,8 @@ test('both screens expose Pause/Resume to host and boss and disable player input
     const mocks = {
       react: { ...React, useEffect: () => {}, useState: () => [[ 'ROOM', ...(shared ? [] : ['player']), id ][stateIndex++], () => {}] },
       'next/navigation': { useRouter: () => ({ push: () => {} }) },
-      '@/lib/liveblocks/client': { useStorage: select => select({ game: game.toImmutable() }) },
-      '@/lib/liveblocks/mutations': new Proxy({}, { get: () => () => () => {} }),
+      '@/lib/party/client': { useStorage: select => select({ game: game.toImmutable() }) },
+      '@/lib/party/mutations': new Proxy({}, { get: () => () => () => {} }),
       '@/lib/guest': {},
       '@/hooks/useHostStateMachine': { useHostStateMachine: () => {} },
       '@/hooks/useQuestionTimeLeft': { useQuestionTimeLeft: () => 20 },
@@ -283,8 +283,8 @@ test('career setup exposes the hints toggle, alongside classic', () => {
     const { default: Setup } = load('app/[roomId]/setup/page.tsx', {
       react: { ...React, useEffect: () => {}, useState: initial => [initial?.gameMode ? { ...initial, gameMode } : initial, () => {}] },
       'next/navigation': { useRouter: () => ({}) },
-      '@/lib/liveblocks/client': { useStorage: () => ({ hostId: '' }) },
-      '@/lib/liveblocks/mutations': { useSaveSettings: () => () => {} },
+      '@/lib/party/client': { useStorage: () => ({ hostId: '' }) },
+      '@/lib/party/mutations': { useSaveSettings: () => () => {} },
       '@/lib/guest': {},
       '@/hooks/useSetupPool': { useSetupPool: () => ({ count: 20, loading: false, error: false }) },
       '@/components/game/AnimatedPoolCount': { AnimatedPoolCount: () => null },

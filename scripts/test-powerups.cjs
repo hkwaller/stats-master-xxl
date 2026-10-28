@@ -5,7 +5,7 @@ const path = require('node:path')
 const ts = require('typescript')
 const React = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
-const { LiveObject } = require('@liveblocks/client')
+const { TestRecord } = require('./helpers/game-rules.cjs')
 
 function load(file, mocks = {}) {
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
@@ -25,9 +25,9 @@ function load(file, mocks = {}) {
 
 test('Power Plays are disabled in saved settings outside Classic', () => {
   const { DEFAULT_SETUP } = load('types/game.ts')
-  const game = new LiveObject({ hostId: 'host' })
-  const { useSaveSettings } = load('lib/liveblocks/mutations.ts', {
-    './client': { useMutation: callback => args => callback({ storage: { get: () => game } }, args) },
+  const game = new TestRecord({ hostId: 'host' })
+  const { useSaveSettings } = load('lib/party/mutations.ts', {
+    './client': { useAction: type => require('./helpers/game-rules.cjs').actionFor(type, () => game) },
     '@/lib/avatar': {},
   })
   for (const gameMode of ['classic', 'career', 'h2h', 'higher-lower']) {

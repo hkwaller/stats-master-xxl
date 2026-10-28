@@ -4,8 +4,23 @@
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3100"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3100"
+      ],
       "port": 3100
+    },
+    {
+      "name": "party",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "party:dev"
+      ],
+      "port": 1999
     }
   ]
 }

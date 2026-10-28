@@ -37,8 +37,8 @@ function renderSharedScreen(command, controller = true) {
     if (dep === 'react') return { ...React, useEffect: () => {},
       useState: () => [['ROOM', controller ? 'host' : 'viewer'][stateIndex++], () => {}] }
     if (dep === 'next/navigation') return { useRouter: () => ({}) }
-    if (dep === '@/lib/liveblocks/client') return { useStorage: selector => selector({ game }) }
-    if (dep === '@/lib/liveblocks/mutations') return new Proxy({}, { get: () => () => () => {} })
+    if (dep === '@/lib/party/client') return { useStorage: selector => selector({ game }) }
+    if (dep === '@/lib/party/mutations') return new Proxy({}, { get: () => () => () => {} })
     if (dep === '@/hooks/useHostStateMachine') return { useHostStateMachine: () => {} }
     if (dep === '@/hooks/useCareerPenalties') return { useCareerPenalties: () => ({}) }
     if (dep === '@/hooks/useQuestionTimeLeft') return { useQuestionTimeLeft: () => 0 }

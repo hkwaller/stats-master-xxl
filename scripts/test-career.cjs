@@ -6,7 +6,7 @@ const ts = require('typescript')
 const React = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
 
-// Exercise the production modules without requiring a database or Liveblocks room.
+// Exercise the production modules without requiring a database or PartyServer room.
 function load(file, mocks = {}) {
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2017, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
@@ -153,8 +153,8 @@ test('only revealed rows render, with one scrolling table following each new sea
 })
 
 test('legacy room careers are restored without restarting the round', () => {
-  const { useRefreshCareerData } = load('lib/liveblocks/mutations.ts', {
-    './client': { useMutation: callback => args => callback({ storage: { get: () => game } }, args) },
+  const { useRefreshCareerData } = load('lib/party/mutations.ts', {
+    './client': { useAction: type => require('./helpers/game-rules.cjs').actionFor(type, () => game) },
     '@/lib/avatar': {},
   })
   const originalNow = Date.now
@@ -202,17 +202,17 @@ test('career result shows Correct with earned points even when the live answer l
 })
 
 test('career submission records the winner and preserves earlier wrong guesses in results', () => {
-  const { LiveList } = require('@liveblocks/client')
+  const { TestList } = require('./helpers/game-rules.cjs')
   const question = { firstName: 'Paul', lastName: 'Coffey' }
-  const players = new LiveList([{ id: 'me', score: 0 }, { id: 'other', score: 0 }])
+  const players = new TestList([{ id: 'me', score: 0 }, { id: 'other', score: 0 }])
   const values = new Map(Object.entries({
     command: 'answering', gameMode: 'career', hostId: 'host', currentQuestion: question,
     buzzedInPlayerId: 'me', buzzedInSeasonCount: 7, careerSeasons: Array(22).fill({}),
-    players, answers: { other: 'Wayne Gretzky' }, questionHistory: [], playedQuestions: new LiveList([]),
+    players, answers: { other: 'Wayne Gretzky' }, questionHistory: [], playedQuestions: new TestList([]),
   }))
   const game = { get: key => values.get(key), set: (key, value) => values.set(key, value) }
-  const mutations = load('lib/liveblocks/mutations.ts', {
-    './client': { useMutation: callback => args => callback({ storage: { get: () => game } }, args) },
+  const mutations = load('lib/party/mutations.ts', {
+    './client': { useAction: type => require('./helpers/game-rules.cjs').actionFor(type, () => game) },
     '@/lib/avatar': {},
   })
   mutations.useSubmitCareerAnswer()({ playerId: 'me', answer: 'Paul Coffey' })
@@ -228,17 +228,17 @@ test('career submission records the winner and preserves earlier wrong guesses i
 })
 
 test('buzzing blocks season reveals and expiry, then preserves the remaining reveal interval', () => {
-  const { LiveList } = require('@liveblocks/client')
+  const { TestList } = require('./helpers/game-rules.cjs')
   const values = new Map(Object.entries({
     command: 'answering', gameMode: 'career', hostId: 'host', buzzedInPlayerId: '',
     lockedOutPlayers: [], revealedSeasonCount: 1, careerSeasons: Array(5).fill({}),
     currentQuestion: { firstName: 'Paul', lastName: 'Coffey' },
-    players: new LiveList([{ id: 'me', score: 0 }]), playedQuestions: new LiveList([]),
+    players: new TestList([{ id: 'me', score: 0 }]), playedQuestions: new TestList([]),
     questionStartsAt: new Date(100_000).toISOString(),
   }))
   const game = { get: key => values.get(key), set: (key, value) => values.set(key, value) }
-  const mutations = load('lib/liveblocks/mutations.ts', {
-    './client': { useMutation: callback => args => callback({ storage: { get: () => game } }, args) },
+  const mutations = load('lib/party/mutations.ts', {
+    './client': { useAction: type => require('./helpers/game-rules.cjs').actionFor(type, () => game) },
     '@/lib/avatar': {},
   })
   const originalNow = Date.now
@@ -278,8 +278,8 @@ test('only the buzzer can cancel, without a penalty, and can buzz again', () => 
     lockedOutPlayers: [], answers: {}, revealedSeasonCount: 2,
   }))
   const game = { get: key => values.get(key), set: (key, value) => values.set(key, value) }
-  const mutations = load('lib/liveblocks/mutations.ts', {
-    './client': { useMutation: callback => args => callback({ storage: { get: () => game } }, args) },
+  const mutations = load('lib/party/mutations.ts', {
+    './client': { useAction: type => require('./helpers/game-rules.cjs').actionFor(type, () => game) },
     '@/lib/avatar': {},
   })
   const originalNow = Date.now
@@ -317,8 +317,8 @@ test('setup cannot continue while pool eligibility is unknown', () => {
     'framer-motion': { motion: { div: ({ initial, animate, transition, ...props }) => React.createElement('div', props) } },
     '@/components/arcade/RinkBg': { RinkBg: () => null },
     '@/components/arcade': { PuckMark: () => null, JumbotronPanel: ({ children }) => React.createElement('div', null, children) },
-    '@/lib/liveblocks/client': { useStorage: () => ({ hostId: '' }) },
-    '@/lib/liveblocks/mutations': { useSaveSettings: () => () => {} },
+    '@/lib/party/client': { useStorage: () => ({ hostId: '' }) },
+    '@/lib/party/mutations': { useSaveSettings: () => () => {} },
     '@/app/actions/game-actions': {},
     '@/components/game/AnimatedPoolCount': { AnimatedPoolCount: ({ count }) => React.createElement('span', null, count) },
     '@/components/game/PowerPlayHelp': { PowerPlayHelp: () => null },

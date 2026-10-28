@@ -14,7 +14,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, Eye, Pause, Play, RotateCcw, Settings, SkipForward } from 'lucide-react'
-import { useStorage } from '@/lib/liveblocks/client'
+import { useStorage } from '@/lib/party/client'
 import {
   useAdvanceToNext,
   useBuzzIn,
@@ -37,7 +37,7 @@ import {
   useSubmitAnswer,
   useSubmitCareerAnswer,
   useTickCountdown,
-} from '@/lib/liveblocks/mutations'
+} from '@/lib/party/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
 import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'

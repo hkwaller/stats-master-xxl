@@ -29,15 +29,13 @@ Player-season data lives in the **Supabase `nhl_player_seasons` table** - 46,704
 idle → starting → question → answering → revealing → next → (loop or finished) → rematch
 ```
 
-## Liveblocks Storage
+## Multiplayer rooms
 
-Storage key is `game` (not `gameState`). Access in mutations:
-
-```ts
-const game = storage.get('game') as unknown as LiveObject<GameState>
-```
-
-`players` is a `LiveList<Player>` - always use the self-healing pattern before operating on it. `questionSequence`, `answers`, `answeredAt`, `hintsUsed`, `playerPowerups` are plain objects/arrays.
+PartyServer runs one Cloudflare Durable Object per room. Plain JSON game state is
+persisted and broadcast after validated actions. `lib/party/rules.ts` holds game
+rules, `reducer.ts` enforces signed identities and phases, and `protocol.ts` validates
+socket payloads. Components use the existing hooks in `lib/party/mutations.ts`
+and selectors in `client.tsx`. See `party/README.md` for local setup and deployment.
 
 ## Scoring
 
@@ -87,5 +85,6 @@ See `.env.example`. Copy to `.env.local` and fill in values.
 
 ```bash
 npm install
+npm run party:dev # separate terminal
 npm run dev
 ```

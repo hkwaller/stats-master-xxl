@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { GameRoomProvider } from '@/lib/liveblocks/GameRoomProvider'
+import { GameRoomProvider } from '@/lib/party/GameRoomProvider'
 import { getOrCreateGuest } from '@/lib/guest'
 
 interface ClientLayoutProps {

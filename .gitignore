@@ -120,3 +120,7 @@ node_modules
 scores.js
 scores.js.tmp
 scripts/.scrape-checkpoint.json
+
+# PartyServer local secrets and Wrangler state
+.dev.vars
+.wrangler/

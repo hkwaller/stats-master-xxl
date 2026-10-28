@@ -5,7 +5,7 @@ const path = require('node:path')
 const ts = require('typescript')
 const React = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
-const { LiveList, LiveObject } = require('@liveblocks/client')
+const { TestList, TestRecord } = require('./helpers/game-rules.cjs')
 
 function load(file, resolve) {
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
@@ -18,10 +18,10 @@ function load(file, resolve) {
 const types = load('types/game.ts', require)
 
 function room() {
-  return new LiveObject({
+  return new TestRecord({
     hostId: 'host', bossId: 'boss', hostPlays: false, command: 'finished',
     gameMode: 'classic', questionCount: 10,
-    players: new LiveList([
+    players: new TestList([
       { id: 'boss', name: 'Boss', score: 100, isHost: false, isBoss: true, isConnected: true },
       { id: 'player', name: 'Player', score: 50, isHost: false, isBoss: false, isConnected: true },
     ]),
@@ -32,8 +32,8 @@ function room() {
 function device(game, id, shared = false) {
   const effects = [], routes = []
   let finalBoard, stateIndex = 0
-  const mutations = load('lib/liveblocks/mutations.ts', dep => {
-    if (dep === './client') return { useMutation: callback => args => callback({ storage: { get: () => game } }, args) }
+  const mutations = load('lib/party/mutations.ts', dep => {
+    if (dep === './client') return { useAction: type => require('./helpers/game-rules.cjs').actionFor(type, () => game) }
     if (dep === '@/lib/game/room-clock') return load('lib/game/room-clock.ts', require)
     if (dep === '@/types/game') return types
     if (dep === '@/lib/avatar') return { getAvatarUrl: () => '' }
@@ -49,8 +49,8 @@ function device(game, id, shared = false) {
       useState: () => [[ 'ROOM', ...(shared ? [] : ['boss']), id ][stateIndex++], () => {}],
     }
     if (dep === 'next/navigation') return { useRouter: () => ({ push: route => routes.push(route) }) }
-    if (dep === '@/lib/liveblocks/client') return { useStorage: selector => selector({ game: game.toImmutable() }) }
-    if (dep === '@/lib/liveblocks/mutations') return mutations
+    if (dep === '@/lib/party/client') return { useStorage: selector => selector({ game: game.toImmutable() }) }
+    if (dep === '@/lib/party/mutations') return mutations
     if (dep === '@/lib/guest') return { getOrCreateGuest: () => ({ id }) }
     if (dep === '@/hooks/useHostStateMachine') return { useHostStateMachine: () => {} }
     if (dep === '@/hooks/useCareerPenalties') return { useCareerPenalties: () => ({}) }
@@ -79,8 +79,8 @@ test('boss rematch keeps player devices on their player view and sends the share
   assert.equal(game.get('hostId'), 'host')
   assert.equal(game.get('bossId'), 'boss')
   assert.equal(game.get('hostPlays'), false)
-  assert.equal(game.get('players').get(0).isBoss, true)
-  assert.equal(game.get('players').get(0).score, 0)
+  assert.equal(game.get('players').at(0).isBoss, true)
+  assert.equal(game.get('players').at(0).score, 0)
   for (const id of ['boss', 'player']) {
     const waiting = device(game, id)
     assert.deepEqual(waiting.routes, [], `${id} must keep the player route`)

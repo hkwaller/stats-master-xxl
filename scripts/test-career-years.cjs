@@ -5,7 +5,7 @@ const path = require('node:path')
 const ts = require('typescript')
 const React = require('react')
 const { renderToStaticMarkup } = require('react-dom/server')
-const { LiveList, LiveObject } = require('@liveblocks/client')
+const { TestList, TestRecord } = require('./helpers/game-rules.cjs')
 
 function load(file, mocks = {}) {
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
@@ -68,9 +68,9 @@ test('Era visibility, available hint counts and revealed values stay consistent'
 })
 
 function room(overrides = {}) {
-  const game = new LiveObject({ hostId: 'host', bossId: 'boss', gameMode: 'career', players: new LiveList([]), hintsEnabled: true, hintsUsed: [], ...overrides })
-  const mutations = load('lib/liveblocks/mutations.ts', {
-    './client': { useMutation: callback => args => callback({ storage: { get: () => game } }, args) },
+  const game = new TestRecord({ hostId: 'host', bossId: 'boss', gameMode: 'career', players: new TestList([]), hintsEnabled: true, hintsUsed: [], ...overrides })
+  const mutations = load('lib/party/mutations.ts', {
+    './client': { useAction: type => require('./helpers/game-rules.cjs').actionFor(type, () => game) },
     '@/lib/avatar': {},
   })
   return { game, mutations }
