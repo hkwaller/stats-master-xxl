@@ -790,6 +790,17 @@ a { text-underline-offset: .2em; }
 .practice-lamp[data-lit=true] { background: var(--color-red); animation: practice-lamp 1.2s ease-out both; }
 .practice-prompt { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 24px 0 14px; }
 .practice-bonus { margin-bottom: 14px; }
+.practice-hints { display: grid; gap: 10px; margin-bottom: 16px; }
+.practice-hint-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.practice-hint { display: flex; min-width: 0; min-height: 64px; flex-direction: column; justify-content: space-between; gap: 8px; padding: 10px 12px; text-align: left; background: var(--color-ice-0); box-shadow: inset 0 -2px var(--color-hairline); transition: background-color 150ms ease-out, box-shadow 150ms ease-out; }
+.practice-hint > span:last-child, .practice-hint strong { font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1; }
+.practice-hint > span:last-child { color: var(--color-ink-2); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--color-hairline); }
+.practice-hint strong { overflow-wrap: anywhere; color: var(--color-ink); }
+.practice-hint[data-open=true] { box-shadow: inset 0 -2px var(--color-ink); }
+button.practice-hint { cursor: pointer; }
+button.practice-hint:hover { background: var(--color-ice-2); }
+button.practice-hint:active { transform: translateY(1px); }
+button.practice-hint:focus-visible { outline: 3px solid var(--color-blue-line); outline-offset: 2px; }
 .practice-choices { display: grid; gap: 6px; }
 .practice-choices > div { animation: practice-choice-in 300ms cubic-bezier(.16,1,.3,1) both; }
 .practice-call { min-height: 82px; padding: 16px 0; }
@@ -815,7 +826,7 @@ a { text-underline-offset: .2em; }
   100% { opacity: 1; box-shadow: 0 0 10px 2px color-mix(in srgb, var(--color-red) 25%, transparent); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .practice-shots li[data-state], .practice-choices > div, .practice-call .reveal-name, .practice-led-call, .practice-delta, .practice-bug .score-change { animation: none; }
+  .practice-shots li[data-state], .practice-choices > div, .practice-call .reveal-name, .practice-hint .reveal-name, .practice-led-call, .practice-delta, .practice-bug .score-change { animation: none; }
   .practice-lamp[data-lit=true] { animation: none; box-shadow: 0 0 10px 2px color-mix(in srgb, var(--color-red) 25%, transparent); }
 }
 @media (min-width: 640px) { .app-home-content { padding: 48px 32px; } }

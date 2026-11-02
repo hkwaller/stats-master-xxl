@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Check, X } from 'lucide-react'
-import type { Question } from '@/types/game'
+import type { HintType, Question } from '@/types/game'
 import { SCORE_SPEED_MAX, SCORE_SPEED_WINDOW_MS } from '@/types/game'
 import poolData from '@/native/offline/questions.json'
 import { generateChoices } from '@/lib/data/choices'
@@ -17,15 +17,30 @@ const pool = poolData as Question[]
 const ROUND_COUNT = 10
 const LETTERS = ['A', 'B', 'C', 'D']
 const BEST_KEY = 'nhl-stats-master:practice-best'
+// Each hint type is free once per game; every later use of that type costs 10 more than the last.
+// Taken off that shot's points, never below 0.
+const HINT_STEP = 10
+const POSITIONS: Record<string, string> = { C: 'Center', L: 'Left wing', LW: 'Left wing', R: 'Right wing', RW: 'Right wing', D: 'Defense', G: 'Goalie' }
+const HINTS: { type: HintType; label: string; value: (q: Question) => string }[] = [
+  { type: 'era', label: 'Era', value: q => q.era },
+  { type: 'team', label: 'Team', value: q => q.teamNames },
+  { type: 'position', label: 'Position', value: q => POSITIONS[q.positionCode] ?? q.positionCode },
+]
 
 type Round = { question: Question; choices: string[]; started: number }
-type Shot = { goal: boolean; points: number }
+type Shot = { goal: boolean; points: number; hintCost: number }
 
 function newRound(used: Set<string>): Round {
   const available = pool.filter(q => !used.has(q.id))
   const question = available[Math.floor(Math.random() * available.length)]
   used.add(question.id)
   return { question, choices: generateChoices(question, pool), started: Date.now() }
+}
+type HintUse = { type: HintType; cost: number }
+type HintCounts = Record<HintType, number>
+const NO_HINTS: HintCounts = { era: 0, team: 0, position: 0 }
+function hintTotal(uses: HintUse[]) {
+  return uses.reduce((sum, use) => sum + use.cost, 0)
 }
 function readBest() {
   try { return Number(localStorage.getItem(BEST_KEY)) || 0 } catch { return 0 }
@@ -69,6 +84,37 @@ function ShotChart({ shots, current }: { shots: Shot[]; current?: number }) {
         )
       })}
     </ol>
+  )
+}
+
+/** Three plates under the board. Each closed plate prints what revealing it costs right now. */
+function Hints({ question, used, counts, locked, onReveal }: { question: Question; used: HintUse[]; counts: HintCounts; locked: boolean; onReveal: (type: HintType) => void }) {
+  const total = hintTotal(used)
+  const freeLeft = HINTS.filter(hint => counts[hint.type] === 0).length
+  return (
+    <div className="practice-hints">
+      <div className="flex items-baseline justify-between">
+        <MonoLabel size={9}>Hints</MonoLabel>
+        <MonoLabel size={9} tracking="0.14em">{total ? `−${total} this shot` : freeLeft ? `${freeLeft} free left this game` : 'Reuse costs more'}</MonoLabel>
+      </div>
+      <div className="practice-hint-grid">
+        {HINTS.map(hint => {
+          const open = used.some(use => use.type === hint.type) || locked
+          const cost = counts[hint.type] * HINT_STEP
+          return open ? (
+            <div key={hint.type} className="practice-hint" data-open="true">
+              <MonoLabel size={9} tracking="0.2em">{hint.label}</MonoLabel>
+              <strong className="reveal-name">{hint.value(question)}</strong>
+            </div>
+          ) : (
+            <button key={hint.type} type="button" className="practice-hint" onClick={() => onReveal(hint.type)} aria-label={`Reveal ${hint.label.toLowerCase()}, ${cost ? `costs ${cost} points` : 'free'}`}>
+              <MonoLabel size={9} tracking="0.2em">{hint.label}</MonoLabel>
+              <span>{cost ? `−${cost}` : 'Free'}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -120,6 +166,8 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
   const [shots, setShots] = useState<Shot[]>([])
   const [answer, setAnswer] = useState<string | null>(null)
   const [answeredAt, setAnsweredAt] = useState<number | null>(null)
+  const [hints, setHints] = useState<HintUse[]>([])
+  const [hintCounts, setHintCounts] = useState<HintCounts>(NO_HINTS)
   const [finished, setFinished] = useState(false)
   const [best, setBest] = useState(0)
   const [previousBest, setPreviousBest] = useState(0)
@@ -133,7 +181,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
     setSession(`practice:${crypto.randomUUID()}`)
     used.current.clear()
     locked.current = false
-    setIndex(0); setShots([]); setAnswer(null); setAnsweredAt(null); setFinished(false)
+    setIndex(0); setShots([]); setAnswer(null); setAnsweredAt(null); setHints([]); setHintCounts(NO_HINTS); setFinished(false)
     setPreviousBest(readBest())
     setRound(newRound(used.current))
     void nativeFeedback()
@@ -145,7 +193,9 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
     const correct = isCorrectAnswer(choice, round.question)
     setAnswer(choice)
     setAnsweredAt(at)
-    setShots(value => [...value, { goal: correct, points: calcScore(at - round.started, round.question.difficulty, false, correct) }])
+    const cost = hintTotal(hints)
+    const earned = calcScore(at - round.started, round.question.difficulty, false, correct)
+    setShots(value => [...value, { goal: correct, points: Math.max(0, earned - cost), hintCost: correct ? Math.min(cost, earned) : 0 }])
     void nativeFeedback(correct ? 'correct' : 'wrong')
   }
   function next() {
@@ -158,8 +208,16 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
     setIndex(value => value + 1)
     setAnswer(null)
     setAnsweredAt(null)
+    setHints([])
     locked.current = false
     setRound(newRound(used.current))
+  }
+
+  function reveal(type: HintType) {
+    if (locked.current || hints.some(use => use.type === type)) return
+    setHints(value => [...value, { type, cost: hintCounts[type] * HINT_STEP }])
+    setHintCounts(value => ({ ...value, [type]: value[type] + 1 }))
+    void nativeFeedback('lock')
   }
 
   // 1–4 or A–D picks a name, so a keyboard player never leaves the home row.
@@ -188,7 +246,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
           <h1 className="font-display text-5xl leading-none font-extrabold uppercase">Classic practice</h1>
           <p className="mt-3 mb-7 text-sm text-ink-2">Offline · 10 shots · Local scores only</p>
           <div className="on-ice practice-intro">
-            <p>The jumbotron lights up a real NHL season. Four names, one skater. Every correct pick is a goal, and the speed bonus drains while you think.</p>
+            <p>The jumbotron lights up a real NHL season. Four names, one skater. Every correct pick is a goal, and the speed bonus drains while you think. Stuck? Era, team and position hints are free once each per game. After that, every reuse costs 10 more than the last.</p>
             <ShotChart shots={[]} />
             {best > 0 && <p className="practice-best-line"><MonoLabel size={9}>Personal best</MonoLabel><span className="font-display text-2xl font-extrabold tabular-nums">{best}</span></p>}
             <Button onClick={start} className="w-full">Drop the puck</Button>
@@ -235,8 +293,8 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
           <Jumbotron
             size="phone"
             struts={false}
-            topLeft={q.season}
-            topRight={`${q.teamAbbrevs} · ${q.positionCode}`}
+            topLeft={answer !== null ? q.season : 'SEASON HIDDEN'}
+            topRight={answer !== null ? `${q.teamAbbrevs} · ${q.positionCode}` : undefined}
             cells={[
               { abbr: 'GP', value: q.gamesPlayed },
               { abbr: 'G', value: q.goals },
@@ -251,7 +309,8 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
           <h2 className="font-display text-3xl font-bold uppercase">Name the skater</h2>
           <TierBadge tier={q.difficulty} />
         </div>
-        <SpeedBonus key={`bonus-${q.id}`}started={round.started} stopped={answeredAt} />
+        <SpeedBonus key={`bonus-${q.id}`} started={round.started} stopped={answeredAt} />
+        <Hints question={q} used={hints} counts={hintCounts} locked={answer !== null} onReveal={reveal} />
 
         <div className="practice-choices" key={`choices-${q.id}`}>
           {round.choices.map((choice, i) => {
@@ -270,7 +329,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
           {answer === null ? <p className="text-sm text-ink-2">Pick a name. Keys 1–4 work too.</p> : last?.goal ? (
             <div className="reveal-name" key={`call-${index}`}>
               <strong>{goalCall(streak)}</strong>
-              <span>+{last.points} for {q.firstName} {q.lastName}</span>
+              <span>+{last.points} for {q.firstName} {q.lastName}{last.hintCost ? ` · hints −${last.hintCost}` : ''}</span>
             </div>
           ) : (
             <div className="reveal-name practice-call-miss" key={`call-${index}`}>
