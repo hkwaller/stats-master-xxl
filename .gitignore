@@ -124,3 +124,16 @@ scripts/.scrape-checkpoint.json
 # PartyServer local secrets and Wrangler state
 .dev.vars
 .wrangler/
+
+# Generated native web bundle and local native build state
+native/www/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+
+.next-native-qa/

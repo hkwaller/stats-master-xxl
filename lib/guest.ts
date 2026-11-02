@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid'
+import { GUEST_STORAGE_KEY, persistNativeGuest } from './native'
 
-const GUEST_KEY = 'nhl-stats-master:guest'
+const GUEST_KEY = GUEST_STORAGE_KEY
 
 export type Guest = {
   id: string
@@ -9,7 +10,7 @@ export type Guest = {
 
 export function getGuestId(): string {
   if (typeof window === 'undefined') return ''
-  const stored = localStorage.getItem(GUEST_KEY)
+  const stored = readGuest()
   if (stored) {
     try {
       return (JSON.parse(stored) as Guest).id
@@ -23,7 +24,7 @@ export function getGuestId(): string {
 export function getOrCreateGuest(): Guest {
   if (typeof window === 'undefined') return { id: '', name: '' }
 
-  const stored = localStorage.getItem(GUEST_KEY)
+  const stored = readGuest()
   if (stored) {
     try {
       return JSON.parse(stored) as Guest
@@ -33,12 +34,22 @@ export function getOrCreateGuest(): Guest {
   }
 
   const guest: Guest = { id: uuid(), name: '' }
-  localStorage.setItem(GUEST_KEY, JSON.stringify(guest))
+  saveGuest(guest)
   return guest
 }
 
 export function updateGuestName(name: string): void {
   if (typeof window === 'undefined') return
   const guest = getOrCreateGuest()
-  localStorage.setItem(GUEST_KEY, JSON.stringify({ ...guest, name }))
+  saveGuest({ ...guest, name })
+}
+
+function saveGuest(guest: Guest) {
+  const value = JSON.stringify(guest)
+  try { localStorage.setItem(GUEST_KEY, value) } catch { /* Storage may be disabled. */ }
+  void persistNativeGuest(value)
+}
+
+function readGuest() {
+  try { return localStorage.getItem(GUEST_KEY) } catch { return null }
 }

@@ -1,8 +1,10 @@
-import type { Metadata } from 'next'
+import { headers } from 'next/headers'
+import type { Metadata, Viewport } from 'next'
 import { Big_Shoulders, Archivo, Barlow_Condensed, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Providers } from './providers'
+import { NativeBoot } from '@/components/native/NativeBoot'
 
 /**
  * "Big Shoulders Display" was folded into the "Big Shoulders" superfamily upstream;
@@ -40,6 +42,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://statsmaster.playam.
 
 const DESCRIPTION =
   'Free NHL trivia with Classic, Career, Head-to-Head and Higher / Lower modes. Play with 2–8 players on your phones or try the daily challenge solo.'
+
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -103,7 +107,8 @@ const jsonLd = {
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nativeRequest = (await headers()).get('user-agent')?.includes('StatsMasterNative/') ?? false
   return (
     <html
       lang="en"
@@ -150,7 +155,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             },
           }}
         >
-          <Providers>{children}</Providers>
+          <Providers><NativeBoot nativeRequest={nativeRequest}>{children}</NativeBoot></Providers>
         </ClerkProvider>
       </body>
     </html>

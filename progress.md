@@ -36,3 +36,26 @@ paid-status fields, and local/example environment variables. Updated privacy,
 terms, and monetization documentation. In-app purchases remain a future task;
 web advertising stays disabled. Verified all 59 tests, Worker type checking,
 and a successful production build after the removal.
+
+Native follow-up (November 2, 2026): user requested game-native and approved
+app.playam.statsmaster plus a dedicated /app landing page. Added Capacitor 8
+shells for iOS/Android, native helpers/guest Preferences hydration, haptics,
+/app home, shared Classic practice, and a bundled styled offline fallback with
+2,234 local NHL seasons and local licensed fonts. Created Stats Master workspace,
+target/product/shared scheme, icon/splash assets, and release-origin guards.
+The earlier statement that no wrapper exists is now superseded.
+
+Verified 62 automated tests (17 Vitest + 45 Node), Next/Worker type checks,
+production Next builds, offline bundle and both platform syncs, iOS Debug and
+Release simulator builds (iPhone 18 Pro / iOS 27), and native offline cold launch.
+Browser flow covers 10 offline rounds, replay, retry failure/success (controlled
+health response), no mid-game auto navigation, Host/Join, web homepage, 320–1280px,
+native UA SSR hydration and keyboard-sized input. No browser runtime errors.
+The existing dev server shares .next, so final QA built separately using
+NEXT_BUILD_DIR=.next-native-qa and localhost:3002 (Clerk's local proxy expects
+localhost). Temporary tests/captures/logs use /tmp/stats-*.
+
+Release configuration restored to https://statsmaster.playam.app + /app;
+production web deployment, signing/stores, Android Java/SDK/build/device tests,
+actual haptics, native keyboard/resume/room sessions and production auth remain.
+See NATIVE.md. No deployments, credentials, monetization or TV changes were made.

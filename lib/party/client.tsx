@@ -1,5 +1,6 @@
 'use client'
 
+import { nativeFeedback } from '../native'
 import { createContext, useCallback, useContext } from 'react'
 import type { GameState } from '../../types/game'
 import type { ActionArgs, ActionType, RoomAction } from './protocol'
@@ -27,5 +28,8 @@ export function useRoomStatus() {
 }
 export function useAction<K extends ActionType>(type: K) {
   const { send } = useRoom()
-  return useCallback((args: ActionArgs<K>) => send({ type, args } as RoomAction), [type, send])
+  return useCallback((args: ActionArgs<K>) => {
+    send({ type, args } as RoomAction)
+    if (type === 'submitAnswer' || type === 'submitCareerAnswer' || type === 'buzzIn') void nativeFeedback('lock')
+  }, [type, send])
 }

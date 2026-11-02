@@ -7,7 +7,7 @@ const clerkProxy = clerkMiddleware()
 
 // Public HTML must not depend on a Clerk handshake. Account/game routes keep their existing auth policy.
 export default function publicProxy(request: PublicNextRequest, event: NextFetchEvent) {
-  if (['/', '/privacy', '/terms', '/about', '/contact', '/support', '/how-to-play', '/robots.txt', '/sitemap.xml'].includes(request.nextUrl.pathname.replace(/\/$/, '') || '/')) {
+  if (['/', '/app', '/app/practice', '/api/health', '/privacy', '/terms', '/about', '/contact', '/support', '/how-to-play', '/robots.txt', '/sitemap.xml'].includes(request.nextUrl.pathname.replace(/\/$/, '') || '/')) {
 
     return NextResponse.next()
   }

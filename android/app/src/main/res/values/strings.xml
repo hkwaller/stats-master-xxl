@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Stats Master</string>
+    <string name="title_activity_main">Stats Master</string>
+    <string name="package_name">app.playam.statsmaster</string>
+    <string name="custom_url_scheme">app.playam.statsmaster</string>
+</resources>

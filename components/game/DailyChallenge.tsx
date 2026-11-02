@@ -1,5 +1,6 @@
 'use client'
 
+import { nativeFeedback } from '@/lib/native'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SignInButton, useUser } from '@clerk/nextjs'
@@ -27,6 +28,7 @@ type StoredAnswer = { result: 'correct' | 'incorrect'; questionId: string }
 
 type Phase =
   | { name: 'loading' }
+  | { name: 'error' }
   | { name: 'playing'; question: Question }
   | { name: 'answered'; result: 'correct' | 'incorrect'; question: Question }
   | { name: 'already_answered'; result: 'correct' | 'incorrect'; question: Question }
@@ -56,6 +58,7 @@ function setLocalAnswer(today: string, answer: StoredAnswer) {
 export function DailyChallenge() {
   const { isLoaded, isSignedIn } = useUser()
   const [phase, setPhase] = useState<Phase>({ name: 'loading' })
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     if (!isLoaded) return
@@ -72,7 +75,7 @@ export function DailyChallenge() {
           getDailyChallenge(),
           !local && isSignedIn ? getMyDailyChallengeScore() : Promise.resolve(null),
         ])
-        if (!q) return
+        if (!q) throw new Error('Daily challenge unavailable')
 
         if (local) {
           setPhase({ name: 'already_answered', result: local.result, question: q })
@@ -89,11 +92,12 @@ export function DailyChallenge() {
         setPhase({ name: 'playing', question: q })
       } catch (err) {
         console.error(err)
+        setPhase({ name: 'error' })
       }
     }
 
     load()
-  }, [isLoaded, isSignedIn])
+  }, [isLoaded, isSignedIn, retryCount])
 
   // Re-check Supabase when user signs in mid-session
   useEffect(() => {
@@ -135,7 +139,12 @@ export function DailyChallenge() {
       }).catch(console.error)
     }
 
+    void nativeFeedback(isCorrect ? 'correct' : 'wrong')
     setPhase({ name: 'answered', result, question })
+  }
+
+  if (phase.name === 'error') {
+    return <div className="on-ice p-6"><p role="status" className="mb-4">The daily challenge is unavailable. Check your connection and try again.</p><Button onClick={() => { setPhase({ name: 'loading' }); setRetryCount(value => value + 1) }}>Try again</Button></div>
   }
 
   if (phase.name === 'loading') {
