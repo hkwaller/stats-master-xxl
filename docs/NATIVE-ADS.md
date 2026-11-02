@@ -60,7 +60,7 @@ Official references checked 2 November 2026:
 
 ## Verification on 2 November 2026
 
-- TypeScript check and native Vite build/Capacitor sync pass.
+- All 105 automated tests pass (60 Vitest, 45 Node), including 43 new ad lifecycle/coordinator tests. TypeScript check and native Vite build/Capacitor sync pass.
 - iOS simulator build succeeds with Google Mobile Ads 13.11.0 and UMP 3.1.0; plugin and app presenter guard compile. The phone guard returned `allowed: true`, UMP reported consent required with `canRequestAds: false`, and its real Publisher Test Ads consent form opened over the Play screen. No SDK initialization or ad load ran ahead of that consent gate. The form remains for manual simulator interaction; the available UI automation could not connect to the Simulator application.
 - A full ten-round browser practice game, final results, replay and return home work without native-plugin errors or ad requests.
 - Automated tests exercise every eligible mode's completed break, restored/duplicate/revisited results, cancellation, no fill, consent refusal/failure, privacy choices, entitlement races, stale cache, foreground and mocked TV/mirroring guards. These are mocked adapter tests, not proof of real ad presentation or a physical TV scene.

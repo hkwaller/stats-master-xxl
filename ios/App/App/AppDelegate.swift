@@ -53,6 +53,9 @@ class StatsMasterViewController: CAPBridgeViewController {
         webView?.scrollView.contentInsetAdjustmentBehavior = .never
         webView?.scrollView.showsHorizontalScrollIndicator = false
         webView?.scrollView.showsVerticalScrollIndicator = false
+        // Rubber-band on every screen, including ones shorter than the viewport.
+        webView?.scrollView.bounces = true
+        webView?.scrollView.alwaysBounceVertical = true
     }
 }
 

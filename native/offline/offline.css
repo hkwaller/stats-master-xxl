@@ -1,4 +1,6 @@
 @import '../../app/globals.css';
 @source '../../components/native';
 @source '../../components/design-system.tsx';
+@source '../../components/arcade/Jumbotron.tsx';
+@source '../../components/game/AnswerRow.tsx';
 @source './OfflineApp.tsx';
