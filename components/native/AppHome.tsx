@@ -1,73 +1,130 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { nanoid } from 'nanoid'
-import { ArrowRight, Plus, Users, WifiOff } from 'lucide-react'
+import { ArrowRight, ChevronRight, Info, Plus, Trophy, Users, WifiOff } from 'lucide-react'
 import { SignInButton, UserButton, useAuth } from '@clerk/nextjs'
 import { PuckMark } from '@/components/arcade/Brand'
 import { RinkBg } from '@/components/arcade/RinkBg'
-import { Button, Kickplate } from '@/components/design-system'
-import { DailyChallenge } from '@/components/game/DailyChallenge'
+import { AdPrivacyChoices } from './AdPrivacyChoices'
 import { nativeFeedback } from '@/lib/native'
 
 export function AppHome() {
   const router = useRouter()
   const { isLoaded, isSignedIn } = useAuth()
+  const sheet = useRef<HTMLDialogElement>(null)
+  const codeInput = useRef<HTMLInputElement>(null)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
-  const [daily, setDaily] = useState(false)
+  const [pending, setPending] = useState<'host' | 'join' | null>(null)
+  const [isNavigating, startNavigation] = useTransition()
+
   function host() {
+    if (isNavigating) return
     void nativeFeedback()
-    router.push(`/${nanoid(6).toUpperCase()}/setup`)
+    startNavigation(() => {
+      setPending('host')
+      router.push(`/${nanoid(6).toUpperCase()}/setup`)
+    })
   }
+
+  function openJoin() {
+    setError('')
+    void nativeFeedback()
+    sheet.current?.showModal()
+    codeInput.current?.focus()
+  }
+
   function join(event: React.FormEvent) {
     event.preventDefault()
+    if (isNavigating) return
     const room = code.trim().toUpperCase()
     if (!/^[A-Z0-9_-]{4,12}$/.test(room)) {
-      setError('Enter the room code shown on the host’s screen.')
+      setError('Enter the 4–12 character code shown on the host’s screen.')
+      void nativeFeedback('wrong')
       return
     }
     void nativeFeedback('lock')
-    router.push(`/${room}/lobby`)
+    startNavigation(() => {
+      setPending('join')
+      router.push(`/${room}/lobby`)
+    })
   }
+
   return (
-    <main className="app-home ice-bg relative min-h-dvh overflow-x-hidden">
-      <RinkBg intensity={0.65} />
-      <header className="app-home-header on-ice-header relative z-[2]">
-        <Link href="/app" className="flex items-center gap-3" aria-label="Stats Master home"><PuckMark /><span className="font-display text-2xl font-extrabold">STATS MASTER</span></Link>
-        {isLoaded && (isSignedIn ? <UserButton /> : <SignInButton mode="modal"><button className="app-text-action">Sign in</button></SignInButton>)}
+    <main className="app-home ice-bg relative isolate overflow-x-hidden">
+      <RinkBg intensity={0.28} />
+      <header className="app-play-header relative z-[2]">
+        <Link href="/app" className="app-play-brand" aria-label="Stats Master home">
+          <PuckMark size={25} /><span>STATS MASTER</span>
+        </Link>
+        <div className="app-account">
+          {!isLoaded ? <span className="app-account-placeholder" aria-label="Loading account" /> : isSignedIn ? <UserButton appearance={{ elements: { userButtonTrigger: { minWidth: 44, minHeight: 44, justifyContent: 'center' } } }} /> : (
+            <SignInButton mode="modal"><button className="app-account-button">Sign in</button></SignInButton>
+          )}
+        </div>
       </header>
-      <div className="relative z-[2]"><Kickplate /></div>
-      <div className="app-home-content relative z-[2] mx-auto w-full max-w-3xl">
-        <h1 className="font-display text-6xl leading-none font-extrabold uppercase sm:text-7xl">Game on.</h1>
-        <p className="mt-3 max-w-md text-ink-2">Your rink. Your rivals. Who knows hockey?</p>
-        <section aria-labelledby="room-heading" className="on-ice mt-8 p-5 sm:p-7">
-          <h2 id="room-heading" className="font-display text-3xl font-bold uppercase">Bring the team</h2>
-          <p className="mt-2 mb-5 text-sm text-ink-2">2–8 players · Classic, Career, Head-to-Head or Higher / Lower</p>
-          <Button className="w-full" onClick={host}><Plus size={20} />Host a game</Button>
-          <form onSubmit={join} className="mt-7">
-            <label htmlFor="room-code" className="mb-2 block text-sm font-semibold">Join a room</label>
-            <div className="app-join-row">
-              <input id="room-code" value={code} onChange={event => { setCode(event.target.value.toUpperCase()); setError('') }} placeholder="ROOM CODE" autoCapitalize="characters" autoCorrect="off" spellCheck={false} maxLength={12} aria-invalid={Boolean(error)} aria-describedby={error ? 'room-error' : undefined} />
-              <Button type="submit" variant="secondary"><Users size={18} />Join</Button>
-            </div>
-            {error && <p id="room-error" role="alert" className="mt-3 text-sm text-red">{error}</p>}
-          </form>
+
+      <div className="app-play-content relative z-[2]">
+        <h1 className="app-play-title">Play</h1>
+        <section aria-labelledby="room-heading" className="app-multiplayer">
+          <div className="app-section-heading">
+            <h2 id="room-heading">With friends</h2>
+            <span>2–8 players</span>
+          </div>
+          <div className="app-room-actions">
+            <button className="app-host-action" onClick={host} disabled={isNavigating} aria-busy={isNavigating && pending === 'host'}>
+              <span className="app-action-icon"><Plus size={26} aria-hidden="true" /></span>
+              <span className="app-action-copy"><strong>{isNavigating && pending === 'host' ? 'Opening room…' : 'Host a game'}</strong><span>Choose a mode. Bring your team.</span></span>
+              <ArrowRight size={22} aria-hidden="true" />
+            </button>
+            <button className="app-join-action" onClick={openJoin} disabled={isNavigating} aria-haspopup="dialog">
+              <Users size={22} aria-hidden="true" /><strong>Join a game</strong><span>Enter room code</span><ChevronRight size={20} aria-hidden="true" />
+            </button>
+          </div>
+          <p className="app-room-note">Classic · Career · Head-to-Head · Higher / Lower</p>
         </section>
-        <section aria-labelledby="solo-heading" className="mt-9">
-          <h2 id="solo-heading" className="font-display text-3xl font-bold uppercase">Take a solo shift</h2>
-          <button className="app-mode-row mt-3" onClick={() => { void nativeFeedback(); setDaily(value => !value) }} aria-expanded={daily} aria-controls="app-daily">
-            <span><strong>Daily challenge</strong><span>One stat line. One shot. New every day.</span></span><ArrowRight size={22} aria-hidden="true" />
-          </button>
-          {daily && <div id="app-daily" className="on-ice p-4"><DailyChallenge /></div>}
-          <Link href="/app/practice" className="app-mode-row" onClick={() => { void nativeFeedback() }}>
-            <span><strong>Classic practice</strong><span>Ten rounds. No account or connection needed.</span></span><WifiOff size={22} aria-hidden="true" />
-          </Link>
+
+        <section aria-labelledby="solo-heading" className="app-solo">
+          <div className="app-section-heading"><h2 id="solo-heading">On your own</h2></div>
+          <div className="app-solo-list">
+            <Link href="/app/daily" className="app-play-row" onClick={() => { void nativeFeedback() }}>
+              <span className="app-row-icon"><Trophy size={23} aria-hidden="true" /></span>
+              <span className="app-row-copy"><strong>Daily challenge</strong><span>One stat line. One shot. Every day.</span></span>
+              <ChevronRight size={20} aria-hidden="true" />
+            </Link>
+            <Link href="/app/practice" className="app-play-row" onClick={() => { void nativeFeedback() }}>
+              <span className="app-row-icon"><WifiOff size={23} aria-hidden="true" /></span>
+              <span className="app-row-copy"><strong>Classic practice</strong><span>Ten rounds. Play offline.</span></span>
+              <ChevronRight size={20} aria-hidden="true" />
+            </Link>
+          </div>
         </section>
-        <footer className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-ink-2"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="https://playam.app">Playam</a></footer>
+
+        <details className="app-about">
+          <summary><Info size={17} aria-hidden="true" />About Stats Master<ChevronRight size={16} aria-hidden="true" /></summary>
+          <p>A hockey trivia game from Playam.</p>
+          <nav aria-label="About Stats Master"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="https://playam.app">Playam</a></nav>
+          <AdPrivacyChoices />
+        </details>
       </div>
+
+      <dialog ref={sheet} className="app-join-sheet" aria-labelledby="join-title" aria-describedby="join-description" onClick={event => {
+        if (event.target === event.currentTarget) sheet.current?.close()
+      }}>
+        <div className="app-sheet-content">
+          <div className="app-sheet-heading"><h2 id="join-title">Join a game</h2><button onClick={() => sheet.current?.close()} className="app-sheet-cancel">Cancel</button></div>
+          <p id="join-description">Enter the room code from your host’s screen.</p>
+          <form onSubmit={join} className="app-sheet-form">
+            <label htmlFor="room-code">Room code</label>
+            <input ref={codeInput} id="room-code" value={code} onChange={event => { setCode(event.target.value.toUpperCase()); setError('') }} placeholder="e.g. ABC123" autoComplete="off" autoCapitalize="characters" autoCorrect="off" spellCheck={false} maxLength={12} enterKeyHint="go" aria-invalid={Boolean(error)} aria-describedby={error ? 'room-error' : 'join-description'} />
+            {error && <p id="room-error" role="alert" className="app-join-error">{error}</p>}
+            <button type="submit" className="app-sheet-submit" disabled={isNavigating} aria-busy={isNavigating && pending === 'join'}>{isNavigating && pending === 'join' ? 'Joining…' : 'Join game'}<ArrowRight size={20} aria-hidden="true" /></button>
+          </form>
+        </div>
+      </dialog>
     </main>
   )
 }

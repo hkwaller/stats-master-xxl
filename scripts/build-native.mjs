@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { readFileSync, writeFileSync, copyFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync, readdirSync } from 'node:fs'
 const identity = JSON.parse(readFileSync(new URL('../native.config.json', import.meta.url)))
 const devUrl = process.env.CAP_DEV_SERVER_URL
 if (devUrl && process.env.NATIVE_DEV !== '1') throw new Error('Development URLs require NATIVE_DEV=1')
@@ -13,3 +13,9 @@ copyFileSync('native/www/offline.html', 'native/www/index.html')
 
 // Capacitor iOS checks that appStartPath exists locally even with server.url.
 copyFileSync('native/www/offline.html', 'native/www/app')
+
+// Keep font redistribution notices alongside the packaged font binaries.
+mkdirSync('native/www/licenses', { recursive: true })
+for (const file of readdirSync('native/offline/fonts').filter(file => file.endsWith('-OFL.txt'))) {
+  copyFileSync(`native/offline/fonts/${file}`, `native/www/licenses/${file}`)
+}

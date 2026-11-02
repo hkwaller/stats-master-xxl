@@ -10,6 +10,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = StatsMasterViewController()
         window?.makeKeyAndVisible()
+        // AdMob/UMP must use the interactive phone scene, never the first TV scene.
+        if windowScene.screen == UIScreen.main,
+           let appDelegate = UIApplication.shared.delegate as? AppDelegate {
+            appDelegate.window = window
+        }
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }

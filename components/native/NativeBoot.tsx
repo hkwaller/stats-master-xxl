@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { NativeAdsBoot } from './NativeAdsBoot'
 import { hasNativePlugin, hydrateNativeGuest, isNative } from '@/lib/native'
 
 export function NativeBoot({ children, nativeRequest }: { children: React.ReactNode; nativeRequest: boolean }) {
@@ -23,6 +24,11 @@ export function NativeBoot({ children, nativeRequest }: { children: React.ReactN
     let cleanup: (() => void) | undefined
     void import('@capacitor/app').then(async ({ App }) => {
       const listener = await App.addListener('backButton', ({ canGoBack }) => {
+        const joinSheet = document.querySelector<HTMLDialogElement>('.app-join-sheet[open]')
+        if (joinSheet) {
+          joinSheet.close()
+          return
+        }
         if (window.location.pathname !== '/app' && canGoBack) window.history.back()
         else if (window.location.pathname !== '/app') router.replace('/app')
         else void App.minimizeApp()
@@ -34,5 +40,5 @@ export function NativeBoot({ children, nativeRequest }: { children: React.ReactN
   }, [router])
   // Browser/SSR markup stays identical; native children wait for Preferences hydration.
   if (!ready && nativeRequest) return <div aria-busy="true" className="native-loading">Loading Stats Master…</div>
-  return children
+  return <><NativeAdsBoot />{children}</>
 }

@@ -2,8 +2,6 @@
 
 import { RinkBg } from '@/components/arcade/RinkBg'
 
-// Future monetization boundary: only after the entire session has completed and final results are visible.
-// Consult playam-monetization.monetizationBreakReached; no ad SDK or event is invoked here.
 
 /**
  * The player's phone: a compact scorebug, the jumbotron stat line, an answer
@@ -41,6 +39,7 @@ import {
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
 import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
+import { useGameCompletion } from '@/hooks/useGameCompletion'
 import { useCareerPenalties } from '@/hooks/useCareerPenalties'
 import { questionPausedAt } from '@/lib/game/room-clock'
 import { GamePausedBanner } from '@/components/game/GamePausedBanner'
@@ -88,7 +87,7 @@ interface PlayerPageProps {
 export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const router = useRouter()
   const [roomId, setRoomId] = useState('')
-  const [, setPlayerId] = useState('')
+  const [playerId, setPlayerId] = useState('')
   const [myId, setMyId] = useState('')
 
   const game = useStorage((root) => root.game)
@@ -133,6 +132,12 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const penalties = useCareerPenalties(game?.careerPenaltyEndsAt, game?.pausedAt, game?.command === 'answering')
   const lockedOutPlayers = Object.keys(penalties)
   const gameMode = game?.gameMode ?? 'classic'
+  useGameCompletion(
+    roomId && game?.session ? `room:${roomId}:${game.session}` : undefined,
+    `/${roomId}/player/${playerId}`,
+    gameMode,
+    game?.command === 'finished' ? 'finished' : game && ['starting', 'question', 'answering', 'revealing', 'next'].includes(game.command) ? 'active' : 'other',
+  )
   const answeredCount = Object.keys(game?.answers ?? {}).length
 
   const players = (game?.players as unknown as Player[]) ?? []

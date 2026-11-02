@@ -59,10 +59,10 @@ Confirmed on November 2, 2026:
 - Offline bundle builds and both platform syncs succeed; generated release config contains only the production origin, `/app`, and `cleartext: false`.
 - Named Xcode workspace lists the **Stats Master** scheme. Debug and Release builds succeed for iPhone 18 Pro / iOS 27 simulator, signing disabled.
 - Native online `/app` launch against the isolated local Next server renders the new home. Native cold launch against `https://offline-test.invalid` renders the real bundled fallback with local fonts and safe areas. The startup path failure found by this check was fixed and retested.
-- Browser tests: ten offline rounds, duplicate-tap lock, replay/reset, retry failure, controlled successful health retry, online/visibility signals without interrupting play, Host/Join navigation, website homepage, and widths 320/390/768/1280. No runtime errors in the completed flow.
+- Browser tests: ten offline rounds, duplicate-tap lock, replay/reset, retry failure, controlled successful health retry, online/visibility signals without interrupting play, Host/Join navigation, website homepage, and widths 320/390/768/1280. No runtime errors in the completed flow. Native-user-agent SSR hydration and compact input checks pass; the Clerk sign-in modal opens (no credentials entered).
 - Release guard rejects the temporary offline-test origin; production configuration restored afterward.
 
-Android build/device evidence is **outstanding**: no Java runtime or Android SDK was found on this Mac. Native interaction testing for focused inputs/keyboard, background/resume, long room sessions, actual haptics and completed production auth is also outstanding; browser viewport/lifecycle checks and native launch screenshots are not substitutes for real-device testing. Production retry cannot succeed until the new web routes are deployed.
+Android build/device evidence is **outstanding**: Gradle rejects the existing `JAVA_HOME` because it points to a missing Java 8 installation; `java_home` finds no runtime, and no Android SDK was found. Install Java 21 and Android SDK 36 before retrying. Native interaction testing for focused inputs/keyboard, background/resume, long room sessions, actual haptics and completed production auth is also outstanding; browser viewport/lifecycle checks and native launch screenshots are not substitutes for real-device testing. Production retry cannot succeed until the new web routes are deployed.
 
 ## Before stores
 
@@ -70,4 +70,8 @@ Android build/device evidence is **outstanding**: no Java runtime or Android SDK
 2. Select your Apple signing team, register the bundle ID and App Store Connect record, choose version/build numbers, and archive the named scheme. Create the matching Google Play record and signing/upload key; build/test the AAB with Java/SDK installed.
 3. Verify production Clerk login/logout, enabled OAuth providers and account deletion; configure and verify any required callback/universal links. Include reviewer access if needed.
 4. Test a physical iPhone and Android: cold offline launch, complete local practice, reconnect, background/resume, room host/join, keyboard on small screens, haptics, safe areas and accessibility. Include iPad/landscape coverage before advertising tablet support.
-5. Finish privacy/data-safety forms for Clerk, Supabase and existing PostHog telemetry, age/content ratings, screenshots, support/privacy URLs, and current Apple/Google store policy checks. No ads, purchases or TV features were added.
+5. Finish privacy/data-safety forms for Clerk, Supabase and existing PostHog telemetry, age/content ratings, screenshots, support/privacy URLs, and current Apple/Google store policy checks. Development AdMob integration is documented in [docs/NATIVE-ADS.md](docs/NATIVE-ADS.md); purchases and TV features are not implemented.
+
+## Native AdMob development integration
+
+See [docs/NATIVE-ADS.md](docs/NATIVE-ADS.md) for placement, demo app/unit IDs, consent, phone/TV guards, entitlement integration and the remaining console/store/device release steps. This configuration serves only Google test units and has not enabled production monetization.

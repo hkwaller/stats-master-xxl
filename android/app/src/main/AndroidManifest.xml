@@ -9,6 +9,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- Google sample app ID: development test ads only. -->
+        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="@string/admob_app_id" />
+        <meta-data android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT" android:value="true" />
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
@@ -36,6 +39,8 @@
         </provider>
     </application>
 
+    <!-- Normal permission for Android 15+ recording detection; no user prompt. -->
+    <uses-permission android:name="android.permission.DETECT_SCREEN_RECORDING" />
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

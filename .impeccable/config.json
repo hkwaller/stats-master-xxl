@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "app/globals.css"
+        ],
+        "createdAt": "2026-11-02T12:57:16.357Z",
+        "reason": "Agent review: the finding targets the existing square .on-ice-header top rule, not a rounded card; DESIGN.md preserves the Rinkside header identity."
+      }
+    ]
+  }
+}

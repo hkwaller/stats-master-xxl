@@ -4,4 +4,6 @@
     <string name="title_activity_main">Stats Master</string>
     <string name="package_name">app.playam.statsmaster</string>
     <string name="custom_url_scheme">app.playam.statsmaster</string>
+    <!-- Development sample; this is an app ID, not an ad unit. -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
 </resources>

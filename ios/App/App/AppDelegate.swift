@@ -47,10 +47,39 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 class StatsMasterViewController: CAPBridgeViewController {
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
     override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(AdPresentationPlugin())
         webView?.allowsBackForwardNavigationGestures = true
         webView?.allowsLinkPreview = false
         webView?.scrollView.contentInsetAdjustmentBehavior = .never
         webView?.scrollView.showsHorizontalScrollIndicator = false
         webView?.scrollView.showsVerticalScrollIndicator = false
+    }
+}
+
+
+@objc(AdPresentationPlugin)
+class AdPresentationPlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "AdPresentationPlugin"
+    let jsName = "AdPresentation"
+    let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "context", returnType: CAPPluginReturnPromise)
+    ]
+
+    @objc func context(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            guard let window = self?.bridge?.viewController?.view.window,
+                  let scene = window.windowScene,
+                  let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
+                call.resolve(["allowed": false]); return
+            }
+            let screen = scene.screen
+            // Suppress all external-display configurations, including plain mirroring.
+            let external = UIScreen.screens.contains { $0 != UIScreen.main }
+            let allowed = screen == UIScreen.main && !screen.isCaptured && !external
+                && scene.activationState == .foregroundActive && window.isKeyWindow
+                && appDelegate.window === window
+                && window.rootViewController?.presentedViewController == nil
+            call.resolve(["allowed": allowed])
+        }
     }
 }

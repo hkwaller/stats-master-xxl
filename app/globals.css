@@ -780,3 +780,88 @@ a { text-underline-offset: .2em; }
 .practice-choice[data-wrong=true] { background: var(--color-red); color: var(--color-ice-0); }
 .practice-result { min-height: 64px; padding: 16px 0; font-weight: 600; }
 @media (min-width: 640px) { .app-home-content { padding: 48px 32px; } }
+
+/* App Play surface: compact task hierarchy, with rink identity in the background. */
+.app-home { min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+.app-play-header { display: flex; justify-content: space-between; align-items: center; min-height: 64px; padding: 8px 20px; background: var(--color-ice-0); border-bottom: 1px solid var(--color-hairline); }
+.app-play-brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-family: var(--font-display); font-weight: 800; font-size: 1.375rem; }
+.app-account { display: flex; min-width: 64px; min-height: 44px; justify-content: flex-end; align-items: center; }
+.app-account-placeholder { width: 32px; height: 32px; border-radius: 50%; background: var(--color-ice-2); }
+.app-account-button { min-height: 44px; padding: 8px 12px; font-size: .875rem; font-weight: 600; color: var(--color-ink); background: var(--color-ice-1); }
+.app-play-content { max-width: 640px; margin: auto; padding: 24px 20px 20px; }
+.app-play-title { font-family: var(--font-display); font-size: 2.75rem; font-weight: 800; line-height: 1.05; }
+.app-multiplayer { margin-top: 28px; }
+.app-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.app-section-heading h2 { font-size: 1rem; font-weight: 700; }
+.app-section-heading > span { font-size: .8125rem; color: var(--color-ink-2); }
+.app-room-actions { background: var(--color-ice-0); }
+.app-host-action { display: flex; align-items: center; gap: 14px; width: 100%; padding: 23px 18px; text-align: left; color: white; background: var(--color-red); }
+.app-action-icon { display: grid; place-items: center; flex-shrink: 0; }
+.app-action-copy { flex: 1; min-width: 0; }
+.app-action-copy strong { display: block; font-family: var(--font-display); font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.app-action-copy > span { display: block; margin-top: 7px; font-size: .8125rem; line-height: 1.5; }
+.app-join-action { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 68px; padding: 16px 18px; text-align: left; }
+.app-join-action strong { font-size: 1rem; font-weight: 600; }
+.app-join-action > span { margin-left: auto; color: var(--color-ink-2); font-size: .8125rem; }
+.app-room-note { color: var(--color-ink-2); font-size: .75rem; line-height: 1.6; margin-top: 12px; text-align: center; text-wrap: balance; }
+.app-solo { margin-top: 32px; }
+.app-solo-list { background: var(--color-ice-0); }
+.app-play-row { display: flex; align-items: center; gap: 14px; min-height: 90px; padding: 18px; }
+.app-play-row + .app-play-row { border-top: 1px solid var(--color-hairline); }
+.app-row-icon { color: var(--color-blue-line); display: grid; place-items: center; flex-shrink: 0; }
+.app-row-copy { flex: 1; min-width: 0; }
+.app-row-copy strong { display: block; font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.app-row-copy > span { display: block; margin-top: 4px; font-size: .8125rem; line-height: 1.5; color: var(--color-ink-2); }
+.app-play-row > svg, .app-join-action > svg:last-child { flex-shrink: 0; color: var(--color-ink-2); }
+.app-about { margin-top: 28px; color: var(--color-ink-2); font-size: .8125rem; }
+.app-about summary { display: flex; align-items: center; justify-content: center; gap: 8px; width: fit-content; min-height: 44px; margin: auto; cursor: pointer; list-style: none; }
+.app-about summary::-webkit-details-marker { display: none; }
+.app-about[open] summary > svg:last-child { transform: rotate(90deg); }
+.app-about p { text-align: center; margin: 8px 0; }
+.app-about nav { display: flex; justify-content: center; gap: 20px; }
+.app-about nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
+.app-join-sheet { position: fixed; inset: auto 0 0; width: 100%; max-width: 100%; max-height: calc(100dvh - env(safe-area-inset-top) - 16px); margin: 0 auto; overflow-y: auto; padding: 0; border: 0; color: var(--color-ink); background: var(--color-ice-0); box-shadow: 0 -8px 40px rgba(13,27,42,.16); }
+.app-join-sheet::backdrop { background: rgba(13,27,42,.46); }
+.app-join-sheet[open] { animation: app-sheet-enter 200ms cubic-bezier(.16,1,.3,1); }
+.app-sheet-content { max-width: 520px; margin: auto; padding: 12px max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+.app-sheet-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.app-sheet-heading h2 { font-family: var(--font-display); font-size: 2rem; font-weight: 700; }
+.app-sheet-cancel { min-height: 44px; padding: 8px 0 8px 12px; font-weight: 600; color: var(--color-red); }
+.app-sheet-content > p { margin: 8px 0 24px; font-size: .9375rem; line-height: 1.5; color: var(--color-ink-2); }
+.app-sheet-form label { display: block; margin-bottom: 8px; font-size: .875rem; font-weight: 600; }
+.app-sheet-form input { display: block; width: 100%; min-height: 60px; border: 1px solid var(--color-hairline); padding: 14px 16px; background: var(--color-ice-1); font-family: var(--font-mono); font-size: 1.125rem; letter-spacing: .12em; caret-color: var(--color-red); }
+.app-sheet-form input::placeholder { color: var(--color-ink-2); letter-spacing: .04em; }
+.app-sheet-form input[aria-invalid=true] { border-color: var(--color-red); }
+.app-join-error { color: var(--color-red); font-size: .875rem; line-height: 1.5; margin-top: 12px; }
+.app-sheet-submit { display: flex; justify-content: center; align-items: center; gap: 12px; min-height: 54px; width: 100%; margin-top: 24px; background: var(--color-red); color: white; font-size: 1rem; font-weight: 600; }
+.app-home button, .app-home a, .app-home summary { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.app-home button { cursor: pointer; }
+.app-home button:disabled { cursor: wait; opacity: .6; }
+.app-home :is(a, button, input, summary):focus-visible, .app-detail-header a:focus-visible { outline: 3px solid var(--color-blue-line); outline-offset: 3px; }
+.app-host-action:active:not(:disabled), .app-sheet-submit:active:not(:disabled) { background: #a90824; }
+.app-join-action:active:not(:disabled), .app-play-row:active, .app-account-button:active { background: var(--color-ice-2); }
+.app-home:has(.app-join-sheet[open]) { overscroll-behavior: contain; }
+body:has(.app-join-sheet[open]) { overflow: hidden; }
+.app-daily-page { min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding-bottom: 28px; }
+.app-detail-header { border-bottom: 1px solid var(--color-hairline); padding: 8px 16px; background: var(--color-ice-0); }
+.app-detail-header a { display: inline-flex; align-items: center; min-height: 44px; gap: 4px; font-weight: 600; }
+.app-daily-content { max-width: 720px; margin: auto; padding: 24px 20px; }
+.app-daily-description { margin: 12px 0 24px; font-size: .9375rem; line-height: 1.6; color: var(--color-ink-2); }
+@keyframes app-sheet-enter { from { transform: translateY(24px); opacity: .5; } to { transform: translateY(0); opacity: 1; } }
+@media (hover: hover) {
+  .app-host-action:hover:not(:disabled), .app-sheet-submit:hover:not(:disabled) { background: #b80927; }
+  .app-join-action:hover:not(:disabled), .app-play-row:hover { background: var(--color-ice-1); }
+}
+@media (max-width: 359px) {
+  .app-play-content { padding-inline: 16px; }
+  .app-join-action { flex-wrap: wrap; gap: 8px; }
+  .app-join-action > span { display: none; }
+  .app-join-action > svg:last-child { margin-left: auto; }
+}
+@media (min-width: 640px) {
+  .app-play-header { padding-inline: 32px; }
+  .app-play-content { padding: 36px 32px; }
+  .app-join-sheet { inset: 0; width: calc(100% - 48px); max-width: 480px; height: fit-content; margin: auto; }
+  .app-sheet-content { padding: 20px 28px 28px; }
+}
+@media (prefers-reduced-motion: reduce) { .app-join-sheet[open] { animation: none; } }

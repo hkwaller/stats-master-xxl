@@ -198,6 +198,7 @@ test('both screens expose Pause/Resume to host and boss and disable player input
       '@/lib/party/client': { useStorage: select => select({ game: game.toImmutable() }) },
       '@/lib/party/mutations': new Proxy({}, { get: () => () => () => {} }),
       '@/lib/guest': {},
+      '@/hooks/useGameCompletion': { useGameCompletion: () => {} },
       '@/hooks/useHostStateMachine': { useHostStateMachine: () => {} },
       '@/hooks/useQuestionTimeLeft': { useQuestionTimeLeft: () => 20 },
       '@/hooks/useCareerPenalties': { useCareerPenalties: () => ({}) },

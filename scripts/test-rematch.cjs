@@ -52,6 +52,7 @@ function device(game, id, shared = false) {
     if (dep === '@/lib/party/client') return { useStorage: selector => selector({ game: game.toImmutable() }) }
     if (dep === '@/lib/party/mutations') return mutations
     if (dep === '@/lib/guest') return { getOrCreateGuest: () => ({ id }) }
+    if (dep === '@/hooks/useGameCompletion') return { useGameCompletion: () => {} }
     if (dep === '@/hooks/useHostStateMachine') return { useHostStateMachine: () => {} }
     if (dep === '@/hooks/useCareerPenalties') return { useCareerPenalties: () => ({}) }
     if (dep === '@/hooks/useQuestionTimeLeft') return { useQuestionTimeLeft: () => 0 }

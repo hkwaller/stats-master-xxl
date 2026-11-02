@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run && node --test scripts/test-*.cjs",
+    "both": "concurrently \"npm run party:dev\" \"npm run dev\"",
     "party:dev": "wrangler dev --config party/wrangler.jsonc --port 1999",
     "party:deploy": "wrangler deploy --config party/wrangler.jsonc",
     "party:check": "tsc --noEmit -p party",
@@ -19,6 +20,7 @@
     "native:assets": "node scripts/native-assets.mjs"
   },
   "dependencies": {
+    "@capacitor-community/admob": "8.2.1",
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
@@ -29,6 +31,7 @@
     "@capacitor/splash-screen": "^8.0.2",
     "@clerk/nextjs": "^7.0.8",
     "@supabase/supabase-js": "^2.47.0",
+    "concurrently": "^10.0.6",
     "framer-motion": "^11.15.0",
     "fuse.js": "^7.3.0",
     "immer": "^11.2.9",

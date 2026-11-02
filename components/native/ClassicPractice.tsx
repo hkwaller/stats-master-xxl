@@ -5,6 +5,7 @@ import type { Question } from '@/types/game'
 import poolData from '@/native/offline/questions.json'
 import { generateChoices } from '@/lib/data/choices'
 import { calcScore, isCorrectAnswer } from '@/lib/game/classic'
+import { useGameCompletion } from '@/hooks/useGameCompletion'
 import { nativeFeedback } from '@/lib/native'
 import { Button } from '@/components/design-system'
 
@@ -27,8 +28,11 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
   const [score, setScore] = useState(0)
   const [answer, setAnswer] = useState<string | null>(null)
   const [finished, setFinished] = useState(false)
+  const [session, setSession] = useState<string>()
+  useGameCompletion(session, '/app/practice', 'practice', finished ? 'finished' : round ? 'active' : 'other')
 
   function start() {
+    setSession(`practice:${crypto.randomUUID()}`)
     used.current.clear()
     locked.current = false
     setIndex(0); setScore(0); setAnswer(null); setFinished(false)
