@@ -11,6 +11,15 @@
         ],
         "createdAt": "2026-11-02T12:57:16.357Z",
         "reason": "Agent review: the finding targets the existing square .on-ice-header top rule, not a rounded card; DESIGN.md preserves the Rinkside header identity."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "app/globals.css"
+        ],
+        "createdAt": "2026-11-02T18:55:56.765Z",
+        "reason": "Agent review: all three current matches are functional non-card styles: the current-shot bottom underline in the practice shot chart, the latest-season table-cell marker, and the inline career-tenure span divider. Preserve these existing indicators; no decorative card side-tabs are present."
       }
     ]
   }
