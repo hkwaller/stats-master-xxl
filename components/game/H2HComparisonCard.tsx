@@ -87,7 +87,7 @@ function PlayerCard({
       whileTap={!locked ? { y: 1 } : undefined}
       animate={{ opacity: dimmed ? 0.55 : 1 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className={`flex-1 p-4 text-left ${wrongPick ? 'penalty-hatch' : ''}`}
+      className={`min-w-0 flex-1 p-3 text-left sm:p-4 ${wrongPick ? 'penalty-hatch' : ''}`}
       style={{
         borderWidth: '0 0 0 5px',
         borderStyle: 'solid',
@@ -160,7 +160,7 @@ export function H2HComparisonCard({
         </h2>
       </div>
 
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
+      <div className="flex flex-row gap-2.5 sm:gap-3">
         <PlayerCard
           question={pair.left}
           side="left"

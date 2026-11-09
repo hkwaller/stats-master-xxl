@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, X } from 'lucide-react'
+import { Check, ChevronLeft, X } from 'lucide-react'
 import type { HintType, Question } from '@/types/game'
 import { SCORE_SPEED_MAX, SCORE_SPEED_WINDOW_MS } from '@/types/game'
 import poolData from '@/native/offline/questions.json'
@@ -240,7 +240,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
 
   return (
     <section className="mx-auto w-full max-w-xl">
-      <button className="app-text-action mb-6" onClick={onExit}>Back to home</button>
+      {(!round || finished) && <button className="app-text-action mb-6" onClick={onExit}>Back to home</button>}
       {!round ? (
         <>
           <h1 className="font-display text-5xl leading-none font-extrabold uppercase">Classic practice</h1>
@@ -277,6 +277,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
         </div>
       ) : q && <>
         <div className="practice-bug">
+          <button type="button" className="practice-bug-exit" onClick={onExit} aria-label="Leave practice"><ChevronLeft size={22} strokeWidth={2.4} aria-hidden="true" /></button>
           <span><MonoLabel size={9} color="rgba(255,255,255,.72)">Shot</MonoLabel><b className="tabular-nums">{index + 1}<small>/{ROUND_COUNT}</small></b></span>
           <span aria-label={`Streak ${streak}`}><MonoLabel size={9} color="rgba(255,255,255,.72)">Streak</MonoLabel><b className="tabular-nums">{streak}</b></span>
           <span className="practice-bug-score">
@@ -306,7 +307,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
         </div>
 
         <div className="practice-prompt">
-          <h2 className="font-display text-3xl font-bold uppercase">Name the skater</h2>
+          <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">Name the skater</h2>
           <TierBadge tier={q.difficulty} />
         </div>
         <SpeedBonus key={`bonus-${q.id}`} started={round.started} stopped={answeredAt} />
@@ -319,12 +320,13 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
             const meta = answer === null ? undefined : correct ? (answer === choice ? 'Your pick · Goal' : 'The skater') : answer === choice ? 'Your pick · Saved' : undefined
             return (
               <div key={choice} style={{ animationDelay: `${i * 45}ms` }}>
-                <AnswerRow letter={LETTERS[i]} name={choice} meta={meta} state={state} variant="phone" disabled={answer !== null} onClick={() => guess(choice)} />
+                <AnswerRow letter={LETTERS[i]} name={choice} meta={meta} state={state} variant="compact" disabled={answer !== null} onClick={() => guess(choice)} />
               </div>
             )
           })}
         </div>
 
+        <div className="practice-dock" data-answered={answer !== null}>
         <div className="practice-call" role="status">
           {answer === null ? <p className="text-sm text-ink-2">Pick a name. Keys 1–4 work too.</p> : last?.goal ? (
             <div className="reveal-name" key={`call-${index}`}>
@@ -339,6 +341,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
           )}
         </div>
         {answer !== null && <Button onClick={next} className="w-full" autoFocus>{index + 1 === ROUND_COUNT ? 'Final horn' : 'Next shot'}</Button>}
+        </div>
       </>}
     </section>
   )

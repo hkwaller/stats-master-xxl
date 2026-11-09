@@ -171,7 +171,7 @@ export function DailyChallenge() {
       <div className="on-ice overflow-hidden">
         <ChallengeHeader question={question} />
 
-        <div className="flex flex-col gap-5 p-5">
+        <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5">
           <StatsCard question={question} revealedColumns={5} size="hero" />
 
           <div className="grid gap-2.5 sm:grid-cols-2">
@@ -199,7 +199,7 @@ export function DailyChallenge() {
   return (
     <div className="on-ice overflow-hidden">
       <ChallengeHeader question={question} />
-      <div className="flex flex-col gap-5 p-5">
+      <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5">
         <StatsCard question={question} revealedColumns={5} size="hero" />
         <ResultPlane
           result={result}
@@ -344,7 +344,7 @@ function AlreadyAnswered({
   return (
     <div className="on-ice overflow-hidden">
       <ChallengeHeader question={question} />
-      <div className="flex flex-col gap-5 p-5">
+      <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5">
         <StatsCard question={question} revealedColumns={5} size="hero" />
         <ResultPlane
           result={result}

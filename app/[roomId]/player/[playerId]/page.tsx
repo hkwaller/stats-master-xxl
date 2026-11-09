@@ -89,6 +89,12 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const [roomId, setRoomId] = useState('')
   const [playerId, setPlayerId] = useState('')
   const [myId, setMyId] = useState('')
+  const [typingOnTouch, setTypingOnTouch] = useState(false)
+  const isField = (node: EventTarget) => node instanceof HTMLInputElement && node.type !== 'checkbox'
+  const onFieldFocus = (event: React.FocusEvent) => {
+    if (isField(event.target) && window.matchMedia('(pointer: coarse)').matches) setTypingOnTouch(true)
+  }
+  const onFieldBlur = (event: React.FocusEvent) => { if (isField(event.target)) setTypingOnTouch(false) }
 
   const game = useStorage((root) => root.game)
 
@@ -268,6 +274,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const showPowerupBar = Boolean(game.powerupsEnabled) && isAnswering && gameMode === 'classic'
 
   const controls = buildControls()
+  // While a name field has focus on a touch screen the keyboard is up, and the
+  // pinned bars would sit on top of the field and its Submit. They step aside until it closes.
+  const dockVisible = !typingOnTouch
   const showCareerBuzzer = isAnswering && gameMode === 'career' && careerSeasons.length > 0
     && !buzzedInPlayerId && !lockedOutPlayers.includes(myId)
 
@@ -353,7 +362,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   }
 
   return (
-    <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
+    <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden" onFocus={onFieldFocus} onBlur={onFieldBlur}>
       <RinkBg intensity={0.65} />
       {isActive && me ? (
         <PlayerScorebug
@@ -399,7 +408,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
         style={{
           border: 0,
           minWidth: 0,
-          paddingBottom: `calc(${(showPowerupBar ? 112 : 0) + (showCareerBuzzer ? BUZZER_HEIGHT : 0) + (controls.length ? 60 : 0) + 32}px + env(safe-area-inset-bottom, 0px))`,
+          paddingBottom: `calc(${(showPowerupBar && dockVisible ? 112 : 0) + (showCareerBuzzer ? BUZZER_HEIGHT : 0) + (controls.length && dockVisible ? 60 : 0) + 32}px + env(safe-area-inset-bottom, 0px))`,
         }}
       >
         {/* Idle */}
@@ -653,7 +662,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
       </fieldset>
 
       {/* Power plays own the bottom edge. */}
-      {showPowerupBar && (
+      {showPowerupBar && dockVisible && (
         <fieldset disabled={isPaused} className="fixed inset-x-0 z-40 m-0 border-0 p-0" style={{ bottom: controls.length ? 60 : 0 }}>
           <div className="mx-auto w-full max-w-[560px]">
             <PowerupBar
@@ -670,7 +679,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
       )}
 
       {/* Host controls - a flush bar, not a floating dock. */}
-      {controls.length > 0 && (
+      {controls.length > 0 && dockVisible && (
         <div
           className="fixed inset-x-0 z-50"
           style={{

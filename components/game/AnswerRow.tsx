@@ -13,8 +13,8 @@ interface AnswerRowProps {
   /** Team + position, or "PENALTY BOX" when eliminated. */
   meta?: string
   state?: AnswerState
-  /** TV rows are padded; phone rows are a fixed 66px. */
-  variant?: 'tv' | 'phone'
+  /** TV rows are padded; phone rows are a fixed 66px; compact rows are 54px for screens that also carry a board and hints. */
+  variant?: 'tv' | 'phone' | 'compact'
   onClick?: () => void
   disabled?: boolean
 }
@@ -67,7 +67,7 @@ export function AnswerRow({
         borderRadius: 0,
         gap: 14,
         padding: variant === 'tv' ? '15px 18px' : '0 16px',
-        height: variant === 'phone' ? 66 : undefined,
+        height: variant === 'phone' ? 66 : variant === 'compact' ? 54 : undefined,
         background,
         boxShadow: shadow,
         cursor: interactive ? 'pointer' : 'default',
@@ -92,7 +92,7 @@ export function AnswerRow({
         style={{
           fontFamily: 'var(--font-display)',
           fontWeight: 700,
-          fontSize: variant === 'tv' ? 28 : 26,
+          fontSize: variant === 'tv' ? 28 : variant === 'compact' ? 24 : 26,
           lineHeight: 1,
           color: nameColor,
         }}
