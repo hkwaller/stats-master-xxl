@@ -56,3 +56,29 @@ rematch. Reload a player and host mid-round. On a real phone, lock the screen fo
 
 The production web deployment switches the room backend. This repository has no
 Capacitor shell or bundled native game to update.
+
+## Automatic deployment from Vercel
+
+`vercel.json` runs `npm run vercel-build`. For production deployments
+(`VERCEL_ENV=production`), this checks the Worker types, builds Next.js, and then
+runs `npm run party:deploy`. Any failure stops the build, preventing that frontend
+deployment from going live. Preview and local builds never deploy the Worker.
+The normal `npm run build` command only builds Next.js.
+
+Before enabling this on a Vercel project, add these **Production-only** variables:
+
+- `CLOUDFLARE_API_TOKEN`: a secret API token with Workers deployment permissions
+  for the Cloudflare account hosting `stats-master-party`.
+- `CLOUDFLARE_ACCOUNT_ID`: that Cloudflare account's ID.
+
+Keep the existing `NEXT_PUBLIC_PARTY_HOST` and matching `PARTY_SECRET` settings.
+The build does not change the Worker's secrets or its host. Missing deployment
+credentials fail production builds immediately instead of silently skipping the Worker.
+
+The Worker becomes live before Vercel finishes publishing the frontend. Keep
+Worker changes compatible with existing clients and active rooms. Vercel
+rollbacks do not roll back Cloudflare; redeploy the corresponding Worker separately.
+
+Production rebuilds redeploy the Worker even when its source is unchanged.
+Avoid overlapping production releases: an older build finishing later could
+otherwise deploy its Worker after a newer release.
