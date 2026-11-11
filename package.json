@@ -17,7 +17,8 @@
     "native:ios": "open \"ios/App/Stats Master.xcworkspace\"",
     "native:android": "cap open android",
     "native:preview": "vite preview --config native/offline/vite.config.ts --host 127.0.0.1",
-    "native:assets": "node scripts/native-assets.mjs"
+    "native:assets": "node scripts/native-assets.mjs",
+    "vercel-build": "node scripts/vercel-build.mjs"
   },
   "dependencies": {
     "@capacitor-community/admob": "8.2.1",
