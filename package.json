@@ -11,7 +11,8 @@
     "both": "concurrently \"npm run party:dev\" \"npm run dev\"",
     "party:dev": "wrangler dev --config party/wrangler.jsonc --port 1999",
     "party:deploy": "wrangler deploy --config party/wrangler.jsonc",
-    "party:check": "tsc --noEmit -p party"
+    "party:check": "tsc --noEmit -p party",
+    "vercel-build": "node scripts/vercel-build.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.8",

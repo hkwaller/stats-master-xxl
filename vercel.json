@@ -23,5 +23,6 @@
       "destination": "https://statsmaster.playam.app/:path*",
       "permanent": true
     }
-  ]
+  ],
+  "buildCommand": "npm run vercel-build"
 }
