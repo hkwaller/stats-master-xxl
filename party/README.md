@@ -54,8 +54,8 @@ rematch. Reload a player and host mid-round. On a real phone, lock the screen fo
 5. Test the preview on a real phone, including reconnects, before deploying production.
 6. Set the same production variables before the production deployment.
 
-The production web deployment switches the room backend. This repository has no
-Capacitor shell or bundled native game to update.
+The production web deployment switches the room backend. Playam loads the website, so
+there is no separate app bundle to update.
 
 ## Automatic deployment from Vercel
 
