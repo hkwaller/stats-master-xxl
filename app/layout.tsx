@@ -1,10 +1,8 @@
-import { headers } from 'next/headers'
 import type { Metadata, Viewport } from 'next'
 import { Big_Shoulders, Archivo, Barlow_Condensed, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Providers } from './providers'
-import { NativeBoot } from '@/components/native/NativeBoot'
 
 /**
  * "Big Shoulders Display" was folded into the "Big Shoulders" superfamily upstream;
@@ -107,8 +105,7 @@ const jsonLd = {
   ],
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nativeRequest = (await headers()).get('user-agent')?.includes('StatsMasterNative/') ?? false
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
@@ -155,7 +152,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             },
           }}
         >
-          <Providers><NativeBoot nativeRequest={nativeRequest}>{children}</NativeBoot></Providers>
+          <Providers>{children}</Providers>
         </ClerkProvider>
       </body>
     </html>

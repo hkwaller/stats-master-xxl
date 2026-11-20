@@ -11,24 +11,9 @@
     "both": "concurrently \"npm run party:dev\" \"npm run dev\"",
     "party:dev": "wrangler dev --config party/wrangler.jsonc --port 1999",
     "party:deploy": "wrangler deploy --config party/wrangler.jsonc",
-    "party:check": "tsc --noEmit -p party",
-    "native:build": "node scripts/build-native.mjs",
-    "native:sync": "npm run native:build && cap sync",
-    "native:ios": "open \"ios/App/Stats Master.xcworkspace\"",
-    "native:android": "cap open android",
-    "native:preview": "vite preview --config native/offline/vite.config.ts --host 127.0.0.1",
-    "native:assets": "node scripts/native-assets.mjs"
+    "party:check": "tsc --noEmit -p party"
   },
   "dependencies": {
-    "@capacitor-community/admob": "8.2.1",
-    "@capacitor/android": "^8.6.0",
-    "@capacitor/app": "^8.1.2",
-    "@capacitor/core": "^8.6.0",
-    "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.6.0",
-    "@capacitor/keyboard": "^8.0.6",
-    "@capacitor/preferences": "^8.0.1",
-    "@capacitor/splash-screen": "^8.0.2",
     "@clerk/nextjs": "^7.0.8",
     "@supabase/supabase-js": "^2.47.0",
     "concurrently": "^10.0.6",
@@ -49,10 +34,8 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.6.0",
     "@cloudflare/workers-types": "^5.20261028.1",
     "@tailwindcss/postcss": "^4.0.0",
-    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

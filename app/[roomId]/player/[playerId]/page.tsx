@@ -39,7 +39,6 @@ import {
 import { getOrCreateGuest } from '@/lib/guest'
 import { useHostStateMachine } from '@/hooks/useHostStateMachine'
 import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
-import { useGameCompletion } from '@/hooks/useGameCompletion'
 import { useCareerPenalties } from '@/hooks/useCareerPenalties'
 import { questionPausedAt } from '@/lib/game/room-clock'
 import { GamePausedBanner } from '@/components/game/GamePausedBanner'
@@ -138,12 +137,6 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const penalties = useCareerPenalties(game?.careerPenaltyEndsAt, game?.pausedAt, game?.command === 'answering')
   const lockedOutPlayers = Object.keys(penalties)
   const gameMode = game?.gameMode ?? 'classic'
-  useGameCompletion(
-    roomId && game?.session ? `room:${roomId}:${game.session}` : undefined,
-    `/${roomId}/player/${playerId}`,
-    gameMode,
-    game?.command === 'finished' ? 'finished' : game && ['starting', 'question', 'answering', 'revealing', 'next'].includes(game.command) ? 'active' : 'other',
-  )
   const answeredCount = Object.keys(game?.answers ?? {}).length
 
   const players = (game?.players as unknown as Player[]) ?? []
