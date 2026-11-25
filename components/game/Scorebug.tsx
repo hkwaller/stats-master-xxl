@@ -1,7 +1,7 @@
 'use client'
 
 import { Zap } from 'lucide-react'
-import type { Player } from '@/types/game'
+import type { Jersey as JerseyData, Player } from '@/types/game'
 import { Kickplate, MonoLabel } from '@/components/design-system'
 import { Jersey } from '@/components/game/Jersey'
 import { jerseyFor } from '@/lib/jersey'
@@ -173,53 +173,52 @@ export function Scorebug({
 }
 
 /**
- * The phone header: room-relative rank and score for one player only.
+ * The phone header: your jersey, name, rank and score, and where the game is.
  */
 export function PlayerScorebug({
   questionLabel,
   name,
   score,
   rank,
+  jersey,
 }: {
   questionLabel: string
   name: string
   score: number
   rank: number
+  jersey?: JerseyData
 }) {
   return (
-    <header className="on-ice-header relative z-20">
-      <div className="flex h-[52px] items-center justify-between px-[18px]">
-        <MonoLabel size={9} tracking="0.2em">
-          {questionLabel}
-        </MonoLabel>
-        <div className="flex items-center gap-[9px]">
-          <span
-            className="font-display max-w-[120px] truncate"
-            style={{ fontWeight: 700, fontSize: 17, textTransform: 'uppercase', color: INK }}
-          >
+    <header className="relative z-20">
+      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+        {jersey && (
+          <div style={{ transform: 'rotate(-4deg)' }}>
+            <Jersey jersey={jersey} size={46} decorative />
+          </div>
+        )}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="font-display truncate" style={{ fontSize: 26, lineHeight: 1, textTransform: 'uppercase' }}>
             {name}
           </span>
-          <span
-            className="font-display tabular-nums"
-            style={{ fontWeight: 800, fontSize: 21, color: INK }}
-          >
-            {score}
-          </span>
-          <span
-            className="font-mono"
-            style={{
-              fontSize: 9,
-              letterSpacing: '0.14em',
-              color: '#fff',
-              background: rank === 1 ? RED : INK,
-              padding: '3px 6px',
-            }}
-          >
-            #{rank}
+          <span className="font-mono tabular-nums" style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-ink-2)' }}>
+            #{rank} · {score.toLocaleString('en-US')} PTS
           </span>
         </div>
+        <span
+          className="font-mono shrink-0"
+          style={{
+            background: rank === 1 && score > 0 ? 'var(--color-cobalt)' : '#ffffff',
+            color: rank === 1 && score > 0 ? '#ffffff' : 'var(--color-ink)',
+            border: '2px solid var(--color-ink)',
+            borderRadius: 999,
+            padding: '5px 11px',
+            fontSize: 13,
+            fontWeight: 700,
+          }}
+        >
+          {questionLabel}
+        </span>
       </div>
-      <Kickplate height={4} />
     </header>
   )
 }

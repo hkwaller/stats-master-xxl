@@ -40,12 +40,12 @@ export function PlayerGuessInput({
 
   if (answerMode === 'multiplechoice') {
     return (
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {choices.map((choice, i) => {
           const isEliminated = eliminatedChoices.includes(choice)
           const isSelected = selected === choice
 
-          // Once you answer, your pick keeps its red edge and the rest fade.
+          // Once you answer, your pick turns cobalt with a LOCKED IN stamp and the rest fade.
           let state: AnswerState = 'default'
           if (isEliminated) state = 'eliminated'
           else if (isSelected) state = 'selected'
@@ -56,7 +56,7 @@ export function PlayerGuessInput({
               key={`${choice}-${i}`}
               letter={ANSWER_LETTERS[i] ?? '?'}
               name={choice}
-              meta={isEliminated ? 'PENALTY BOX' : undefined}
+              meta={isEliminated ? 'PENALTY BOX' : isSelected ? 'LOCKED IN' : undefined}
               state={state}
               variant={variant}
               disabled={locked || isEliminated}

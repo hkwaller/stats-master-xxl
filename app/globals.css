@@ -639,10 +639,12 @@ a { text-underline-offset: .2em; }
 .captain-patch {
   display: inline-grid;
   place-items: center;
-  width: 25px;
-  height: 29px;
-  border: 2px solid currentColor;
-  font: 800 20px/1 var(--font-display);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-lemon);
+  border: 2.5px solid var(--color-ink);
+  font: 400 18px/1 var(--font-display);
   color: var(--color-ink);
 }
 .broadcast-score {

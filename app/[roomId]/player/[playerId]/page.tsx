@@ -1,6 +1,5 @@
 'use client'
 
-import { RinkBg } from '@/components/arcade/RinkBg'
 
 
 /**
@@ -32,6 +31,7 @@ import {
   useRevealNextCareerSeason,
   useSkipQuestion,
   useSetGamePaused,
+  useSetJersey,
   useSubmitAnswer,
   useSubmitCareerAnswer,
   useTickCountdown,
@@ -53,13 +53,19 @@ import { PlayerGuessInput } from '@/components/game/PlayerGuessInput'
 import { PlayerScorebug } from '@/components/game/Scorebug'
 import { PowerupBar } from '@/components/game/PowerupBar'
 import { Scoreboard, FinalBoard } from '@/components/game/Scoreboard'
-import { StatsCard } from '@/components/game/StatsCard'
+import { CardBack } from '@/components/cards/CardBack'
+import { ClockStamp } from '@/components/cards/ClockStamp'
+import { Jersey } from '@/components/game/Jersey'
+import { SweaterPicker } from '@/components/game/SweaterPicker'
 import { HintPanel } from '@/components/game/HintPanel'
-import { Clock, Kickplate, MonoLabel, ProgressTrack } from '@/components/design-system'
+import { Button, Clock, Modal, MonoLabel, ProgressTrack } from '@/components/design-system'
 import { CBrand } from '@/components/arcade'
 import { currentStreak } from '@/lib/streaks'
+import { jerseyFor, takenNumbers } from '@/lib/jersey'
+import { saveJersey } from '@/lib/jersey-storage'
 import type {
   H2HPair,
+  Jersey as JerseyData,
   HintType,
   HLPair,
   Player,
@@ -74,7 +80,7 @@ const RED = '#2357ff'
 const QUESTION_SECONDS = 30
 
 const MODE_TITLES: Record<string, string> = {
-  classic: 'Name the skater',
+  classic: 'Name the player',
   career: 'Who is this?',
   h2h: 'Which line is his?',
   'higher-lower': 'Higher or lower?',
@@ -105,6 +111,8 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   const advanceToNext = useAdvanceToNext()
   const skipQuestion = useSkipQuestion()
   const setGamePaused = useSetGamePaused()
+  const setJersey = useSetJersey()
+  const [dressing, setDressing] = useState<JerseyData | null>(null)
   const revealAnswers = useRevealAnswers()
   const rematch = useRematch()
   const tickCountdown = useTickCountdown()
@@ -323,7 +331,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
     }
     if (game!.command === 'revealing') {
       out.push({
-        label: gameMode === 'classic' ? 'Next question' : 'Next round',
+        label: gameMode === 'classic' ? 'Next card' : 'Next round',
         icon: <ChevronRight size={14} strokeWidth={2.2} />,
         tone: 'red',
         onClick: () => advanceToNext(myId),
@@ -336,24 +344,24 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
   if (game.command === 'finished') {
     return (
       <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
-      <RinkBg intensity={0.65} />
         <div className="relative z-[2] mx-auto flex w-full max-w-[860px] flex-1 flex-col pb-10">
           <FinalBoard
             players={players}
             history={history}
             myId={myId}
-            eyebrow={`Final · ${game.questionCount} questions`}
+            eyebrow={`${game.questionCount} ${gameMode === 'classic' ? 'cards' : 'rounds'}`}
+            compact
             onRematch={isController ? () => rematch(myId) : undefined}
             onSettings={isController ? () => router.push(`/${roomId}/setup`) : undefined}
           >
-            <div className="mx-10 mt-10 flex flex-col gap-5">
+            <div className="mt-4 flex flex-col gap-5">
               <QuestionHistory
                 history={history}
                 players={players}
                 myId={myId}
                 gameMode={gameMode}
               />
-              {!isController && <MonoLabel size={9}>Waiting for the host to restart</MonoLabel>}
+              {!isController && <MonoLabel>Waiting for the host to restart</MonoLabel>}
             </div>
           </FinalBoard>
         </div>
@@ -363,33 +371,27 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
   return (
     <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden" onFocus={onFieldFocus} onBlur={onFieldBlur}>
-      <RinkBg intensity={0.65} />
       {isActive && me ? (
         <PlayerScorebug
-          questionLabel={`Q ${String((game.currentQuestionIndex ?? 0) + 1).padStart(2, '0')} / ${String(game.questionCount).padStart(2, '0')}`}
+          questionLabel={`${gameMode === 'classic' ? 'Card' : 'Round'} ${(game.currentQuestionIndex ?? 0) + 1} / ${game.questionCount}`}
           name={me.name}
           score={me.score}
           rank={myRank}
+          jersey={jerseyFor(me)}
         />
       ) : (
-        <header className="on-ice-header relative z-20">
-          <div className="flex h-[52px] items-center justify-between px-[18px]">
+        <header className="relative z-20">
+          <div className="flex h-[60px] items-center justify-between px-4">
             <CBrand small />
             {me && (
-              <div className="flex items-center gap-2.5">
-                <span
-                  className="font-display tabular-nums"
-                  style={{ fontWeight: 800, fontSize: 21, color: INK }}
-                >
-                  {me.score}
+              <div className="flex items-center gap-2">
+                <Jersey jersey={jerseyFor(me)} size={34} decorative />
+                <span className="font-mono tabular-nums" style={{ fontSize: 15, fontWeight: 700 }}>
+                  #{myRank} · {me.score.toLocaleString('en-US')}
                 </span>
-                <MonoLabel size={9} tracking="0.16em">
-                  #{myRank}
-                </MonoLabel>
               </div>
             )}
           </div>
-          <Kickplate height={4} />
         </header>
       )}
 
@@ -413,14 +415,23 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
       >
         {/* Idle */}
         {(game.command === 'idle' || game.command === 'rematch') && (
-          <div className="flex flex-col items-center gap-3 py-20 text-center">
-            <span
-              className="font-display"
-              style={{ fontWeight: 800, fontSize: 44, lineHeight: 1, textTransform: 'uppercase' }}
-            >
-              Waiting to start
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            {me && (
+              <div style={{ transform: 'rotate(-3deg)' }}>
+                <Jersey jersey={jerseyFor(me)} name={me.name} size={180} />
+              </div>
+            )}
+            <span className="font-display" style={{ fontSize: 40, lineHeight: 1, textTransform: 'uppercase' }}>
+              You&apos;re on the hook
             </span>
-            <MonoLabel size={9}>Hold tight</MonoLabel>
+            <span style={{ fontSize: 16, color: 'var(--color-ink-2)' }}>
+              Waiting for the host to deal the cards.
+            </span>
+            {me && (
+              <Button variant="ghost" size="sm" onClick={() => setDressing(jerseyFor(me))}>
+                Change sweater
+              </Button>
+            )}
           </div>
         )}
 
@@ -436,7 +447,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
             >
               <span
                 className="font-display tabular-nums"
-                style={{ fontWeight: 800, fontSize: '38vw', lineHeight: 0.8, color: RED }}
+                style={{ fontSize: '38vw', lineHeight: 0.8, color: 'var(--color-cobalt)' }}
               >
                 {game.countdownTime || '·'}
               </span>
@@ -463,17 +474,16 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               >
                 {MODE_TITLES.classic}
               </span>
-              {isAnswering && (
-                <span className="shrink-0">
-                  <Clock seconds={questionTimeLeft} size={38} label={null} />
-                </span>
-              )}
+              {isAnswering && <ClockStamp seconds={questionTimeLeft} total={QUESTION_SECONDS} size={64} />}
             </div>
 
-            <StatsCard
+            <CardBack
               question={currentQuestion}
               revealedColumns={isRevealing ? 5 : (game.revealedColumns ?? 0)}
               size="phone"
+              title={`Card ${(game.currentQuestionIndex ?? 0) + 1} · ${currentQuestion.season.replace('-', '–')}${
+                isRevealing || sharedHints.includes('position') ? ` · Pos ${currentQuestion.positionCode}` : ''
+              }`}
             />
 
             {isAnswering && (
@@ -652,10 +662,8 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
         {/* Standings - hairline rows on a plane, not a floating sidebar. */}
         {connectedPlayers.length >= 2 && (
-          <div className="on-ice mt-2">
-            <div className="px-3 pt-3 pb-2">
-              <MonoLabel size={9}>Standings</MonoLabel>
-            </div>
+          <div className="mt-2 flex flex-col gap-2">
+            <MonoLabel>Standings</MonoLabel>
             <Scoreboard players={players} variant="live" myId={myId} />
           </div>
         )}
@@ -685,27 +693,25 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
           style={{
             bottom: showCareerBuzzer ? `calc(${BUZZER_HEIGHT}px + env(safe-area-inset-bottom, 0px))` : 0,
             paddingBottom: showCareerBuzzer ? 0 : 'env(safe-area-inset-bottom, 0px)',
-            background: INK,
+            background: '#ffffff',
+            borderTop: `3px solid ${INK}`,
           }}
         >
           <div
-            className="mx-auto grid w-full max-w-[560px]"
+            className="mx-auto grid w-full max-w-[560px] gap-2 px-3 py-2.5"
             style={{ gridTemplateColumns: `repeat(${controls.length}, 1fr)` }}
           >
-            {controls.map((c, index) => (
+            {controls.map((c) => (
               <button
                 key={c.label}
                 onClick={c.onClick}
-                className="btn-ice font-display flex items-center justify-center gap-2"
+                className="btn-ice font-display flex min-h-[44px] items-center justify-center gap-2"
                 style={{
-                  padding: '19px 0',
-                  background: c.tone === 'red' ? RED : INK,
-                  border: 'none',
-                  borderLeft: index > 0 ? '1px solid rgba(238,243,249,0.2)' : undefined,
-                  color: c.tone === 'red' ? '#fff' : '#e9f6ff',
-                  fontWeight: 700,
-                  fontSize: 15,
-                  letterSpacing: '0.14em',
+                  background: c.tone === 'red' ? 'var(--color-cobalt)' : '#ffffff',
+                  border: `2.5px solid ${INK}`,
+                  color: c.tone === 'red' ? '#fff' : INK,
+                  fontSize: 17,
+                  letterSpacing: '0.03em',
                   textTransform: 'uppercase',
                   cursor: 'pointer',
                 }}
@@ -726,6 +732,45 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
           onNext={isController ? () => advanceToNext(myId) : undefined}
         />
       )}
+      <AnimatePresence>
+        {dressing && (
+          <Modal open onClose={() => setDressing(null)} className="max-h-[92dvh] overflow-y-auto">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <Jersey jersey={dressing} name={me?.name} size={110} />
+                <h2 className="font-display m-0" style={{ fontSize: 34, lineHeight: 1, textTransform: 'uppercase' }}>
+                  Change sweater
+                </h2>
+              </div>
+              <SweaterPicker
+                jersey={dressing}
+                onChange={setDressing}
+                taken={takenNumbers(players, myId)}
+                takenBy={players
+                  .filter((p) => p.id !== myId && p.jersey)
+                  .sort((a, b) => a.jersey!.number - b.jersey!.number)
+                  .map((p) => `${p.jersey!.number} ${p.name}`)
+                  .join(' · ')}
+              />
+              <div className="grid grid-cols-2 gap-2.5">
+                <Button variant="ghost" onClick={() => setDressing(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setJersey({ playerId: myId, jersey: dressing })
+                    saveJersey(dressing)
+                    setDressing(null)
+                  }}
+                >
+                  Wear it
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
+      </AnimatePresence>
     </main>
   )
 }
@@ -770,28 +815,14 @@ function RoundStatus({
   return (
     <div
       className="on-ice flex items-baseline justify-between p-4"
-      style={{ borderLeft: `5px solid ${isCorrect ? RED : '#8ea3c2'}` }}
+      style={{ background: isCorrect ? 'var(--color-mint)' : '#ffffff' }}
     >
-      <span
-        className="font-display"
-        style={{
-          fontWeight: 800,
-          fontSize: 28,
-          lineHeight: 1,
-          textTransform: 'uppercase',
-          color: isCorrect ? RED : INK,
-        }}
-      >
-        {!hasAnswered ? 'No answer' : isCorrect ? 'Correct' : 'Missed'}
+      <span className="font-display" style={{ fontSize: 32, lineHeight: 1, textTransform: 'uppercase', color: INK }}>
+        {!hasAnswered ? 'No shot' : isCorrect ? 'Goal!' : 'Wide'}
       </span>
-      {points !== 0 && (
-        <span
-          className="font-display tabular-nums"
-          style={{ fontWeight: 800, fontSize: 24, color: points > 0 ? RED : INK }}
-        >
-          {points > 0 ? `+${points}` : points}
-        </span>
-      )}
+      <span className="font-mono tabular-nums" style={{ fontSize: 22, fontWeight: 700, color: INK }}>
+        {points > 0 ? `+${points}` : points}
+      </span>
     </div>
   )
 }
@@ -843,10 +874,10 @@ function QuestionHistory({
                 return (
                   <div
                     key={player.id}
-                    className="flex items-center gap-3 py-1.5"
+                    className="flex items-center gap-3 rounded-lg py-1.5"
                     style={{
                       borderBottom: '1px solid rgba(20, 33, 61,0.07)',
-                      borderLeft: `4px solid ${player.id === myId ? INK : 'transparent'}`,
+                      background: player.id === myId ? 'var(--color-ice-1)' : undefined,
                       paddingLeft: 8,
                     }}
                   >

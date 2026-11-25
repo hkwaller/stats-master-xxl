@@ -1,7 +1,5 @@
 'use client'
 
-import { RinkBg } from '@/components/arcade/RinkBg'
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
@@ -11,14 +9,13 @@ import { useStorage } from '@/lib/party/client'
 import { useAssignBoss, useJoinGame, useStartGame } from '@/lib/party/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
 import { Check, Copy, Settings } from 'lucide-react'
-import { Button, Kickplate, Modal, MonoLabel } from '@/components/design-system'
+import { Button, Modal, MonoLabel } from '@/components/design-system'
 import { Jersey } from '@/components/game/Jersey'
 import { jerseyFor } from '@/lib/jersey'
-import { PuckMark, JumbotronPanel } from '@/components/arcade'
-import type { CareerQuestion, H2HPair, HLPair, Question } from '@/types/game'
+import { PuckMark } from '@/components/arcade'
+import type { CareerQuestion, H2HPair, HLPair, Player, Question } from '@/types/game'
 
 const INK = '#14213d'
-const RED = '#2357ff'
 const DEAD = '#8ea3c2'
 
 interface LobbyPageProps {
@@ -191,14 +188,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
     }
   }
 
-  const players = (game?.players ?? []) as {
-    id: string
-    name: string
-    avatarUrl: string
-    score: number
-    isHost: boolean
-    isBoss: boolean
-  }[]
+  const players = (game?.players ?? []) as Player[]
   const isHost = game?.hostId === myId
   const canStart = players.length >= 1
   const maxPlayers = 8
@@ -212,7 +202,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
   const configTiers = (game?.difficultyTiers as string[] | undefined) ?? []
   const configSummary = [
     modeName.toUpperCase(),
-    `${game?.questionCount ?? 10} QUESTIONS`,
+    `${game?.questionCount ?? 10} ${game?.gameMode === 'classic' || !game?.gameMode ? 'CARDS' : 'ROUNDS'}`,
     configTiers.length ? configTiers.map((t) => t.toUpperCase()).join(' + ') : null,
   ]
     .filter(Boolean)
@@ -220,325 +210,238 @@ export default function LobbyPage({ params }: LobbyPageProps) {
 
   const openSeats = Math.max(0, maxPlayers - players.length)
 
+  const hooks = Array.from({ length: maxPlayers }, (_, i) => players[i] ?? null)
+
   return (
     <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
-      <RinkBg intensity={0.65} />
       {/* ── Header ── */}
-      <header className="on-ice-header relative z-20">
-        <div className="flex h-[60px] items-center justify-between px-5 md:px-8">
-          <div className="flex items-center gap-[11px]">
-            <PuckMark size={26} />
-            <span
-              className="font-display"
-              style={{ fontWeight: 800, fontSize: 18, letterSpacing: '0.02em' }}
-            >
-              STATS MASTER
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <MonoLabel size={9} tracking="0.22em">
-              {players.length} / {maxPlayers} seated
-            </MonoLabel>
-            <span className="flex items-center gap-[7px]">
-              <span className="size-[7px] animate-pulse rounded-full" style={{ background: RED }} />
-              <MonoLabel size={9} tracking="0.16em">
-                Live
-              </MonoLabel>
-            </span>
-          </div>
+      <header className="relative z-20 flex flex-wrap items-center gap-2.5 px-5 pt-5 md:px-10">
+        <div className="mr-auto flex items-center gap-2.5">
+          <PuckMark size={30} />
+          <span className="font-display" style={{ fontSize: 28, lineHeight: 1, letterSpacing: '0.02em' }}>
+            STATS MASTER
+          </span>
         </div>
-        <Kickplate />
+        <span
+          className="font-mono"
+          style={{
+            background: '#fff',
+            border: `2px solid ${INK}`,
+            borderRadius: 999,
+            padding: '6px 14px',
+            fontSize: 13,
+            fontWeight: 700,
+          }}
+        >
+          {configSummary}
+        </span>
       </header>
 
-      <div className="relative z-[2] mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-5 pt-8 pb-[132px] md:px-8">
+      <div className="relative z-[2] mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-5 pt-6 pb-[132px] md:px-10">
         {/* ── Title ── */}
-        <div className="flex flex-col gap-2">
-          <MonoLabel size={10} tracking="0.3em">
-            Step 2 of 2 · {configSummary}
-          </MonoLabel>
-          <h1
-            className="font-display m-0"
-            style={{
-              fontWeight: 800,
-              fontSize: 'clamp(38px,7vw,60px)',
-              lineHeight: 0.9,
-              letterSpacing: '0.005em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Warm-up
+        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+          <h1 className="font-display m-0" style={{ fontSize: 'clamp(40px,7vw,64px)', lineHeight: 1, textTransform: 'uppercase' }}>
+            The locker room
           </h1>
+          <span style={{ fontSize: 18, fontWeight: 500, color: 'var(--color-ink-2)' }}>
+            {players.length} of {maxPlayers} hooks taken. Pick a sweater on your phone to join.
+          </span>
         </div>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-          {/* ── Room code, on the jumbotron ── */}
-          <div className="flex flex-col gap-5">
-            <JumbotronPanel struts screenPad="20px 22px">
-              <div className="flex flex-col gap-3">
-                <span
-                  className="font-mono"
-                  style={{ fontSize: 10, letterSpacing: '0.3em', color: 'rgba(255,176,31,0.65)' }}
-                >
-                  ROOM CODE
-                </span>
-                <span
-                  className="led-glow tabular-nums"
-                  style={{
-                    fontFamily: 'var(--font-led)',
-                    fontWeight: 700,
-                    fontSize: 'clamp(52px,11vw,84px)',
-                    lineHeight: 0.82,
-                    letterSpacing: '0.1em',
-                    color: '#ffb01f',
-                  }}
-                >
-                  {roomId || '-'}
-                </span>
-              </div>
-            </JumbotronPanel>
-
-            <div className="on-ice flex flex-col gap-4 p-5">
-              <MonoLabel size={10} tracking="0.22em">
-                Scan to join
-              </MonoLabel>
-
-              <div className="flex items-center gap-5">
-                {connectUrl && (
-                  <div
-                    className="shrink-0 bg-white p-2"
-                    style={{ boxShadow: 'inset 0 0 0 1px rgba(20, 33, 61,0.14)' }}
-                  >
-                    <QRCodeSVG
-                      value={connectUrl}
-                      size={116}
-                      bgColor="#ffffff"
-                      fgColor={INK}
-                      level="M"
+        {/* ── The hooks ── */}
+        <section aria-label="Players" className="relative pt-[18px]">
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-2.5"
+            style={{ height: 10, borderRadius: 5, background: INK }}
+          />
+          <ol className="m-0 grid list-none grid-cols-4 gap-x-4 gap-y-6 p-0 lg:grid-cols-8">
+            {hooks.map((player, i) => (
+              <li key={player?.id ?? `open-${i}`} className="relative flex flex-col items-center">
+                <svg aria-hidden="true" width="20" height="22" viewBox="0 0 20 22">
+                  <path
+                    d="M10 0 V12 Q10 19 4 17"
+                    fill="none"
+                    stroke={player ? INK : DEAD}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                {player ? (
+                  <>
+                    <Jersey
+                      jersey={jerseyFor(player)}
+                      name={player.name}
+                      size={130}
+                      className="h-auto w-full max-w-[130px]"
                     />
-                  </div>
-                )}
-                <div className="flex min-w-0 flex-1 flex-col gap-3">
-                  <span
-                    className="font-mono break-all"
-                    style={{
-                      fontSize: 10,
-                      letterSpacing: '0.08em',
-                      color: '#4a5a78',
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {connectUrl}
-                  </span>
-                  <Button variant="secondary" size="sm" onClick={handleCopy}>
-                    {copied ? (
-                      <Check size={14} strokeWidth={2.4} />
-                    ) : (
-                      <Copy size={14} strokeWidth={2.2} />
+                    {player.isHost && (
+                      <span
+                        className="captain-patch absolute"
+                        title="Host · Captain"
+                        aria-label="Host"
+                        style={{ top: 30, right: 0 }}
+                      >
+                        C
+                      </span>
                     )}
-                    {copied ? 'Copied' : 'Copy link'}
-                  </Button>
-                </div>
+                    <span className="font-display mt-1.5 max-w-full truncate" style={{ fontSize: 20, textTransform: 'uppercase' }}>
+                      {player.name}
+                    </span>
+                    <div className="flex flex-wrap items-center justify-center gap-1.5">
+                      {player.isBoss && (
+                        <span
+                          className="font-mono"
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: '#fff',
+                            background: 'var(--color-cobalt)',
+                            borderRadius: 999,
+                            padding: '2px 8px',
+                          }}
+                        >
+                          BOSS
+                        </span>
+                      )}
+                      {player.id === myId && <MonoLabel size={11}>You</MonoLabel>}
+                    </div>
+                    {isHost && (
+                      <button
+                        type="button"
+                        onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
+                        className="font-mono mt-0.5 min-h-[36px]"
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          color: 'var(--color-ink-2)',
+                          textDecoration: 'underline',
+                          textUnderlineOffset: 3,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {player.isBoss ? 'Clear boss' : 'Make boss'}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 120 128"
+                      className="h-auto w-full max-w-[130px]"
+                    >
+                      <path
+                        d="M44 6 L12 16 L1 88 L21 93 L31 48 L31 123 L89 123 L89 48 L99 93 L119 88 L108 16 L76 6 Q60 13 44 6 Z"
+                        fill="none"
+                        stroke={DEAD}
+                        strokeWidth="2.5"
+                        strokeDasharray="6 5"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <MonoLabel size={12}>Open hook</MonoLabel>
+                  </>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <div className="grid items-stretch gap-5 lg:grid-cols-[1.4fr_1fr]">
+          {/* ── Join ── */}
+          <div className="on-ice flex flex-wrap items-center gap-5 p-5">
+            {connectUrl && (
+              <div className="shrink-0 rounded-[10px] bg-white p-2" style={{ border: '2px solid var(--color-ice-2)' }}>
+                <QRCodeSVG value={connectUrl} size={116} bgColor="#ffffff" fgColor="#14213d" level="M" />
+              </div>
+            )}
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <MonoLabel size={12}>Scan or go to {connectUrl.replace(/^https?:\/\//, '').replace(/\/[^/]+\/connect$/, '')}</MonoLabel>
+              <span
+                className="font-display tabular-nums"
+                style={{ fontSize: 'clamp(52px,8vw,78px)', lineHeight: 0.95, letterSpacing: '0.06em' }}
+              >
+                {roomId || '-'}
+              </span>
+              <div>
+                <Button variant="ghost" size="sm" onClick={handleCopy}>
+                  {copied ? <Check size={15} strokeWidth={2.6} /> : <Copy size={15} strokeWidth={2.4} />}
+                  {copied ? 'Copied' : 'Copy link'}
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* ── Roster + settings ── */}
-          <div className="flex flex-col gap-5">
-            <div className="on-ice flex flex-col">
-              <div className="flex items-baseline justify-between px-5 pt-5 pb-3">
-                <MonoLabel size={10} tracking="0.22em">
-                  Starting lineup
-                </MonoLabel>
-                <MonoLabel size={9} tracking="0.16em">
-                  Tap a name to make them boss
-                </MonoLabel>
+          {/* ── Settings ── */}
+          <div className="on-ice flex flex-col gap-2.5 p-5">
+            <MonoLabel size={12}>The game</MonoLabel>
+            {[
+              { key: 'Mode', value: modeName },
+              { key: game?.gameMode === 'classic' ? 'Cards' : 'Rounds', value: String(game?.questionCount ?? 10) },
+              {
+                key: 'Difficulty',
+                value: configTiers.length
+                  ? configTiers.map((t) => t[0].toUpperCase() + t.slice(1)).join(' + ')
+                  : '-',
+              },
+              {
+                key: 'Answers',
+                value: game?.gameMode === 'career' ? 'Buzz in and type' : game?.answerMode === 'freetext' ? 'Type it' : 'Multiple choice',
+              },
+              {
+                key: 'Reveal',
+                value: game?.gameMode === 'career' ? 'First season first · Every 3 seconds' : game?.revealMode === 'timed' ? 'Stat by stat' : 'All at once',
+              },
+              ...(game?.gameMode === 'career' ? [{
+                key: 'Season years',
+                value: game.careerShowYears === false ? 'Hidden' : 'Shown',
+              }] : []),
+            ].map((row) => (
+              <div
+                key={row.key}
+                className="flex items-baseline justify-between gap-3 pb-2"
+                style={{ borderBottom: '2px solid var(--color-ice-2)' }}
+              >
+                <MonoLabel size={11}>{row.key}</MonoLabel>
+                <span className="font-display" style={{ fontSize: 20, textTransform: 'uppercase' }}>
+                  {row.value}
+                </span>
               </div>
-
-              {players.map((player, i) => (
-                <div
-                  key={player.id}
-                  className="lineup-row relative flex items-center gap-3 px-5 py-3"
-                  style={{
-                    borderBottom: '1px solid rgba(20, 33, 61,0.09)',
-                    borderLeft: `5px solid ${player.isBoss ? RED : INK}`,
-                    background: player.isBoss ? 'rgba(35, 87, 255,0.06)' : 'transparent',
-                  }}
-                >
-                  <span className="jersey-number" aria-label={`Lineup number ${i + 1}`}>
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <Jersey jersey={jerseyFor(player)} size={38} decorative />
-                  <span
-                    className="font-display min-w-0 flex-1 truncate"
-                    style={{
-                      fontWeight: 700,
-                      fontSize: 22,
-                      textTransform: 'uppercase',
-                      color: INK,
-                    }}
-                  >
-                    {player.name}
-                  </span>
-
-                  {player.isHost && (
-                    <span className="captain-patch" title="Host · Captain" aria-label="Host · Captain">C</span>
-                  )}
-                  {player.isBoss && (
-                    <span
-                      className="font-mono"
-                      style={{
-                        fontSize: 9,
-                        letterSpacing: '0.14em',
-                        color: '#fff',
-                        background: RED,
-                        padding: '3px 7px',
-                      }}
-                    >
-                      BOSS
-                    </span>
-                  )}
-                  {player.id === myId && (
-                    <MonoLabel size={9} tracking="0.14em">
-                      You
-                    </MonoLabel>
-                  )}
-
-                  {isHost && (
-                    <button
-                      type="button"
-                      onClick={() => handleAssignBoss(player.isBoss ? null : player.id)}
-                      className="btn-ice font-mono shrink-0"
-                      style={{
-                        border: 'none',
-                        background: 'transparent',
-                        padding: '4px 0',
-                        fontSize: 9,
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        color: '#4a5a78',
-                        textDecoration: 'underline',
-                        textUnderlineOffset: 3,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {player.isBoss ? 'Clear' : 'Make boss'}
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              {/* Open seats fill in one by one as phones connect. */}
-              {Array.from({ length: Math.min(openSeats, 4) }).map((_, i) => (
-                <div
-                  key={`open-${i}`}
-                  className="penalty-hatch flex items-center gap-3 px-5 py-3"
-                  style={{
-                    borderBottom: '1px solid rgba(20, 33, 61,0.09)',
-                    borderLeft: `5px solid ${DEAD}`,
-                  }}
-                >
-                  <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#7a88a3' }}>
-                    {String(players.length + i + 1).padStart(2, '0')}
-                  </span>
-                  <span
-                    className="font-display flex-1"
-                    style={{
-                      fontWeight: 700,
-                      fontSize: 22,
-                      textTransform: 'uppercase',
-                      color: '#7a88a3',
-                    }}
-                  >
-                    Open seat
-                  </span>
-                  <MonoLabel size={9} tracking="0.14em" color="#7a88a3">
-                    Scan to join
-                  </MonoLabel>
-                </div>
-              ))}
-            </div>
-
-            <div className="on-ice flex flex-col gap-3 p-5">
-              <MonoLabel size={10} tracking="0.22em">
-                Settings
-              </MonoLabel>
-              {[
-                { key: 'Mode', value: modeName },
-                { key: 'Questions', value: String(game?.questionCount ?? 10) },
-                {
-                  key: 'Difficulty',
-                  value: configTiers.length
-                    ? configTiers.map((t) => t[0].toUpperCase() + t.slice(1)).join(' + ')
-                    : '-',
-                },
-                {
-                  key: 'Answers',
-                  value: game?.gameMode === 'career' ? 'Buzz in and type' : game?.answerMode === 'freetext' ? 'Type it' : 'Multiple choice',
-                },
-                {
-                  key: 'Reveal',
-                  value: game?.gameMode === 'career' ? 'First season first · Every 3 seconds' : game?.revealMode === 'timed' ? 'Column by column' : 'All at once',
-                },
-                ...(game?.gameMode === 'career' ? [{
-                  key: 'Season years',
-                  value: game.careerShowYears === false ? 'Hidden' : 'Shown',
-                }] : []),
-              ].map((row) => (
-                <div
-                  key={row.key}
-                  className="flex items-baseline justify-between gap-3 pb-2.5"
-                  style={{ borderBottom: '1px solid rgba(20, 33, 61,0.07)' }}
-                >
-                  <MonoLabel size={9} tracking="0.2em">
-                    {row.key}
-                  </MonoLabel>
-                  <span
-                    className="font-display"
-                    style={{
-                      fontWeight: 700,
-                      fontSize: 20,
-                      color: INK,
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ── Start bar ── */}
-      <div className="fixed inset-x-0 bottom-0 z-40">
-        <Kickplate height={4} />
-        <div
-          className="flex flex-wrap items-center gap-4 px-5 py-4 md:px-8"
-          style={{ background: INK }}
-        >
-          <MonoLabel size={10} tracking="0.14em" color="#8d9cb0">
-            {isHost ? 'Everyone in? Phones are the buzzers.' : 'Waiting for the host to start'}
-          </MonoLabel>
+      {/* ── Deal bar ── */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center gap-4 px-5 py-4 md:px-10"
+        style={{ background: '#fff', borderTop: `3px solid ${INK}` }}
+      >
+        <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--color-ink-2)' }}>
+          {isHost ? 'Everyone dressed? Phones are the sticks.' : 'Waiting for the host to deal'}
+        </span>
 
-          {isHost && (
-            <div className="flex w-full items-center gap-2.5 sm:ml-auto sm:w-auto">
-              <Button variant="ghost" size="sm" onClick={() => router.push(`/${roomId}/setup`)}>
-                <Settings size={14} strokeWidth={2.2} />
-                Setup
-              </Button>
-              <Button
-                variant="primary"
-                size="md"
-                disabled={!canStart || starting}
-                onClick={handleStartGame}
-                className="flex-1 sm:flex-none"
-              >
-                {starting ? 'Starting…' : 'Drop the puck'}
-              </Button>
-            </div>
-          )}
-        </div>
+        {isHost && (
+          <div className="flex w-full items-center gap-2.5 sm:ml-auto sm:w-auto">
+            <Button variant="ghost" size="sm" onClick={() => router.push(`/${roomId}/setup`)}>
+              <Settings size={15} strokeWidth={2.4} />
+              Setup
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              disabled={!canStart || starting}
+              onClick={handleStartGame}
+              className="flex-1 sm:flex-none"
+            >
+              {starting ? 'Dealing…' : 'Deal cards'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ── Boss selection ── */}
@@ -574,12 +477,12 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                       type="button"
                       onClick={() => setPendingBossId(player.id)}
                       aria-pressed={picked}
-                      className="btn-ice flex items-center gap-3 px-3 py-2.5 text-left"
+                      className="flex items-center gap-3 px-3 py-2 text-left"
                       style={{
-                        border: 'none',
-                        borderLeft: `5px solid ${picked ? RED : 'transparent'}`,
-                        borderBottom: '1px solid rgba(20, 33, 61,0.09)',
-                        background: picked ? 'rgba(35, 87, 255,0.06)' : 'transparent',
+                        border: picked ? `3px solid ${INK}` : '2px solid var(--color-ice-2)',
+                        borderRadius: 14,
+                        marginBottom: 6,
+                        background: picked ? 'var(--color-ice-1)' : '#fff',
                         cursor: 'pointer',
                       }}
                     >
@@ -595,22 +498,18 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                       >
                         {player.name}
                       </span>
-                      {picked && <Check size={15} strokeWidth={2.4} color={RED} />}
+                      {picked && <Check size={18} strokeWidth={3} color="var(--color-cobalt)" />}
                     </button>
                   )
                 })}
               </div>
 
-              <div
-                className="grid grid-cols-2 gap-px"
-                style={{ background: 'rgba(20, 33, 61,0.12)' }}
-              >
-                <Button variant="ghost" flush onClick={() => setShowBossModal(false)}>
+              <div className="grid grid-cols-2 gap-2.5">
+                <Button variant="ghost" onClick={() => setShowBossModal(false)}>
                   Cancel
                 </Button>
                 <Button
                   variant="primary"
-                  flush
                   disabled={!pendingBossId || starting}
                   onClick={() => {
                     if (!pendingBossId) return

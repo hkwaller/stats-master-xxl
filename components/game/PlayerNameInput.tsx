@@ -194,9 +194,8 @@ export function PlayerNameInput({
                   fontWeight: 700,
                   fontSize: 19,
                   color: INK,
-                  background: i === activeIndex ? 'rgba(35, 87, 255,0.07)' : 'transparent',
+                  background: i === activeIndex ? 'var(--color-ice-1)' : 'transparent',
                   borderBottom: '1px solid rgba(20, 33, 61,0.07)',
-                  borderLeft: `4px solid ${i === activeIndex ? RED : 'transparent'}`,
                 }}
               >
                 <HighlightMatch text={name} query={value} />
