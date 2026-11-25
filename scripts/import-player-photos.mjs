@@ -175,7 +175,9 @@ try {
     const id = Number(key)
     return ids.has(id) && !curatedIds.has(id) ? [{ id, title: `File:${file}`, caption }] : []
   })
-  candidates.push(...await getWikidataCandidates(ids))
+  const reviewedIdsByTitle = new Map(candidates.map(({ title, id }) => [title, id]))
+  const wikidata = await getWikidataCandidates(ids)
+  candidates.push(...wikidata.filter(({ title, id }) => !reviewedIdsByTitle.has(title) || reviewedIdsByTitle.get(title) === id))
   const photos = await getCommonsPhotos(candidates)
   const imported = Object.keys(photos).length
   if (!imported) throw new Error('No licensed matches found. The previous catalog was kept.')

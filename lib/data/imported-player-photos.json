@@ -246,6 +246,13 @@
     "license": "CC BY-SA 2.0",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
   },
+  "8446967": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/84/Hastings_County_Archives_HC01957B_%2827079924619%29.jpg/500px-Hastings_County_Archives_HC01957B_%2827079924619%29.jpg",
+    "creator": "Community Archives",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hastings_County_Archives_HC01957B_(27079924619).jpg",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
   "8446978": {
     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Ftorek-2020_AHL_Hall_of_Fame_Induction_IMG_0451_%2849452283641%29_%28cropped%29.jpg/500px-Ftorek-2020_AHL_Hall_of_Fame_Induction_IMG_0451_%2849452283641%29_%28cropped%29.jpg",
     "creator": "TheAHL",
@@ -302,6 +309,13 @@
     "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tony_Granato_2011-10-13.JPG",
     "license": "CC BY-SA 3.0",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "8447429": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Bengt-%C3%85ke_Gustafsson_in_2023.jpg/500px-Bengt-%C3%85ke_Gustafsson_in_2023.jpg",
+    "creator": "Frankie Fouganthin",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bengt-%C3%85ke_Gustafsson_in_2023.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
   },
   "8447500": {
     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/29/Ted_Lindsay_%28cropped_portrait%29.jpg/500px-Ted_Lindsay_%28cropped_portrait%29.jpg",
@@ -491,6 +505,13 @@
     "license": "CC BY-SA 2.0",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
   },
+  "8448848": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/H%C3%A5kan_Loob.jpg/500px-H%C3%A5kan_Loob.jpg",
+    "creator": "Frankie Fouganthin",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:H%C3%A5kan_Loob.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
   "8448857": {
     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/02/KenLinseman.jpg/500px-KenLinseman.jpg",
     "creator": "Meowwcat",
@@ -632,6 +653,21 @@
     "sourceUrl": "https://commons.wikimedia.org/wiki/File:Larry_Murphy_Mellon_Arena_Final_Game_2010-04-08.JPG",
     "license": "CC BY-SA 3.0",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "8449796": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/Alumni_game_IMG_1032_%2824033920682%29.jpg/500px-Alumni_game_IMG_1032_%2824033920682%29.jpg",
+    "creator": "Jessica",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Alumni_game_IMG_1032_(24033920682).jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "caption": "Näslund, No. 26 in white"
+  },
+  "8449807": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/8/88/Petr_Nedv%C4%9Bd.jpg",
+    "creator": "TheAHL",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Petr_Nedv%C4%9Bd.jpg",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
   },
   "8449812": {
     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Camneely2013.png/500px-Camneely2013.png",
@@ -854,13 +890,6 @@
     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/Steve_Shutt2.jpg/500px-Steve_Shutt2.jpg",
     "creator": "Horge",
     "sourceUrl": "https://commons.wikimedia.org/wiki/File:Steve_Shutt2.jpg",
-    "license": "CC BY 3.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
-  },
-  "8451365": {
-    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/df/Mikemilburyfacingoff.jpg/500px-Mikemilburyfacingoff.jpg",
-    "creator": "WeatherExperiment at English Wikipedia",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mikemilburyfacingoff.jpg",
     "license": "CC BY 3.0",
     "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
   },
@@ -2620,11 +2649,11 @@
     "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
   },
   "8480830": {
-    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Andrei_Svechnikov_2018.jpg/500px-Andrei_Svechnikov_2018.jpg",
-    "creator": "Benjamin Reed",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Andrei_Svechnikov_2018.jpg",
-    "license": "CC0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/Lillehammer_2016_Hockey_Norv%C3%A8ge_-_Russie_%2825025956436%29.jpg/500px-Lillehammer_2016_Hockey_Norv%C3%A8ge_-_Russie_%2825025956436%29.jpg",
+    "creator": "pleclown",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lillehammer_2016_Hockey_Norv%C3%A8ge_-_Russie_(25025956436).jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
   },
   "8480839": {
     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Rasmus_Dahlin_2019_crop.png/500px-Rasmus_Dahlin_2019_crop.png",
