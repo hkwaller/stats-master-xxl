@@ -1,41 +1,66 @@
 @import 'tailwindcss';
 
 @theme {
-  /* ── Ice surface ──────────────────────────────────────────────────────────── */
-  --color-ice-0: #ffffff;
-  --color-ice-1: #eef3f9; /* page base */
-  --color-ice-2: #e4ecf5; /* far end of the ice gradient */
-  --color-ice-3: #f4f7fa; /* disabled fill */
+  /* ── Cards on Ice ─────────────────────────────────────────────────────────
+     A trading-card game played on the pond. The page is pale ice with skate
+     trails; UI sits on it as white cards with an ink frame and a hard offset. */
+
+  /* ── Ice and card stock ───────────────────────────────────────────────────── */
+  --color-ice-0: #ffffff; /* card stock: panels, answer cards, sheets */
+  --color-ice-1: #e9f6ff; /* the pond: page base */
+  --color-ice-2: #dcebfa; /* pressed / inactive fills, photo slots */
+  --color-ice-3: #f4f9fe; /* disabled fill */
+  --color-ice-line: #d3ecff; /* faceoff circles and rink paint on the pond */
 
   /* ── Ink ──────────────────────────────────────────────────────────────────── */
-  --color-ink: #0d1b2a; /* primary text, dark bars, boards */
-  --color-ink-2: #55677d; /* secondary text, mono labels - 4.5:1 on white */
-  --color-ink-3: #7d8b9c; /* disabled text - use sparingly */
-  --color-ink-4: #6b7a8c; /* eliminated body text */
-  --color-edge-dead: #b3c0cf; /* left edge marker on eliminated rows */
-  --color-hairline: rgba(13, 27, 42, 0.1);
-  --color-hairline-2: rgba(13, 27, 42, 0.07);
+  --color-ink: #14213d; /* text, card frames, offset shadows */
+  --color-ink-2: #4a5a78; /* secondary text and mono labels - 6.9:1 on white */
+  --color-ink-3: #7a88a3; /* disabled text only */
+  --color-ink-4: #5e6d88; /* eliminated answer text */
+  --color-edge-dead: #8ea3c2; /* dashed frames of eliminated / waiting cards */
+  --color-hairline: rgba(20, 33, 61, 0.1);
+  --color-hairline-2: rgba(20, 33, 61, 0.07);
 
   /* ── Accents ──────────────────────────────────────────────────────────────── */
-  --color-red: #cf0a2c; /* the accent - leader, live, primary CTA */
-  --color-blue-line: #0b53c9; /* rink geometry + section rules, always alpha'd */
-  --color-amber: #f2b21c; /* kickplate trim only */
+  --color-cobalt: #2357ff; /* action, your pick, the leader - white text 5.8:1 */
+  --color-cobalt-hover: #1a44d6;
+  --color-cobalt-pressed: #1638b8;
+  --color-lemon: #ffd84d; /* the key stat, stamps, power plays - ink text */
+  --color-tangerine: #ff7a1a; /* the mystery nameplate - ink text */
+  --color-mint: #2bc48a; /* goal / correct - ink text */
+  --color-pink: #ff6fa8; /* penalty box stamp - ink text */
+  --color-alarm: #d92d20; /* under 5 seconds and errors only - white text 5:1 */
 
-  /* ── Jumbotron ────────────────────────────────────────────────────────────── */
+  /* Legacy names from On the Ice, aliased until phase 3 retires them. */
+  --color-red: var(--color-cobalt);
+  --color-blue-line: var(--color-cobalt);
+  --color-amber: var(--color-lemon);
+
+  /* ── Jumbotron (retired in phase 2) ─────────────────────────────────────── */
   --color-jumbo-screen: #05070b;
   --color-jumbo-led: #ffb01f;
   --color-jumbo-led-dim: rgba(255, 176, 31, 0.6);
 
+  /* ── Shape ────────────────────────────────────────────────────────────────── */
+  --radius-card: 16px;
+  --radius-chip: 999px;
+  --shadow-card: 4px 4px 0 var(--color-ink);
+  --shadow-card-lg: 8px 8px 0 var(--color-ink);
+
   /* ── Fonts ────────────────────────────────────────────────────────────────── */
-  --font-display:
-    var(--font-big-shoulders), 'Big Shoulders Display', 'Barlow Condensed', sans-serif;
+  --font-display: var(--font-anton), 'Anton', 'Impact', sans-serif;
   --font-led: var(--font-barlow-condensed), 'Barlow Condensed', sans-serif;
-  --font-body: var(--font-archivo), 'Archivo', sans-serif;
-  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  --font-body: var(--font-dm-sans), 'DM Sans', sans-serif;
+  --font-mono: var(--font-space-mono), 'Space Mono', monospace;
 }
 
 :root {
   color-scheme: light;
+}
+
+html {
+  /* Anton ships one weight; never let the browser smear a fake bold over it. */
+  font-synthesis-weight: none;
 }
 
 body {
@@ -45,49 +70,58 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Ice page surface ───────────────────────────────────────────────────────
-   The page IS the rink: white to pale blue, with faint diagonal skate scuffs.
-   `.ice-bg` paints the gradient; `/* Broad, irregular skate cuts; no repeating wallpaper pattern. */
+.font-display {
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* ── The pond ───────────────────────────────────────────────────────────────
+   `.ice-bg` paints pale ice with two long skate trails and a faint faceoff
+   circle via ::before (z-index 0), so content needs `relative z-[2]`. */
+.ice-bg {
+  position: relative;
+  background-color: var(--color-ice-1);
+}
 .ice-bg::before, .ice-scuffs {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-image:
-    linear-gradient(153deg, transparent 28%, rgba(85,103,125,.06) 28.1%, transparent 28.3%),
-    linear-gradient(26deg, transparent 63%, rgba(85,103,125,.05) 63.1%, transparent 63.3%),
-    linear-gradient(148deg, transparent 72%, rgba(255,255,255,.8) 72.1%, transparent 72.4%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720' preserveAspectRatio='none'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M-40 520C160 440 330 600 560 520S980 380 1320 470' stroke='%23fff' stroke-width='5'/%3E%3Cpath d='M-40 548C180 470 350 628 580 548S1000 410 1320 500' stroke='%23fff' stroke-width='2.5' opacity='.8'/%3E%3Cpath d='M860-20C960 120 1150 80 1300 210' stroke='%23fff' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(circle at 12% 88%, transparent 0 158px, var(--color-ice-line) 159px 168px, transparent 169px);
+  background-size: 100% 100%, 100% 100%;
+  background-repeat: no-repeat;
 }
 
-/* ── Planes on the ice ──────────────────────────────────────────────────────
-   Flat white, square, separated by ambient shadow rather than an outline. */
+/* ── Cards on the ice ───────────────────────────────────────────────────────
+   White card stock in an ink frame with a hard offset. Depth is the offset,
+   never a blur. */
 .on-ice {
-  background: #ffffff;
-  border-radius: 0;
-  box-shadow: 0 2px 10px rgba(13, 27, 42, 0.07);
+  background: var(--color-ice-0);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 }
 
 .on-ice-header {
-  background: #ffffff;
+  background: var(--color-ice-0);
   border-radius: 0;
-  box-shadow:
-    0 1px 0 rgba(13, 27, 42, 0.1),
-    0 8px 24px rgba(13, 27, 42, 0.06);
+  border-bottom: 3px solid var(--color-ink);
+  box-shadow: none;
 }
 
-/* The padding at the base of the boards - 4–5px amber under a header bar. */
+/* Kickplate is retired: a header bar is just its ink rule now. */
 .kickplate {
-  height: 5px;
-  background: var(--color-amber);
+  height: 0;
 }
 
-/* Eliminated answers: hatched, like the penalty box glass. */
+/* Eliminated answers: hatched like the penalty box glass, in a dashed frame. */
 .penalty-hatch {
   background-image: repeating-linear-gradient(
-    45deg,
-    rgba(13, 27, 42, 0.055) 0 8px,
-    rgba(13, 27, 42, 0.02) 8px 16px
+    135deg,
+    var(--color-ice-2) 0 8px,
+    var(--color-ice-3) 8px 16px
   );
 }
 
@@ -96,7 +130,7 @@ body {
 .jumbo-body {
   background: linear-gradient(180deg, #2b3646 0%, #141c28 55%, #0b1017 100%);
   box-shadow:
-    0 30px 60px rgba(13, 27, 42, 0.35),
+    0 30px 60px rgba(20, 33, 61, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
@@ -117,30 +151,30 @@ body {
 }
 
 /* ── Buttons ────────────────────────────────────────────────────────────────
-   Square, borderless. Only the primary keeps a hard offset, and it is 3px. */
+   Pills in an ink frame. Pressing sinks the button into its offset. */
 .btn-ice {
-  border-radius: 0;
+  border-radius: var(--radius-chip);
   transition:
     transform 0.1s ease,
     box-shadow 0.1s ease,
     background-color 0.1s ease;
 }
 .btn-ice:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: translate(2px, 2px);
 }
 
 /* ── Focus ──────────────────────────────────────────────────────────────────
-   This system has no borders to thicken, so focus is a red offset ring. The
-   inputs set `focus:outline-none` to drop the UA ring; this replaces it. */
+   A cobalt ring offset from the ink frame. The inputs set `focus:outline-none`
+   to drop the UA ring; this replaces it. */
 :focus-visible {
-  outline: 2px solid var(--color-red);
-  outline-offset: 2px;
+  outline: 3px solid var(--color-cobalt);
+  outline-offset: 3px;
 }
 
 input:focus-visible,
 input:focus {
-  outline: 2px solid var(--color-red);
-  outline-offset: -2px;
+  outline: 3px solid var(--color-cobalt);
+  outline-offset: 2px;
 }
 
 /* ── Timer urgency ──────────────────────────────────────────────────────────
@@ -302,13 +336,13 @@ input:focus {
   border-top: 6px solid var(--color-red);
   background: linear-gradient(135deg, var(--color-ice-0) 35%, var(--color-ice-2));
   color: var(--color-ink);
-  box-shadow: 0 24px 64px rgba(13, 27, 42, 0.3);
+  box-shadow: 0 24px 64px rgba(20, 33, 61, 0.3);
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 .career-answer-dialog::backdrop {
-  background: rgba(13, 27, 42, 0.76);
+  background: rgba(20, 33, 61, 0.76);
   backdrop-filter: blur(5px);
 }
 
@@ -584,7 +618,7 @@ a { text-underline-offset: .2em; }
 .rink-facts { padding-top: 22px; border-top: 3px double var(--color-blue-line); }
 .centre-ice-challenge { position: relative; padding-block: 24px; }
 .centre-ice-challenge > p { color: var(--color-ink) !important; background: var(--color-ice-0); padding: 10px 14px; margin: 0; }
-.on-ice-header { border-top: 4px solid var(--color-red); }
+.on-ice-header { border-top: 0; }
 .mode-nameplate { position: relative; border-left: 0 !important; border-top: 4px solid var(--color-ink); }
 .mode-nameplate::after { content: ''; width: 52px; height: 7px; background: var(--color-red); margin-top: 14px; }
 .lineup-row { border-left: 0 !important; }
@@ -703,7 +737,7 @@ a { text-underline-offset: .2em; }
 .setup-career-sequence li > svg { flex-shrink: 0; color: var(--color-blue-line); }
 .setup-career-sequence strong { display: block; font-family: var(--font-display); font-size: 22px; line-height: 1; text-transform: uppercase; margin-bottom: 6px; }
 .setup-career-sequence li div > span { display: block; color: var(--color-ink); font-size: 12px; line-height: 1.5; }
-.setup-boards { background: var(--color-ice-0); box-shadow: 0 -6px 24px rgba(13,27,42,.08); }
+.setup-boards { background: var(--color-ice-0); box-shadow: 0 -6px 24px rgba(20, 33, 61,.08); }
 .setup-boards-inner { max-width: 1100px; margin: auto; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 20px; padding: 14px 32px max(14px, env(safe-area-inset-bottom)); }
 .setup-pool-board { min-width: 185px; }
 .setup-pool-score { display: flex; align-items: center; gap: 12px; color: var(--color-jumbo-led); }
@@ -740,7 +774,7 @@ a { text-underline-offset: .2em; }
 .power-play-help { position: relative; display: inline-flex; vertical-align: middle; }
 .power-play-help-trigger { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: var(--color-ink-2); background: transparent; border: 0; cursor: pointer; }
 .power-play-help-trigger:hover, .power-play-help-trigger[aria-expanded="true"] { color: var(--color-blue-line); background: var(--color-ice-1); }
-.power-play-help-panel { position: absolute; z-index: 60; right: 0; bottom: 100%; width: 380px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 48px); overflow-y: auto; padding: 18px; color: var(--color-ink); background: var(--color-ice-0); box-shadow: 0 8px 28px rgba(13,27,42,.18); font-family: var(--font-body); font-size: 13px; font-weight: 400; line-height: 1.5; text-transform: none; letter-spacing: normal; text-align: left; }
+.power-play-help-panel { position: absolute; z-index: 60; right: 0; bottom: 100%; width: 380px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 48px); overflow-y: auto; padding: 18px; color: var(--color-ink); background: var(--color-ice-0); box-shadow: 0 8px 28px rgba(20, 33, 61,.18); font-family: var(--font-body); font-size: 13px; font-weight: 400; line-height: 1.5; text-transform: none; letter-spacing: normal; text-align: left; }
 .power-play-help-heading { display: block; font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1; text-transform: uppercase; }
 .power-play-help-intro { display: block; margin-top: 8px; color: var(--color-ink-2); }
 .power-play-help-item { display: block; padding-top: 8px; margin-top: 8px; border-top: 1px solid var(--color-hairline); }
@@ -809,7 +843,7 @@ button.practice-hint:focus-visible { outline: 3px solid var(--color-blue-line); 
 .practice-choices > div { animation: practice-choice-in 300ms cubic-bezier(.16,1,.3,1) both; }
 .practice-call { min-height: 60px; padding: 10px 0; }
 /* After a pick the call and Next shot pin to the bottom edge, so the action is never below the fold. */
-.practice-dock[data-answered=true] { position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 14px; margin: 12px -16px 0; padding: 10px 16px max(10px, env(safe-area-inset-bottom)); background: var(--color-ice-0); box-shadow: 0 -6px 16px rgba(13,27,42,.08); }
+.practice-dock[data-answered=true] { position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 14px; margin: 12px -16px 0; padding: 10px 16px max(10px, env(safe-area-inset-bottom)); background: var(--color-ice-0); box-shadow: 0 -6px 16px rgba(20, 33, 61,.08); }
 .practice-dock[data-answered=true] .practice-call { flex: 1; min-width: 0; min-height: 0; padding: 0; }
 .practice-dock[data-answered=true] .practice-call strong { font-size: 28px; }
 .practice-dock[data-answered=true] .practice-call span { font-size: 14px; line-height: 1.3; }
@@ -881,8 +915,8 @@ button.practice-hint:focus-visible { outline: 3px solid var(--color-blue-line); 
 .app-about p { text-align: center; margin: 8px 0; }
 .app-about nav { display: flex; justify-content: center; gap: 20px; }
 .app-about nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
-.app-join-sheet { position: fixed; inset: auto 0 0; width: 100%; max-width: 100%; max-height: calc(100dvh - env(safe-area-inset-top) - 16px); margin: 0 auto; overflow-y: auto; padding: 0; border: 0; color: var(--color-ink); background: var(--color-ice-0); box-shadow: 0 -8px 40px rgba(13,27,42,.16); }
-.app-join-sheet::backdrop { background: rgba(13,27,42,.46); }
+.app-join-sheet { position: fixed; inset: auto 0 0; width: 100%; max-width: 100%; max-height: calc(100dvh - env(safe-area-inset-top) - 16px); margin: 0 auto; overflow-y: auto; padding: 0; border: 0; color: var(--color-ink); background: var(--color-ice-0); box-shadow: 0 -8px 40px rgba(20, 33, 61,.16); }
+.app-join-sheet::backdrop { background: rgba(20, 33, 61,.46); }
 .app-join-sheet[open] { animation: app-sheet-enter 200ms cubic-bezier(.16,1,.3,1); }
 .app-sheet-content { max-width: 520px; margin: auto; padding: 12px max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
 .app-sheet-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -899,7 +933,7 @@ button.practice-hint:focus-visible { outline: 3px solid var(--color-blue-line); 
 .app-home button { cursor: pointer; }
 .app-home button:disabled { cursor: wait; opacity: .6; }
 .app-home :is(a, button, input, summary):focus-visible, .app-detail-header a:focus-visible { outline: 3px solid var(--color-blue-line); outline-offset: 3px; }
-.app-host-action:active:not(:disabled), .app-sheet-submit:active:not(:disabled) { background: #a90824; }
+.app-host-action:active:not(:disabled), .app-sheet-submit:active:not(:disabled) { background: #1638b8; }
 .app-join-action:active:not(:disabled), .app-play-row:active, .app-account-button:active { background: var(--color-ice-2); }
 .app-home:has(.app-join-sheet[open]) { overscroll-behavior: contain; }
 body:has(.app-join-sheet[open]) { overflow: hidden; }
@@ -912,7 +946,7 @@ body:has(.app-join-sheet[open]) { overflow: hidden; }
 .app-daily-description { margin: 6px 0 16px; font-size: .9375rem; line-height: 1.6; color: var(--color-ink-2); }
 @keyframes app-sheet-enter { from { transform: translateY(24px); opacity: .5; } to { transform: translateY(0); opacity: 1; } }
 @media (hover: hover) {
-  .app-host-action:hover:not(:disabled), .app-sheet-submit:hover:not(:disabled) { background: #b80927; }
+  .app-host-action:hover:not(:disabled), .app-sheet-submit:hover:not(:disabled) { background: #1a44d6; }
   .app-join-action:hover:not(:disabled), .app-play-row:hover { background: var(--color-ice-1); }
 }
 @media (max-width: 359px) {

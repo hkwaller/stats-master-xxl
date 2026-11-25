@@ -197,7 +197,7 @@ export function BuzzInButton({
       style={{
         background: RED,
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        boxShadow: '0 -1px 0 rgba(13,27,42,0.10)',
+        boxShadow: '0 -1px 0 rgba(20, 33, 61,0.10)',
       }}
     >
       <motion.button

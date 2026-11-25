@@ -69,8 +69,8 @@ import type {
 } from '@/types/game'
 import { CAREER_REVEAL_INTERVAL_MS, POWERUP_INITIAL_CHARGES } from '@/types/game'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 const QUESTION_SECONDS = 30
 
 const MODE_TITLES: Record<string, string> = {
@@ -702,7 +702,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
                   background: c.tone === 'red' ? RED : INK,
                   border: 'none',
                   borderLeft: index > 0 ? '1px solid rgba(238,243,249,0.2)' : undefined,
-                  color: c.tone === 'red' ? '#fff' : '#eef3f9',
+                  color: c.tone === 'red' ? '#fff' : '#e9f6ff',
                   fontWeight: 700,
                   fontSize: 15,
                   letterSpacing: '0.14em',
@@ -770,7 +770,7 @@ function RoundStatus({
   return (
     <div
       className="on-ice flex items-baseline justify-between p-4"
-      style={{ borderLeft: `5px solid ${isCorrect ? RED : '#b3c0cf'}` }}
+      style={{ borderLeft: `5px solid ${isCorrect ? RED : '#8ea3c2'}` }}
     >
       <span
         className="font-display"
@@ -845,7 +845,7 @@ function QuestionHistory({
                     key={player.id}
                     className="flex items-center gap-3 py-1.5"
                     style={{
-                      borderBottom: '1px solid rgba(13,27,42,0.07)',
+                      borderBottom: '1px solid rgba(20, 33, 61,0.07)',
                       borderLeft: `4px solid ${player.id === myId ? INK : 'transparent'}`,
                       paddingLeft: 8,
                     }}
@@ -868,7 +868,7 @@ function QuestionHistory({
                         fontSize: 19,
                         width: 46,
                         textAlign: 'right',
-                        color: result.points > 0 ? RED : '#55677d',
+                        color: result.points > 0 ? RED : '#4a5a78',
                       }}
                     >
                       {result.points > 0 ? `+${result.points}` : result.points}

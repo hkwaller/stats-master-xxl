@@ -41,7 +41,7 @@ export function CBrand({ small = false, subtitle, light = false, className = '' 
             fontSize: wordSize,
             lineHeight: 1,
             letterSpacing: '0.02em',
-            color: light ? '#ffffff' : '#0d1b2a',
+            color: light ? '#ffffff' : '#14213d',
           }}
         >
           STATS MASTER
@@ -53,7 +53,7 @@ export function CBrand({ small = false, subtitle, light = false, className = '' 
               fontSize: 8,
               lineHeight: 1,
               letterSpacing: '0.22em',
-              color: light ? 'rgba(255,255,255,0.55)' : '#55677d',
+              color: light ? 'rgba(255,255,255,0.55)' : '#4a5a78',
             }}
           >
             {subtitle}

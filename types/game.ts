@@ -75,10 +75,23 @@ export type HLPair = {
 
 // ─── Player (room participant, not NHL player) ────────────────────────────────
 
+export type JerseyPattern = 'plain' | 'hoops' | 'yoke' | 'sleeves' | 'sash' | 'chevron'
+
+/** A player's sweater: two colours, a pattern and a number that is unique in the room. */
+export type Jersey = {
+  pattern: JerseyPattern
+  body: string // one of JERSEY_BODIES
+  trim: string // one of JERSEY_TRIMS, never equal to body
+  number: number // 1–99
+}
+
 export type Player = {
   id: string
   name: string
+  /** Legacy generated avatar, kept for saved games. Rooms show `jersey`. */
   avatarUrl: string
+  /** Missing on rooms created before jerseys; fall back to `jerseyFor(player, ...)`. */
+  jersey?: Jersey
   score: number
   isHost: boolean
   isBoss: boolean

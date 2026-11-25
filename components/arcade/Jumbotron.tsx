@@ -124,8 +124,8 @@ export function Jumbotron({
             right: s.strutInset,
             top: -s.strutHeight,
             height: s.strutHeight,
-            borderLeft: '3px solid rgba(13,27,42,0.21)',
-            borderRight: '3px solid rgba(13,27,42,0.21)',
+            borderLeft: '3px solid rgba(20, 33, 61,0.21)',
+            borderRight: '3px solid rgba(20, 33, 61,0.21)',
           }}
         />
       )}
@@ -253,8 +253,8 @@ export function JumbotronPanel({
             right: '24%',
             top: -32,
             height: 32,
-            borderLeft: '3px solid rgba(13,27,42,0.21)',
-            borderRight: '3px solid rgba(13,27,42,0.21)',
+            borderLeft: '3px solid rgba(20, 33, 61,0.21)',
+            borderRight: '3px solid rgba(20, 33, 61,0.21)',
           }}
         />
       )}

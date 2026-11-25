@@ -2,8 +2,8 @@
 
 import { motion } from 'framer-motion'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 
 export type AnswerState = 'default' | 'selected' | 'eliminated' | 'correct' | 'faded'
 
@@ -40,11 +40,11 @@ export function AnswerRow({
   const correct = state === 'correct'
   const selected = state === 'selected'
 
-  const edge = eliminated ? '#b3c0cf' : correct || selected ? RED : INK
-  const background = correct ? 'rgba(207,10,44,0.07)' : eliminated ? 'transparent' : '#ffffff'
-  const shadow = eliminated ? 'none' : '0 2px 10px rgba(13,27,42,0.09)'
-  const nameColor = eliminated ? '#6b7a8c' : INK
-  const letterColor = eliminated ? '#7d8b9c' : '#55677d'
+  const edge = eliminated ? '#8ea3c2' : correct || selected ? RED : INK
+  const background = correct ? 'rgba(35, 87, 255,0.07)' : eliminated ? 'transparent' : '#ffffff'
+  const shadow = eliminated ? 'none' : '0 2px 10px rgba(20, 33, 61,0.09)'
+  const nameColor = eliminated ? '#5e6d88' : INK
+  const letterColor = eliminated ? '#7a88a3' : '#4a5a78'
   const interactive = Boolean(onClick) && !disabled
 
   const Tag = onClick ? motion.button : motion.div
@@ -106,7 +106,7 @@ export function AnswerRow({
           style={{
             fontSize: variant === 'tv' ? 9 : 8,
             letterSpacing: variant === 'tv' ? '0.16em' : '0.14em',
-            color: '#55677d',
+            color: '#4a5a78',
             textTransform: 'uppercase',
           }}
         >

@@ -2,10 +2,12 @@
 
 import { Flame } from 'lucide-react'
 import type { Player, Question, HintType } from '@/types/game'
-import { Avatar, MonoLabel } from '@/components/design-system'
+import { MonoLabel } from '@/components/design-system'
+import { Jersey } from '@/components/game/Jersey'
+import { jerseyFor } from '@/lib/jersey'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 
 interface SideRailProps {
   answeredCount: number
@@ -63,14 +65,14 @@ export function SideRail({
     <aside
       className="flex flex-col"
       style={{
-        borderLeft: '7px solid rgba(11,83,201,0.55)',
+        borderLeft: '7px solid rgba(35, 87, 255,0.55)',
         background: 'rgba(255,255,255,0.72)',
       }}
     >
       {/* Answers in */}
       <div
         className="flex flex-col gap-[11px] px-5 py-[18px]"
-        style={{ borderBottom: '1px solid rgba(13,27,42,0.10)' }}
+        style={{ borderBottom: '1px solid rgba(20, 33, 61,0.10)' }}
       >
         <MonoLabel size={9}>Answers in</MonoLabel>
         <div className="flex items-baseline gap-2">
@@ -82,7 +84,7 @@ export function SideRail({
           </span>
           <span
             className="font-display"
-            style={{ fontWeight: 700, fontSize: 22, color: '#55677d' }}
+            style={{ fontWeight: 700, fontSize: 22, color: '#4a5a78' }}
           >
             / {totalPlayers}
           </span>
@@ -94,7 +96,7 @@ export function SideRail({
               className="flex-1"
               style={{
                 height: 5,
-                background: i < answeredCount ? INK : 'rgba(13,27,42,0.14)',
+                background: i < answeredCount ? INK : 'rgba(20, 33, 61,0.14)',
               }}
             />
           ))}
@@ -105,7 +107,7 @@ export function SideRail({
       {hintsEnabled && question && (
         <div
           className="flex flex-col gap-[13px] px-5 py-[18px]"
-          style={{ borderBottom: '1px solid rgba(13,27,42,0.10)' }}
+          style={{ borderBottom: '1px solid rgba(20, 33, 61,0.10)' }}
         >
           <MonoLabel size={9}>Hints revealed</MonoLabel>
           {HINT_ROWS.filter((row) => row.type !== 'era' || showEraHint).map((row) => {
@@ -114,7 +116,7 @@ export function SideRail({
               <div
                 key={row.type}
                 className="flex items-baseline justify-between gap-2.5 pb-2.5"
-                style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+                style={{ borderBottom: '1px solid rgba(20, 33, 61,0.07)' }}
               >
                 <MonoLabel size={9} tracking="0.2em">{row.key}</MonoLabel>
                 <span
@@ -122,7 +124,7 @@ export function SideRail({
                   style={{
                     fontWeight: 700,
                     fontSize: 21,
-                    color: revealed ? INK : '#6b7a8c',
+                    color: revealed ? INK : '#5e6d88',
                   }}
                 >
                   {revealed ? row.value(question) : 'LOCKED'}
@@ -138,7 +140,7 @@ export function SideRail({
         <div className="flex flex-col gap-3 px-5 py-[18px]">
           <MonoLabel size={9}>Streak leader</MonoLabel>
           <div className="flex items-center gap-[11px]">
-            <Avatar url={streak.player.avatarUrl} name={streak.player.name} size={36} />
+            <Jersey jersey={jerseyFor(streak.player)} size={44} decorative />
             <div className="flex flex-col gap-1">
               <span
                 className="font-display"
@@ -172,7 +174,7 @@ export function SideRail({
                 padding: '18px 0',
                 background: c.tone === 'red' ? RED : INK,
                 border: 'none',
-                color: c.tone === 'red' ? '#fff' : '#eef3f9',
+                color: c.tone === 'red' ? '#fff' : '#e9f6ff',
                 fontWeight: 700,
                 fontSize: 16,
                 letterSpacing: '0.14em',

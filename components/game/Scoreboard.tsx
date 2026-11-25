@@ -3,12 +3,14 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { RotateCcw, Settings } from 'lucide-react'
 import type { Player, QuestionResult } from '@/types/game'
-import { Avatar, GameHeading, MonoLabel } from '@/components/design-system'
+import { GameHeading, MonoLabel } from '@/components/design-system'
+import { Jersey } from '@/components/game/Jersey'
+import { jerseyFor } from '@/lib/jersey'
 import { JumbotronPanel } from '@/components/arcade'
 import { currentStreak, playerSummary } from '@/lib/streaks'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 const LED = '#ffb01f'
 
 interface ScoreboardProps {
@@ -47,8 +49,8 @@ function LiveScoreboard({ players, myId }: { players: Player[]; myId?: string })
               className="standings-row grid items-center gap-3 px-3 py-2.5"
               style={{
                 gridTemplateColumns: '18px 26px 1fr auto',
-                background: isLeader ? 'rgba(207,10,44,0.07)' : 'transparent',
-                borderBottom: '1px solid rgba(13,27,42,0.09)',
+                background: isLeader ? 'rgba(35, 87, 255,0.07)' : 'transparent',
+                borderBottom: '1px solid rgba(20, 33, 61,0.09)',
                 borderLeft: `4px solid ${player.id === myId ? INK : 'transparent'}`,
               }}
             >
@@ -57,7 +59,7 @@ function LiveScoreboard({ players, myId }: { players: Player[]; myId?: string })
               >
                 {String(i + 1).padStart(2, '0')}
               </span>
-              <Avatar url={player.avatarUrl} name={player.name} size={26} />
+              <Jersey jersey={jerseyFor(player)} size={34} decorative />
               <span
                 className="font-display truncate"
                 style={{
@@ -126,19 +128,19 @@ function ResultRows({
             className="result-row grid items-center gap-[18px] px-5 py-4"
             style={{
               gridTemplateColumns: '30px 34px 1fr auto 82px',
-              background: isWinner ? 'rgba(207,10,44,0.07)' : '#ffffff',
-              borderLeft: `5px solid ${isWinner ? RED : scoredNothing ? '#b3c0cf' : INK}`,
-              borderBottom: '1px solid rgba(13,27,42,0.09)',
-              boxShadow: p.id === myId ? 'inset 0 0 0 1px rgba(13,27,42,0.14)' : undefined,
+              background: isWinner ? 'rgba(35, 87, 255,0.07)' : '#ffffff',
+              borderLeft: `5px solid ${isWinner ? RED : scoredNothing ? '#8ea3c2' : INK}`,
+              borderBottom: '1px solid rgba(20, 33, 61,0.09)',
+              boxShadow: p.id === myId ? 'inset 0 0 0 1px rgba(20, 33, 61,0.14)' : undefined,
             }}
           >
             <span
               className="font-mono"
-              style={{ fontSize: 11, color: isWinner ? RED : '#55677d' }}
+              style={{ fontSize: 11, color: isWinner ? RED : '#4a5a78' }}
             >
               {String(i + 1).padStart(2, '0')}
             </span>
-            <Avatar url={p.avatarUrl} name={p.name} size={34} />
+            <Jersey jersey={jerseyFor(p)} size={42} decorative />
             <span
               className="font-display truncate"
               style={{ fontWeight: 700, fontSize: 27, textTransform: 'uppercase', color: INK }}
@@ -275,7 +277,7 @@ export function FinalBoard({
               padding: '24px 0',
               background: INK,
               border: 'none',
-              color: '#eef3f9',
+              color: '#e9f6ff',
               fontWeight: 700,
               fontSize: 19,
               letterSpacing: '0.14em',

@@ -4,14 +4,18 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useStorage } from '@/lib/party/client'
-import { useClaimBoss, useJoinGame } from '@/lib/party/mutations'
+import { useClaimBoss, useJoinGame, useSetJersey } from '@/lib/party/mutations'
 import { getOrCreateGuest, updateGuestName } from '@/lib/guest'
-import { getAvatarUrl } from '@/lib/avatar'
+import { defaultJersey, nextFreeNumber } from '@/lib/jersey'
+import { loadSavedJersey, saveJersey } from '@/lib/jersey-storage'
+import type { Jersey as JerseyData, Player } from '@/types/game'
 import { Button, Kickplate, MonoLabel } from '@/components/design-system'
 import { PuckMark, JumbotronPanel } from '@/components/arcade'
+import { Jersey } from '@/components/game/Jersey'
+import { SweaterPicker } from '@/components/game/SweaterPicker'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 
 interface ConnectPageProps {
   params: Promise<{ roomId: string }>
@@ -24,10 +28,27 @@ export default function ConnectPage({ params }: ConnectPageProps) {
   const [name, setName] = useState('')
   const [guestId, setGuestId] = useState('')
   const [joining, setJoining] = useState(false)
+  const [picked, setPicked] = useState<JerseyData | null>(null)
 
   const game = useStorage((root) => root.game)
   const joinGame = useJoinGame()
+  const setJersey = useSetJersey()
   const claimBoss = useClaimBoss()
+
+  const players = (game?.players ?? []) as Player[]
+  const others = players.filter((p) => p.id !== guestId)
+  const taken = new Set(others.flatMap((p) => (p.jersey ? [p.jersey.number] : [])))
+  const takenBy = others
+    .filter((p) => p.jersey)
+    .sort((a, b) => a.jersey!.number - b.jersey!.number)
+    .map((p) => `${p.jersey!.number} ${p.name}`)
+    .join(' · ')
+
+  // Your saved sweater (or a starter one), with its number moved off any clash.
+  const base = picked ?? (guestId ? (loadSavedJersey() ?? defaultJersey(guestId)) : null)
+  const jersey = base && taken.has(base.number)
+    ? { ...base, number: nextFreeNumber(base.number, taken) }
+    : base
 
   const bossToken = searchParams.get('boss')
 
@@ -39,10 +60,13 @@ export default function ConnectPage({ params }: ConnectPageProps) {
   }, [params])
 
   function handleJoin() {
-    if (!name.trim() || !guestId) return
+    if (!name.trim() || !guestId || !jersey) return
     setJoining(true)
     updateGuestName(name.trim())
-    joinGame({ id: guestId, name: name.trim() })
+    saveJersey(jersey)
+    joinGame({ id: guestId, name: name.trim(), jersey })
+    // Already in the room (a rejoin): the join is ignored, so update the sweater directly.
+    if (players.some((p) => p.id === guestId)) setJersey({ playerId: guestId, jersey })
     if (bossToken) {
       claimBoss({ playerId: guestId, token: bossToken })
     }
@@ -52,10 +76,6 @@ export default function ConnectPage({ params }: ConnectPageProps) {
         : `/${roomId}/player/${guestId}`,
     )
   }
-
-  const avatarUrl = guestId ? getAvatarUrl(guestId) : ''
-
-  const players = (game?.players ?? []) as { id: string; name: string }[]
 
   return (
     <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
@@ -125,29 +145,23 @@ export default function ConnectPage({ params }: ConnectPageProps) {
           </div>
         )}
 
-        {/* Your jersey: avatar and name. */}
-        <div className="on-ice flex flex-col gap-5 p-5" style={{ borderLeft: `5px solid ${INK}` }}>
+        {/* Your sweater: the preview updates as you pick. */}
+        <div className="on-ice flex flex-col gap-5 p-5">
           <div className="flex items-center gap-4">
-            {avatarUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={avatarUrl}
-                alt=""
-                width={64}
-                height={64}
-                style={{ width: 64, height: 64, borderRadius: 3, background: '#e4ecf5' }}
-              />
+            {jersey && (
+              <div style={{ transform: 'rotate(-3deg)' }}>
+                <Jersey jersey={jersey} name={name || undefined} size={120} />
+              </div>
             )}
-            <div className="flex flex-col gap-1.5">
-              <MonoLabel size={9} tracking="0.22em">
-                Your jersey
-              </MonoLabel>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <MonoLabel>Pick your sweater</MonoLabel>
               <span
-                className="font-display"
-                style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
+                className="font-display truncate"
+                style={{ fontSize: 34, lineHeight: 1, textTransform: 'uppercase' }}
               >
                 {name || '-'}
               </span>
+              {jersey && <MonoLabel color="var(--color-ink)">No. {jersey.number}</MonoLabel>}
             </div>
           </div>
 
@@ -165,13 +179,12 @@ export default function ConnectPage({ params }: ConnectPageProps) {
               className="w-full focus:outline-none"
               style={{
                 background: '#ffffff',
-                boxShadow: 'inset 0 0 0 2px rgba(13,27,42,0.14)',
-                border: 'none',
-                borderRadius: 0,
-                padding: '14px 16px',
+                border: '3px solid var(--color-ink)',
+                borderRadius: 14,
+                padding: '12px 16px',
                 fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: 24,
+                fontWeight: 400,
+                fontSize: 26,
                 lineHeight: 1,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
@@ -179,6 +192,10 @@ export default function ConnectPage({ params }: ConnectPageProps) {
               }}
             />
           </div>
+
+          {jersey && (
+            <SweaterPicker jersey={jersey} onChange={setPicked} taken={taken} takenBy={takenBy} />
+          )}
 
           <Button
             variant="primary"
@@ -188,7 +205,7 @@ export default function ConnectPage({ params }: ConnectPageProps) {
             className="w-full"
             style={{ minHeight: 52 }}
           >
-            {joining ? 'Joining…' : 'Take the ice'}
+            {joining ? 'Joining…' : 'Hit the ice'}
           </Button>
         </div>
 
@@ -203,15 +220,19 @@ export default function ConnectPage({ params }: ConnectPageProps) {
             {players.map((p, i) => (
               <div
                 key={p.id}
-                className="flex items-baseline gap-3 px-4 py-2.5"
-                style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+                className="flex items-center gap-3 px-4 py-2"
+                style={{ borderBottom: '1px solid rgba(20, 33, 61,0.07)' }}
               >
-                <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#55677d' }}>
-                  {String(i + 1).padStart(2, '0')}
-                </span>
+                {p.jersey ? (
+                  <Jersey jersey={p.jersey} size={32} decorative />
+                ) : (
+                  <span className="font-mono" style={{ fontSize: 11, width: 32, color: '#4a5a78' }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                )}
                 <span
                   className="font-display flex-1 truncate"
-                  style={{ fontWeight: 700, fontSize: 19, textTransform: 'uppercase', color: INK }}
+                  style={{ fontSize: 21, textTransform: 'uppercase', color: INK }}
                 >
                   {p.name}
                 </span>

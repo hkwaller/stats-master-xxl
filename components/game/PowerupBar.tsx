@@ -8,8 +8,8 @@ import { Button, Modal, MonoLabel } from '@/components/design-system'
 import { PowerPlayHelp } from '@/components/game/PowerPlayHelp'
 import { POWERUP_DETAILS } from '@/lib/game/powerups'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 
 interface PowerupBarProps {
   charges: Record<PowerupType, number>
@@ -88,7 +88,7 @@ export function PowerupBar({
 
   return (
     <>
-      <div className="on-ice-header" style={{ boxShadow: '0 -1px 0 rgba(13,27,42,0.10)' }}>
+      <div className="on-ice-header" style={{ boxShadow: '0 -1px 0 rgba(20, 33, 61,0.10)' }}>
         <div className="flex items-center justify-between px-[18px] pt-3 pb-2">
           <div className="flex items-center gap-1">
             <MonoLabel size={9} tracking="0.22em">Power plays</MonoLabel>
@@ -101,7 +101,7 @@ export function PowerupBar({
           )}
         </div>
 
-        <div className="grid grid-cols-4" style={{ gap: 1, background: 'rgba(13,27,42,0.12)' }}>
+        <div className="grid grid-cols-4" style={{ gap: 1, background: 'rgba(20, 33, 61,0.12)' }}>
           {POWERUPS.map((pu) => {
             const charge = charges[pu.type] ?? 0
             const available = pu.availableIn(answerMode, revealMode)
@@ -121,8 +121,8 @@ export function PowerupBar({
                 style={{
                   height: 72,
                   border: 'none',
-                  background: isActive ? RED : exhausted ? '#f4f7fa' : '#ffffff',
-                  color: isActive ? '#ffffff' : exhausted ? '#7d8b9c' : INK,
+                  background: isActive ? RED : exhausted ? '#f4f9fe' : '#ffffff',
+                  color: isActive ? '#ffffff' : exhausted ? '#7a88a3' : INK,
                   cursor: canUse ? 'pointer' : 'default',
                 }}
               >
@@ -133,7 +133,7 @@ export function PowerupBar({
                     fontSize: 8,
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',
-                    color: isActive ? '#ffffff' : exhausted ? '#7d8b9c' : '#55677d',
+                    color: isActive ? '#ffffff' : exhausted ? '#7a88a3' : '#4a5a78',
                   }}
                 >
                   {pu.short} ·{charge}
@@ -155,12 +155,12 @@ export function PowerupBar({
               >
                 {confirmPowerup.label}
               </h3>
-              <p style={{ fontSize: 14, lineHeight: 1.6, color: '#55677d', margin: 0 }}>
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: '#4a5a78', margin: 0 }}>
                 {confirmPowerup.description}
               </p>
               <div
                 className="grid grid-cols-2 gap-px pt-2"
-                style={{ background: 'rgba(13,27,42,0.12)' }}
+                style={{ background: 'rgba(20, 33, 61,0.12)' }}
               >
                 <Button variant="ghost" flush onClick={() => setConfirming(null)}>
                   Cancel

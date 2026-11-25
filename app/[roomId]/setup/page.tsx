@@ -127,7 +127,7 @@ function SegBtn({
         textTransform: 'uppercase',
         background: on ? INK : 'var(--color-ice-0)',
         color: on ? 'var(--color-ice-1)' : 'var(--color-ink-2)',
-        boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(13,27,42,0.14)',
+        boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(20, 33, 61,0.14)',
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
@@ -179,7 +179,7 @@ function Toggle({
           width: 40,
           height: 20,
           background: on ? RED : 'var(--color-ice-3)',
-          boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(13,27,42,0.14)',
+          boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(20, 33, 61,0.14)',
         }}
       >
         <span
@@ -196,7 +196,7 @@ function FormatRow({ label, children }: { label: string; children: React.ReactNo
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-3 pb-3.5"
-      style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+      style={{ borderBottom: '1px solid rgba(20, 33, 61,0.07)' }}
     >
       <span
         className="font-display"
@@ -241,7 +241,7 @@ function OptionPlane({
         borderLeft: `6px solid ${on ? edge : DEAD}`,
         borderRadius: 0,
         background: on ? 'color-mix(in srgb, var(--color-red) 5%, var(--color-ice-0))' : 'var(--color-ice-0)',
-        boxShadow: on ? '0 2px 10px rgba(13,27,42,0.10)' : '0 2px 10px rgba(13,27,42,0.05)',
+        boxShadow: on ? '0 2px 10px rgba(20, 33, 61,0.10)' : '0 2px 10px rgba(20, 33, 61,0.05)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.55 : 1,
       }}

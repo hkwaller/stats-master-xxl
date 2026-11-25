@@ -19,7 +19,7 @@ export default function OpengraphImage() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(178deg, #ffffff 0%, #eef3f9 38%, #e4ecf5 100%)',
+        background: 'linear-gradient(178deg, #ffffff 0%, #e9f6ff 38%, #dcebfa 100%)',
       }}
     >
       {/* Rink geometry: two blue lines and the red centre line. */}
@@ -30,7 +30,7 @@ export default function OpengraphImage() {
           top: 0,
           bottom: 0,
           width: 8,
-          background: 'rgba(11,83,201,0.10)',
+          background: 'rgba(35, 87, 255,0.10)',
         }}
       />
       <div
@@ -40,7 +40,7 @@ export default function OpengraphImage() {
           top: 0,
           bottom: 0,
           width: 8,
-          background: 'rgba(207,10,44,0.10)',
+          background: 'rgba(35, 87, 255,0.10)',
         }}
       />
       <div
@@ -50,7 +50,7 @@ export default function OpengraphImage() {
           top: 0,
           bottom: 0,
           width: 8,
-          background: 'rgba(11,83,201,0.10)',
+          background: 'rgba(35, 87, 255,0.10)',
         }}
       />
 
@@ -68,7 +68,7 @@ export default function OpengraphImage() {
             display: 'flex',
             alignItems: 'center',
             gap: 18,
-            background: '#0d1b2a',
+            background: '#14213d',
             color: '#ffffff',
             padding: '14px 22px',
             fontSize: 24,
@@ -86,13 +86,13 @@ export default function OpengraphImage() {
             fontSize: 118,
             lineHeight: 0.9,
             fontWeight: 800,
-            color: '#0d1b2a',
+            color: '#14213d',
             letterSpacing: '-0.02em',
           }}
         >
           <span>KNOW HOCKEY.</span>
           <span>PICK YOUR MODE.</span>
-          <span style={{ color: '#cf0a2c' }}>PROVE IT.</span>
+          <span style={{ color: '#2357ff' }}>PROVE IT.</span>
         </div>
 
         <div
@@ -100,7 +100,7 @@ export default function OpengraphImage() {
             display: 'flex',
             marginTop: 36,
             fontSize: 30,
-            color: '#55677d',
+            color: '#4a5a78',
             maxWidth: 880,
           }}
         >
@@ -109,7 +109,7 @@ export default function OpengraphImage() {
       </div>
 
       {/* Kickplate - the padding at the base of the boards. */}
-      <div style={{ display: 'flex', height: 14, background: '#f2b21c' }} />
+      <div style={{ display: 'flex', height: 14, background: '#ffd84d' }} />
     </div>,
     { ...size },
   )

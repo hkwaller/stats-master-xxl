@@ -10,8 +10,8 @@ import { Button, Kickplate, MonoLabel } from '@/components/design-system'
 import { PuckMark, RinkBg } from '@/components/arcade'
 import { DailyChallenge } from '@/components/game/DailyChallenge'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 
 const HERO_STATS = [
   { value: '46,704', label: 'Real seasons' },
@@ -52,7 +52,7 @@ const MODES = [
   {
     label: 'Career',
     tag: 'Buzz in',
-    edge: '#0b53c9',
+    edge: '#2357ff',
     desc: 'Seasons reveal one by one. First to buzz gets the shot - and the lockout if they miss.',
   },
   {
@@ -64,7 +64,7 @@ const MODES = [
   {
     label: 'Higher / Lower',
     tag: 'Fast',
-    edge: '#f2b21c',
+    edge: '#ffd84d',
     desc: 'Did they finish above or below the reference line? Pick a stat and go.',
   },
 ]
@@ -92,12 +92,12 @@ export default function LandingPage() {
   return (
     <main
       className="flex min-h-screen flex-col overflow-x-hidden"
-      style={{ background: '#eef3f9' }}
+      style={{ background: '#e9f6ff' }}
     >
       {/* ── Nav ── */}
       <nav
         className="flex h-[66px] items-center justify-between px-5 md:px-[34px]"
-        style={{ background: '#fff', boxShadow: '0 1px 0 rgba(13,27,42,0.10)' }}
+        style={{ background: '#fff', boxShadow: '0 1px 0 rgba(20, 33, 61,0.10)' }}
       >
         <div className="flex items-center gap-[11px]">
           <PuckMark size={28} />
@@ -168,7 +168,7 @@ export default function LandingPage() {
 
             <p
               className="m-0 max-w-[480px]"
-              style={{ fontSize: 16, lineHeight: 1.6, color: '#55677d' }}
+              style={{ fontSize: 16, lineHeight: 1.6, color: '#4a5a78' }}
             >
               Identify skaters, uncover careers, match stat lines or call higher or lower. Four ways
               to test your NHL knowledge with friends, using real stats from 1917 to 2025. Share the
@@ -183,7 +183,7 @@ export default function LandingPage() {
 
               <div
                 className="flex min-w-0"
-                style={{ background: '#fff', boxShadow: 'inset 0 0 0 2px rgba(13,27,42,0.14)' }}
+                style={{ background: '#fff', boxShadow: 'inset 0 0 0 2px rgba(20, 33, 61,0.14)' }}
               >
                 <input
                   value={joinCode}
@@ -264,7 +264,7 @@ export default function LandingPage() {
           >
 
             <DailyChallenge />
-            <p className="m-0" style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>
+            <p className="m-0" style={{ fontSize: 13, lineHeight: 1.6, color: '#4a5a78' }}>
               Same skater for everyone. New challenge at midnight UTC. No room needed.
             </p>
           </motion.div>
@@ -314,7 +314,7 @@ export default function LandingPage() {
                 >
                   {s.title}
                 </span>
-                <span style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>{s.desc}</span>
+                <span style={{ fontSize: 13, lineHeight: 1.6, color: '#4a5a78' }}>{s.desc}</span>
               </div>
             ))}
           </div>
@@ -322,7 +322,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Four ways to play ── */}
-      <section id="modes" className="px-5 py-[54px] md:px-[34px]" style={{ background: '#eef3f9' }}>
+      <section id="modes" className="px-5 py-[54px] md:px-[34px]" style={{ background: '#e9f6ff' }}>
         <div className="mx-auto flex max-w-[1180px] flex-col gap-[30px]">
           <h2
             className="font-display m-0"
@@ -354,7 +354,7 @@ export default function LandingPage() {
                     {m.tag}
                   </MonoLabel>
                 </div>
-                <span style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>{m.desc}</span>
+                <span style={{ fontSize: 13, lineHeight: 1.6, color: '#4a5a78' }}>{m.desc}</span>
               </div>
             ))}
           </div>

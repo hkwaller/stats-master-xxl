@@ -2,11 +2,13 @@
 
 import { Zap } from 'lucide-react'
 import type { Player } from '@/types/game'
-import { Avatar, Kickplate, MonoLabel } from '@/components/design-system'
+import { Kickplate, MonoLabel } from '@/components/design-system'
+import { Jersey } from '@/components/game/Jersey'
+import { jerseyFor } from '@/lib/jersey'
 import { PuckMark } from '@/components/arcade'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 
 interface ScorebugProps {
   players: Player[]
@@ -48,7 +50,7 @@ export function Scorebug({
         {/* Left - identity */}
         <div
           className="flex items-center gap-3 px-5"
-          style={{ borderRight: '1px solid rgba(13,27,42,0.10)' }}
+          style={{ borderRight: '1px solid rgba(20, 33, 61,0.10)' }}
         >
           <PuckMark size={compact ? 24 : 28} />
           <div className="flex flex-col gap-[3px]">
@@ -82,17 +84,17 @@ export function Scorebug({
                 key={p.id}
                 className="relative flex items-center gap-2.5 px-4"
                 style={{
-                  borderRight: '1px solid rgba(13,27,42,0.08)',
-                  background: isLeader ? 'rgba(207,10,44,0.08)' : 'transparent',
+                  borderRight: '1px solid rgba(20, 33, 61,0.08)',
+                  background: isLeader ? 'rgba(35, 87, 255,0.08)' : 'transparent',
                 }}
               >
                 <span
                   className="font-mono"
-                  style={{ fontSize: 9, width: 12, color: isLeader ? RED : '#55677d' }}
+                  style={{ fontSize: 9, width: 12, color: isLeader ? RED : '#4a5a78' }}
                 >
                   {i + 1}
                 </span>
-                <Avatar url={p.avatarUrl} name={p.name} size={24} />
+                <Jersey jersey={jerseyFor(p)} size={32} decorative />
                 <span
                   className="font-display whitespace-nowrap"
                   style={{
@@ -136,7 +138,7 @@ export function Scorebug({
         {/* Right - mode and active powerup */}
         <div
           className="flex items-center gap-4 px-5"
-          style={{ borderLeft: '1px solid rgba(13,27,42,0.10)' }}
+          style={{ borderLeft: '1px solid rgba(20, 33, 61,0.10)' }}
         >
           {meta && (
             <MonoLabel size={9} tracking="0.18em">

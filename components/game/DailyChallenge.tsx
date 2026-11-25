@@ -17,10 +17,10 @@ import {
 } from '@/app/actions/daily-challenge-actions'
 import type { Question } from '@/types/game'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
-const DEAD = '#b3c0cf'
-const AMBER = '#f2b21c'
+const INK = '#14213d'
+const RED = '#2357ff'
+const DEAD = '#8ea3c2'
+const AMBER = '#ffd84d'
 
 const ANSWER_LETTERS = ['A', 'B', 'C', 'D']
 
@@ -280,9 +280,9 @@ function ResultPlane({
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className="flex flex-col gap-4 p-5"
       style={{
-        background: correct ? 'rgba(207,10,44,0.06)' : '#ffffff',
+        background: correct ? 'rgba(35, 87, 255,0.06)' : '#ffffff',
         borderLeft: `5px solid ${correct ? RED : DEAD}`,
-        boxShadow: '0 2px 10px rgba(13,27,42,0.07)',
+        boxShadow: '0 2px 10px rgba(20, 33, 61,0.07)',
       }}
     >
       <span
@@ -300,7 +300,7 @@ function ResultPlane({
 
       <div
         className="flex flex-col gap-1.5 pt-3"
-        style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
+        style={{ borderTop: '1px solid rgba(20, 33, 61,0.10)' }}
       >
         <MonoLabel size={9}>The answer was</MonoLabel>
         <span
@@ -384,13 +384,13 @@ function LeaderboardPanel() {
   return (
     <div
       className="flex flex-col gap-3 pt-4"
-      style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
+      style={{ borderTop: '1px solid rgba(20, 33, 61,0.10)' }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <MonoLabel size={10} tracking="0.22em">
           Leaderboard
         </MonoLabel>
-        <div className="flex flex-wrap gap-px" style={{ background: 'rgba(13,27,42,0.12)' }}>
+        <div className="flex flex-wrap gap-px" style={{ background: 'rgba(20, 33, 61,0.12)' }}>
           {PERIODS.map((p) => {
             const selected = period === p.id
             return (
@@ -408,7 +408,7 @@ function LeaderboardPanel() {
                   letterSpacing: '0.12em',
                   textTransform: 'uppercase',
                   background: selected ? INK : '#ffffff',
-                  color: selected ? '#eef3f9' : '#55677d',
+                  color: selected ? '#e9f6ff' : '#4a5a78',
                   cursor: 'pointer',
                 }}
               >
@@ -434,13 +434,13 @@ function LeaderboardPanel() {
               key={entry.userId}
               className="flex items-center gap-3 px-2 py-2"
               style={{
-                borderBottom: '1px solid rgba(13,27,42,0.07)',
-                background: i === 0 ? 'rgba(207,10,44,0.07)' : 'transparent',
+                borderBottom: '1px solid rgba(20, 33, 61,0.07)',
+                background: i === 0 ? 'rgba(35, 87, 255,0.07)' : 'transparent',
               }}
             >
               <span
                 className="font-mono shrink-0"
-                style={{ fontSize: 10, width: 18, color: i === 0 ? RED : '#55677d' }}
+                style={{ fontSize: 10, width: 18, color: i === 0 ? RED : '#4a5a78' }}
               >
                 {String(i + 1).padStart(2, '0')}
               </span>

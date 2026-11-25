@@ -31,6 +31,6 @@ export function RinkBg({ intensity = 1, className = '' }: RinkBgProps) {
   )
 }
 
-export function FaceoffCircle({ size = 560, color = 'rgba(11,83,201,0.10)', style }: { size?: number; color?: string; style?: CSSProperties }) {
+export function FaceoffCircle({ size = 560, color = 'rgba(35, 87, 255,0.10)', style }: { size?: number; color?: string; style?: CSSProperties }) {
   return <div aria-hidden="true" className="pointer-events-none absolute rounded-full" style={{ width: size, height: size, border: `6px solid ${color}`, ...style }} />
 }

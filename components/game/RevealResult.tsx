@@ -30,7 +30,7 @@ export function RevealResult({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className="on-ice flex flex-col gap-4 p-5"
-      style={{ borderTop: `4px solid ${isCorrect ? RED : '#b3c0cf'}` }}
+      style={{ borderTop: `4px solid ${isCorrect ? RED : '#8ea3c2'}` }}
     >
       <div className="flex items-baseline justify-between gap-3">
         <span
@@ -62,7 +62,7 @@ export function RevealResult({
 
       <div
         className="flex flex-col gap-1.5 pt-3"
-        style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
+        style={{ borderTop: '1px solid rgba(20, 33, 61,0.10)' }}
       >
         <MonoLabel size={9}>The answer was</MonoLabel>
         <span

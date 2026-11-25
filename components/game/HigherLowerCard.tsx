@@ -6,9 +6,9 @@ import type { HLComparisonField, HLPair } from '@/types/game'
 import { MonoLabel } from '@/components/design-system'
 import { JumbotronPanel } from '@/components/arcade'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
-const DEAD = '#b3c0cf'
+const INK = '#14213d'
+const RED = '#2357ff'
+const DEAD = '#8ea3c2'
 const LED = '#ffb01f'
 
 const FIELD_DISPLAY: Record<HLComparisonField, string> = {
@@ -45,7 +45,7 @@ export function HigherLowerCard({
           style={{
             background: '#fff',
             borderLeft: `5px solid ${INK}`,
-            boxShadow: '0 2px 10px rgba(13,27,42,0.07)',
+            boxShadow: '0 2px 10px rgba(20, 33, 61,0.07)',
           }}
         >
           <div className="flex min-w-0 flex-col gap-1.5">
@@ -160,8 +160,8 @@ export function HigherLowerCard({
                 borderColor: edge,
                 borderRadius: 0,
                 padding: '20px 0',
-                background: revealed && isCorrect ? 'rgba(207,10,44,0.07)' : '#ffffff',
-                boxShadow: wrongPick ? 'none' : '0 2px 10px rgba(13,27,42,0.07)',
+                background: revealed && isCorrect ? 'rgba(35, 87, 255,0.07)' : '#ffffff',
+                boxShadow: wrongPick ? 'none' : '0 2px 10px rgba(20, 33, 61,0.07)',
                 cursor: locked ? 'default' : 'pointer',
                 transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
               }}

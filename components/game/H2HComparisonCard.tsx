@@ -5,9 +5,9 @@ import { Check } from 'lucide-react'
 import type { H2HPair, Question } from '@/types/game'
 import { MonoLabel } from '@/components/design-system'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
-const DEAD = '#b3c0cf'
+const INK = '#14213d'
+const RED = '#2357ff'
+const DEAD = '#8ea3c2'
 
 interface H2HComparisonCardProps {
   pair: H2HPair
@@ -39,7 +39,7 @@ function StatRow({
   return (
     <div
       className="flex items-baseline justify-between gap-3 py-1.5"
-      style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+      style={{ borderBottom: '1px solid rgba(20, 33, 61,0.07)' }}
     >
       <MonoLabel size={9} tracking="0.18em">
         {label}
@@ -50,7 +50,7 @@ function StatRow({
           fontWeight: emphasis ? 800 : 700,
           fontSize: 21,
           lineHeight: 1,
-          color: dimmed ? '#7d8b9c' : emphasis ? RED : INK,
+          color: dimmed ? '#7a88a3' : emphasis ? RED : INK,
         }}
       >
         {value}
@@ -93,8 +93,8 @@ function PlayerCard({
         borderStyle: 'solid',
         borderColor: edge,
         borderRadius: 0,
-        background: revealed && isCorrect ? 'rgba(207,10,44,0.07)' : '#ffffff',
-        boxShadow: wrongPick ? 'none' : '0 2px 10px rgba(13,27,42,0.07)',
+        background: revealed && isCorrect ? 'rgba(35, 87, 255,0.07)' : '#ffffff',
+        boxShadow: wrongPick ? 'none' : '0 2px 10px rgba(20, 33, 61,0.07)',
         cursor: locked ? 'default' : 'pointer',
         transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
       }}

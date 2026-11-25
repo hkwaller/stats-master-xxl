@@ -253,7 +253,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
             bottom: -300,
             width: 640,
             height: 640,
-            border: '6px solid rgba(11,83,201,0.10)',
+            border: '6px solid rgba(35, 87, 255,0.10)',
           }}
         />
         <div className="relative z-[2] mx-auto flex w-full max-w-[860px] flex-1 flex-col">
@@ -341,7 +341,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                     fontWeight: 800,
                     fontSize: 240,
                     lineHeight: 0.8,
-                    color: '#cf0a2c',
+                    color: '#2357ff',
                   }}
                 >
                   {game.countdownTime || '·'}

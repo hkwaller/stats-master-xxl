@@ -11,13 +11,15 @@ import { useStorage } from '@/lib/party/client'
 import { useAssignBoss, useJoinGame, useStartGame } from '@/lib/party/mutations'
 import { getOrCreateGuest } from '@/lib/guest'
 import { Check, Copy, Settings } from 'lucide-react'
-import { Avatar, Button, Kickplate, Modal, MonoLabel } from '@/components/design-system'
+import { Button, Kickplate, Modal, MonoLabel } from '@/components/design-system'
+import { Jersey } from '@/components/game/Jersey'
+import { jerseyFor } from '@/lib/jersey'
 import { PuckMark, JumbotronPanel } from '@/components/arcade'
 import type { CareerQuestion, H2HPair, HLPair, Question } from '@/types/game'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
-const DEAD = '#b3c0cf'
+const INK = '#14213d'
+const RED = '#2357ff'
+const DEAD = '#8ea3c2'
 
 interface LobbyPageProps {
   params: Promise<{ roomId: string }>
@@ -304,7 +306,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                 {connectUrl && (
                   <div
                     className="shrink-0 bg-white p-2"
-                    style={{ boxShadow: 'inset 0 0 0 1px rgba(13,27,42,0.14)' }}
+                    style={{ boxShadow: 'inset 0 0 0 1px rgba(20, 33, 61,0.14)' }}
                   >
                     <QRCodeSVG
                       value={connectUrl}
@@ -321,7 +323,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                     style={{
                       fontSize: 10,
                       letterSpacing: '0.08em',
-                      color: '#55677d',
+                      color: '#4a5a78',
                       lineHeight: 1.6,
                     }}
                   >
@@ -357,15 +359,15 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                   key={player.id}
                   className="lineup-row relative flex items-center gap-3 px-5 py-3"
                   style={{
-                    borderBottom: '1px solid rgba(13,27,42,0.09)',
+                    borderBottom: '1px solid rgba(20, 33, 61,0.09)',
                     borderLeft: `5px solid ${player.isBoss ? RED : INK}`,
-                    background: player.isBoss ? 'rgba(207,10,44,0.06)' : 'transparent',
+                    background: player.isBoss ? 'rgba(35, 87, 255,0.06)' : 'transparent',
                   }}
                 >
                   <span className="jersey-number" aria-label={`Lineup number ${i + 1}`}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <Avatar url={player.avatarUrl} name={player.name} size={30} />
+                  <Jersey jersey={jerseyFor(player)} size={38} decorative />
                   <span
                     className="font-display min-w-0 flex-1 truncate"
                     style={{
@@ -413,7 +415,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                         fontSize: 9,
                         letterSpacing: '0.14em',
                         textTransform: 'uppercase',
-                        color: '#55677d',
+                        color: '#4a5a78',
                         textDecoration: 'underline',
                         textUnderlineOffset: 3,
                         cursor: 'pointer',
@@ -431,11 +433,11 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                   key={`open-${i}`}
                   className="penalty-hatch flex items-center gap-3 px-5 py-3"
                   style={{
-                    borderBottom: '1px solid rgba(13,27,42,0.09)',
+                    borderBottom: '1px solid rgba(20, 33, 61,0.09)',
                     borderLeft: `5px solid ${DEAD}`,
                   }}
                 >
-                  <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#7d8b9c' }}>
+                  <span className="font-mono" style={{ fontSize: 9, width: 14, color: '#7a88a3' }}>
                     {String(players.length + i + 1).padStart(2, '0')}
                   </span>
                   <span
@@ -444,12 +446,12 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                       fontWeight: 700,
                       fontSize: 22,
                       textTransform: 'uppercase',
-                      color: '#7d8b9c',
+                      color: '#7a88a3',
                     }}
                   >
                     Open seat
                   </span>
-                  <MonoLabel size={9} tracking="0.14em" color="#7d8b9c">
+                  <MonoLabel size={9} tracking="0.14em" color="#7a88a3">
                     Scan to join
                   </MonoLabel>
                 </div>
@@ -485,7 +487,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                 <div
                   key={row.key}
                   className="flex items-baseline justify-between gap-3 pb-2.5"
-                  style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+                  style={{ borderBottom: '1px solid rgba(20, 33, 61,0.07)' }}
                 >
                   <MonoLabel size={9} tracking="0.2em">
                     {row.key}
@@ -557,7 +559,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                 >
                   Assign a boss
                 </h2>
-                <p className="m-0" style={{ fontSize: 13.5, lineHeight: 1.6, color: '#55677d' }}>
+                <p className="m-0" style={{ fontSize: 13.5, lineHeight: 1.6, color: '#4a5a78' }}>
                   This screen is only showing the board, so someone on a phone has to reveal answers
                   and advance rounds.
                 </p>
@@ -576,12 +578,12 @@ export default function LobbyPage({ params }: LobbyPageProps) {
                       style={{
                         border: 'none',
                         borderLeft: `5px solid ${picked ? RED : 'transparent'}`,
-                        borderBottom: '1px solid rgba(13,27,42,0.09)',
-                        background: picked ? 'rgba(207,10,44,0.06)' : 'transparent',
+                        borderBottom: '1px solid rgba(20, 33, 61,0.09)',
+                        background: picked ? 'rgba(35, 87, 255,0.06)' : 'transparent',
                         cursor: 'pointer',
                       }}
                     >
-                      <Avatar url={player.avatarUrl} name={player.name} size={28} />
+                      <Jersey jersey={jerseyFor(player)} size={36} decorative />
                       <span
                         className="font-display flex-1 truncate"
                         style={{
@@ -601,7 +603,7 @@ export default function LobbyPage({ params }: LobbyPageProps) {
 
               <div
                 className="grid grid-cols-2 gap-px"
-                style={{ background: 'rgba(13,27,42,0.12)' }}
+                style={{ background: 'rgba(20, 33, 61,0.12)' }}
               >
                 <Button variant="ghost" flush onClick={() => setShowBossModal(false)}>
                   Cancel

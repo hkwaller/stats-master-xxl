@@ -3,7 +3,7 @@
 import type { Question, HintType } from '@/types/game'
 import { MonoLabel } from '@/components/design-system'
 
-const INK = '#0d1b2a'
+const INK = '#14213d'
 
 interface HintPanelProps {
   question: Question
@@ -56,7 +56,7 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint, sh
           <div
             key={hint.type}
             className="flex items-baseline justify-between gap-3 pb-2.5"
-            style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+            style={{ borderBottom: '1px solid rgba(20, 33, 61,0.07)' }}
           >
             <MonoLabel size={9} tracking="0.2em">{hint.label}</MonoLabel>
             {revealed ? (
@@ -78,11 +78,11 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint, sh
                   padding: 0,
                   fontWeight: 700,
                   fontSize: 21,
-                  color: '#6b7a8c',
+                  color: '#5e6d88',
                   cursor: 'pointer',
                   textDecoration: 'underline',
                   textUnderlineOffset: 4,
-                  textDecorationColor: 'rgba(13,27,42,0.2)',
+                  textDecorationColor: 'rgba(20, 33, 61,0.2)',
                 }}
               >
                 Reveal
