@@ -7,7 +7,7 @@ import type { Question } from '@/types/game'
 import { MonoLabel } from '@/components/design-system'
 
 const INK = 'var(--color-ink)'
-const RED = 'var(--color-red)'
+const COBALT = 'var(--color-cobalt)'
 
 interface CareerRevealCardProps {
   size?: 'compact' | 'tv'
@@ -47,15 +47,16 @@ function SeasonTable({ rows, showYears }: { rows: Question[]; showYears: boolean
           {COLUMNS.map((c) => (
             <th
               key={c.abbr}
-              className="font-mono sticky top-0 z-10 bg-ice-0 pb-2"
+              className="font-mono sticky top-0 z-10 pb-2"
               style={{
                 textAlign: c.align,
-                fontSize: 'var(--career-label-size, 9px)',
-                fontWeight: 400,
-                letterSpacing: '0.2em',
+                fontSize: 'var(--career-label-size, 11px)',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                color: 'var(--color-ink-2)',
-                borderBottom: '1px solid var(--color-hairline)',
+                color: c.emphasis ? INK : 'var(--color-ink-2)',
+                background: c.emphasis ? 'var(--color-lemon)' : 'var(--color-ice-0)',
+                borderBottom: `2px solid ${INK}`,
                 padding: 'var(--career-header-padding, 0 8px 8px)',
                 whiteSpace: 'nowrap',
               }}
@@ -75,14 +76,15 @@ function SeasonTable({ rows, showYears }: { rows: Question[]; showYears: boolean
                 style={{
                   textAlign: c.align,
                   padding: 'var(--career-row-padding, 9px 8px)',
-                  borderBottom: '1px solid var(--color-hairline-2)',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: c.emphasis ? 800 : 700,
+                  borderBottom: '2px solid var(--color-ice-2)',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  background: c.emphasis ? 'var(--color-lemon)' : undefined,
                   fontSize: c.key === 'season'
                     ? 'var(--career-season-size, 18px)'
                     : 'var(--career-stat-size, 20px)',
                   lineHeight: 1,
-                  color: c.emphasis ? RED : INK,
+                  color: INK,
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -127,14 +129,13 @@ export function CareerRevealCard({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.16 }}
           className="career-possession flex flex-wrap items-center justify-between gap-2 px-4 py-3"
-          style={{ background: RED, color: '#fff' }}
+          style={{ background: COBALT, color: '#fff', border: `3px solid ${INK}`, borderRadius: 14 }}
         >
           <span
             className="font-display"
             style={{
-              fontWeight: 700,
-              fontSize: size === 'tv' ? 26 : 18,
-              letterSpacing: '0.1em',
+              fontSize: size === 'tv' ? 30 : 22,
+              letterSpacing: '0.02em',
               textTransform: 'uppercase',
             }}
           >
@@ -160,13 +161,13 @@ export function CareerRevealCard({
 
       <div
         className="flex items-baseline justify-between gap-3 pt-1"
-        style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 12 }}
+        style={{ borderTop: '2px solid var(--color-ice-2)', paddingTop: 12 }}
       >
-        <MonoLabel size={size === 'tv' ? 12 : 9} tracking="0.18em">
+        <MonoLabel size={size === 'tv' ? 13 : 11}>
           {visibleSeasons.length} {visibleSeasons.length === 1 ? 'season' : 'seasons'} revealed
         </MonoLabel>
         {lockedOutCount > 0 && (
-          <MonoLabel size={size === 'tv' ? 12 : 9} tracking="0.18em" color={RED}>
+          <MonoLabel size={size === 'tv' ? 13 : 11} color={INK}>
             {lockedOutCount} in the penalty box
           </MonoLabel>
         )}

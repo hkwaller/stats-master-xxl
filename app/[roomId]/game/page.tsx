@@ -104,7 +104,7 @@ function hintLine(q: Question, used: HintType[], hintsEnabled: boolean): string 
   const known: string[] = []
   if (used.includes('position')) known.push(`plays ${(POSITIONS[q.positionCode] ?? q.positionCode).toLowerCase()}`)
   if (used.includes('team')) known.push(`played for ${q.teamNames}`)
-  if (used.includes('era')) known.push(`played in the ${q.era}`)
+  if (used.includes('era')) known.push(`played in ${q.season.replace('-', '–')}`)
   if (known.length === 0) return 'Every hint is still face down.'
   const s = known.join(', ')
   return `${s.charAt(0).toUpperCase()}${s.slice(1)}.`
@@ -160,9 +160,10 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   })
 
   useEffect(() => {
-    if (!game || game.command !== 'rematch') return
+    // Wait for the room id: before it resolves this would push "//lobby", a protocol-relative URL.
+    if (!game || !roomId || game.command !== 'rematch') return
     router.push(`/${roomId}/lobby`)
-  }, [game?.command])
+  }, [game?.command, roomId])
 
   const questionDurationMs = game?.gameMode === 'career'
     ? (game.careerSeasons?.length ?? 0) * CAREER_REVEAL_INTERVAL_MS
@@ -284,9 +285,6 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
     ? [
         { label: 'TEAM', value: isRevealing || usedHints.includes('team') ? currentQuestion.teamAbbrevs : null },
         { label: 'POS', value: isRevealing || usedHints.includes('position') ? currentQuestion.positionCode : null },
-        ...(game.hintsEnabled || isRevealing
-          ? [{ label: 'ERA', value: isRevealing || usedHints.includes('era') ? currentQuestion.era : null }]
-          : []),
       ]
     : []
 
@@ -338,12 +336,13 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
             <>
               <div className="w-[340px] shrink-0 pt-2">
                 <MysteryCard
-                  season={currentQuestion.season}
+                  season={isRevealing || usedHints.includes('era') ? currentQuestion.season : null}
                   cardNumber={cardNumber}
                   chips={chips}
                   revealed={
                     isRevealing
                       ? {
+                          playerId: currentQuestion.playerId,
                           name: fullName(currentQuestion),
                           detail: [currentQuestion.teamNames, POSITIONS[currentQuestion.positionCode] ?? currentQuestion.positionCode]
                             .filter(Boolean)
@@ -380,11 +379,10 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                 <CardBack
                   question={currentQuestion}
                   revealedColumns={isRevealing ? 5 : (game.revealedColumns ?? 0)}
-                  showTeam={isRevealing || usedHints.includes('team')}
                 />
 
                 {multipleChoice ? (
-                  <div className="grid grid-cols-4 gap-3.5">
+                  <div className="grid grid-cols-2 gap-3.5">
                     {choices.map((choice, i) => {
                       const isCorrect =
                         isRevealing && choice.trim().toLowerCase() === fullName(currentQuestion).toLowerCase()
@@ -396,6 +394,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
                           letter={ANSWER_LETTERS[i] ?? '?'}
                           name={choice}
                           variant="card"
+                          colorByLetter
                           state={state}
                           meta={isRevealing ? `${picks} ${picks === 1 ? 'pick' : 'picks'}` : undefined}
                         />

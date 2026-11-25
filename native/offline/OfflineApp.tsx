@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 const ClassicPractice = lazy(() => import('../../components/native/ClassicPractice').then(module => ({ default: module.ClassicPractice })))
-import { Button, Kickplate } from '../../components/design-system'
+import { Button } from '../../components/design-system'
 import { PuckMark } from '../../components/arcade/Brand'
 import { hasNativePlugin } from '../../lib/native'
 import identity from '../../native.config.json'
@@ -50,7 +50,7 @@ function OfflineApp() {
   }, [])
 
   return <main className="min-h-dvh">
-    <header className="app-home-header on-ice-header"><span className="flex items-center gap-3"><PuckMark /><span className="font-display text-2xl font-extrabold">STATS MASTER</span></span></header><Kickplate />
+    <header className="app-home-header"><span className="flex items-center gap-3"><PuckMark /><span className="font-display text-2xl">STATS MASTER</span></span></header>
     <div className="app-home-content mx-auto max-w-xl">{playing ? <Suspense fallback={<p role="status">Getting the ice ready…</p>}><ClassicPractice onExit={() => { playingRef.current = false; setPlaying(false) }} /></Suspense> : <>
       <h1 className="font-display text-6xl leading-none font-extrabold uppercase">Off the grid.<br />Still on the ice.</h1>
       <p className="mt-5 mb-7 text-ink-2" role="status">{status}</p>

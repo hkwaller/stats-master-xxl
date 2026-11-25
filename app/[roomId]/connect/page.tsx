@@ -9,8 +9,8 @@ import { getOrCreateGuest, updateGuestName } from '@/lib/guest'
 import { defaultJersey, nextFreeNumber } from '@/lib/jersey'
 import { loadSavedJersey, saveJersey } from '@/lib/jersey-storage'
 import type { Jersey as JerseyData, Player } from '@/types/game'
-import { Button, Kickplate, MonoLabel } from '@/components/design-system'
-import { PuckMark, JumbotronPanel } from '@/components/arcade'
+import { Button, MonoLabel } from '@/components/design-system'
+import { PuckMark } from '@/components/arcade'
 import { Jersey } from '@/components/game/Jersey'
 import { SweaterPicker } from '@/components/game/SweaterPicker'
 
@@ -79,22 +79,16 @@ export default function ConnectPage({ params }: ConnectPageProps) {
 
   return (
     <main className="ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
-      <header className="on-ice-header relative z-20">
-        <div className="flex h-[52px] items-center justify-between px-[18px]">
+      <header className="relative z-20">
+        <div className="flex h-[60px] items-center justify-between px-[18px]">
           <div className="flex items-center gap-2.5">
-            <PuckMark size={22} />
-            <span
-              className="font-display"
-              style={{ fontWeight: 800, fontSize: 16, letterSpacing: '0.02em' }}
-            >
+            <PuckMark size={26} />
+            <span className="font-display" style={{ fontSize: 22, letterSpacing: '0.02em' }}>
               STATS MASTER
             </span>
           </div>
-          <MonoLabel size={9} tracking="0.2em">
-            Joining
-          </MonoLabel>
+          <MonoLabel>Joining</MonoLabel>
         </div>
-        <Kickplate height={4} />
       </header>
 
       <motion.div
@@ -103,43 +97,26 @@ export default function ConnectPage({ params }: ConnectPageProps) {
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className="relative z-[2] mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center gap-6 px-[18px] py-10"
       >
-        {/* Room code on the board - the same object the TV is showing. */}
-        <JumbotronPanel bezel={8} screenPad="16px 18px">
-          <div className="flex flex-col gap-2.5">
-            <span
-              className="font-mono"
-              style={{ fontSize: 9, letterSpacing: '0.3em', color: 'rgba(255,176,31,0.65)' }}
-            >
-              ROOM CODE
-            </span>
-            <span
-              className="led-glow"
-              style={{
-                fontFamily: 'var(--font-led)',
-                fontWeight: 700,
-                fontSize: 54,
-                lineHeight: 0.82,
-                letterSpacing: '0.1em',
-                color: '#ffb01f',
-              }}
-            >
-              {roomId || '-'}
-            </span>
-          </div>
-        </JumbotronPanel>
+        {/* Room code - the same code the TV is showing. */}
+        <div
+          className="flex items-center justify-between gap-3 px-5 py-3"
+          style={{ background: '#fff', border: `3px solid ${INK}`, borderRadius: 16, boxShadow: `4px 4px 0 ${INK}` }}
+        >
+          <MonoLabel>Room code</MonoLabel>
+          <span className="font-display tabular-nums" style={{ fontSize: 46, lineHeight: 1, letterSpacing: '0.06em' }}>
+            {roomId || '-'}
+          </span>
+        </div>
 
         {bossToken && (
           <div
             className="flex flex-col gap-1.5 px-4 py-3"
-            style={{ background: RED, color: '#fff' }}
+            style={{ background: RED, color: '#fff', border: `3px solid ${INK}`, borderRadius: 14 }}
           >
-            <span className="font-mono" style={{ fontSize: 9, letterSpacing: '0.22em' }}>
+            <span className="font-mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em' }}>
               BOSS LINK
             </span>
-            <span
-              className="font-display"
-              style={{ fontWeight: 700, fontSize: 20, lineHeight: 1, textTransform: 'uppercase' }}
-            >
+            <span className="font-display" style={{ fontSize: 24, lineHeight: 1, textTransform: 'uppercase' }}>
               You control the game
             </span>
           </div>
@@ -166,9 +143,7 @@ export default function ConnectPage({ params }: ConnectPageProps) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <MonoLabel size={9} tracking="0.22em">
-              Name on the board
-            </MonoLabel>
+            <MonoLabel>Name on the board</MonoLabel>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -213,9 +188,7 @@ export default function ConnectPage({ params }: ConnectPageProps) {
         {players.length > 0 && (
           <div className="on-ice flex flex-col">
             <div className="px-4 pt-4 pb-2">
-              <MonoLabel size={9} tracking="0.22em">
-                Already in · {players.length}
-              </MonoLabel>
+              <MonoLabel>Already in · {players.length}</MonoLabel>
             </div>
             {players.map((p, i) => (
               <div

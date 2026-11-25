@@ -4,6 +4,11 @@ import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
 
 const INK = 'var(--color-ink)'
+const CHOICE_BADGES: Record<string, string> = {
+  B: 'var(--color-lemon)',
+  C: 'var(--color-tangerine)',
+  D: 'var(--color-pink)',
+}
 
 export type AnswerState = 'default' | 'selected' | 'eliminated' | 'correct' | 'faded'
 
@@ -15,9 +20,10 @@ interface AnswerRowProps {
   state?: AnswerState
   /**
    * tv: padded row. phone: 68px row. compact: 54px row for screens that also
-   * carry a board and hints. card: the TV's stacked answer card, name on two lines.
+   * carry a board and hints. card: the TV's classic answer grid.
    */
   variant?: 'tv' | 'phone' | 'compact' | 'card'
+  colorByLetter?: boolean
   onClick?: () => void
   disabled?: boolean
 }
@@ -41,6 +47,7 @@ export function AnswerRow({
   meta,
   state = 'default',
   variant = 'tv',
+  colorByLetter = false,
   onClick,
   disabled,
 }: AnswerRowProps) {
@@ -51,9 +58,8 @@ export function AnswerRow({
   const card = variant === 'card'
   const Tag = onClick ? motion.button : motion.div
 
-  const parts = name.trim().split(/\s+/)
-  const twoLine = card && parts.length > 1
-  const nameSize = card ? 28 : variant === 'tv' ? 28 : variant === 'compact' ? 22 : 25
+  const choiceBadge = colorByLetter ? CHOICE_BADGES[letter] : undefined
+  const nameSize = variant === 'tv' || card ? 28 : variant === 'compact' ? 22 : 25
   const stampMeta = meta && (state === 'selected' || eliminated)
 
   return (
@@ -64,7 +70,7 @@ export function AnswerRow({
       animate={{ opacity: state === 'faded' ? 0.5 : 1 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       aria-pressed={onClick ? state === 'selected' : undefined}
-      className={`relative flex w-full text-left ${card ? 'flex-col items-start' : 'items-center'} ${eliminated ? 'penalty-hatch' : ''}`}
+      className={`relative flex min-w-0 w-full items-center text-left ${eliminated ? 'penalty-hatch' : ''}`}
       style={{
         background: look.bg,
         color: look.fg,
@@ -72,9 +78,9 @@ export function AnswerRow({
         borderRadius: 14,
         boxShadow: look.offset ? `4px 4px 0 ${INK}` : 'none',
         transform: state === 'selected' ? 'rotate(-1deg)' : undefined,
-        gap: card ? 6 : 12,
-        padding: card ? '10px 12px 12px' : variant === 'tv' ? '14px 16px' : '0 14px',
-        minHeight: variant === 'phone' ? 68 : variant === 'compact' ? 54 : undefined,
+        gap: 12,
+        padding: card ? '10px 12px' : variant === 'tv' ? '14px 16px' : '0 14px',
+        minHeight: card || variant === 'phone' ? 68 : variant === 'compact' ? 54 : undefined,
         cursor: interactive ? 'pointer' : 'default',
         transition: 'background-color 200ms ease-out',
       }}
@@ -86,8 +92,8 @@ export function AnswerRow({
           width: 32,
           height: 32,
           borderRadius: '50%',
-          background: checked ? '#ffffff' : eliminated ? '#ffffff' : 'var(--color-cobalt)',
-          color: checked ? (state === 'selected' ? 'var(--color-cobalt)' : INK) : eliminated ? 'var(--color-ink-2)' : '#ffffff',
+          background: checked || eliminated ? '#ffffff' : choiceBadge ?? 'var(--color-cobalt)',
+          color: state === 'selected' ? 'var(--color-cobalt)' : eliminated ? 'var(--color-ink-2)' : checked || choiceBadge ? INK : '#ffffff',
           fontSize: 17,
         }}
       >
@@ -96,7 +102,7 @@ export function AnswerRow({
       {checked && <span className="sr-only">{letter}</span>}
 
       <span
-        className={`font-display min-w-0 ${card ? '' : 'flex-1 truncate'}`}
+        className={`font-display min-w-0 flex-1 ${card ? '[overflow-wrap:anywhere]' : 'truncate'}`}
         style={{
           fontSize: nameSize,
           lineHeight: 1.02,
@@ -105,15 +111,7 @@ export function AnswerRow({
           textDecoration: eliminated ? 'line-through' : undefined,
         }}
       >
-        {twoLine ? (
-          <>
-            {parts[0]}
-            <br />
-            {parts.slice(1).join(' ')}
-          </>
-        ) : (
-          name
-        )}
+        {name}
       </span>
 
       {meta &&

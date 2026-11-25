@@ -59,6 +59,7 @@ export function PlayerGuessInput({
               meta={isEliminated ? 'PENALTY BOX' : isSelected ? 'LOCKED IN' : undefined}
               state={state}
               variant={variant}
+              colorByLetter
               disabled={locked || isEliminated}
               onClick={() => {
                 if (locked || isEliminated) return

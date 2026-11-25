@@ -166,31 +166,6 @@ export function TierBadge({ tier, className = '' }: BadgeProps) {
   )
 }
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
-// Legacy generated avatar. Players are shown by their Jersey now; kept for
-// screens not yet moved over.
-
-interface AvatarProps {
-  url: string
-  name: string
-  size?: number
-  className?: string
-}
-
-export function Avatar({ url, name, size = 34, className = '' }: AvatarProps) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={url}
-      alt={name}
-      width={size}
-      height={size}
-      className={`shrink-0 object-cover ${className}`}
-      style={{ width: size, height: size, borderRadius: 8, background: 'var(--color-ice-2)' }}
-    />
-  )
-}
-
 // ─── ProgressTrack ────────────────────────────────────────────────────────────
 // A rounded time track. Under 5s the fill turns alarm red and pulses; it never shakes.
 
@@ -260,65 +235,6 @@ export function Clock({
       >
         {text}
       </span>
-    </div>
-  )
-}
-
-// ─── Kickplate ────────────────────────────────────────────────────────────────
-// Retired with On the Ice: header bars end on their ink rule. Kept so callers
-// can be removed screen by screen.
-
-export function Kickplate(_props: { height?: number }) {
-  return null
-}
-
-// ─── Ticker ───────────────────────────────────────────────────────────────────
-
-export function Ticker({ items }: { items: string[] }) {
-  if (items.length === 0) return null
-
-  return (
-    <div
-      className="relative flex h-10 items-center gap-[26px] overflow-hidden px-5"
-      style={{ background: INK, borderTop: `3px solid ${INK}` }}
-    >
-      <span
-        className="font-mono shrink-0"
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.06em',
-          color: '#ffffff',
-          background: COBALT,
-          borderRadius: 999,
-          padding: '4px 10px',
-        }}
-      >
-        LIVE
-      </span>
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="ticker-track">
-          {/* Two copies so the marquee loops seamlessly at -50%; the second is
-              decorative, so only the first is announced. */}
-          {[false, true].map((isClone) => (
-            <div
-              key={String(isClone)}
-              className="flex shrink-0 items-center gap-[26px] pr-[26px]"
-              aria-hidden={isClone || undefined}
-            >
-              {items.map((item, i) => (
-                <span
-                  key={i}
-                  className="font-mono"
-                  style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', color: '#c9d8ea' }}
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

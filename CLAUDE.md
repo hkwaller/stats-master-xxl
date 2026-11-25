@@ -49,22 +49,23 @@ and selectors in `client.tsx`. See `party/README.md` for local setup and deploym
 
 Normalize: lowercase + trim + collapse spaces. Accept full name OR last name only.
 
-## Design System - "On the Ice"
+## Design System - "Cards on Ice"
 
-Broadcast-hockey visual system. Tokens live in the `@theme` block in `app/globals.css`; never hardcode a colour that has a token.
+A trading-card game played on the pond. Tokens live in the `@theme` block in `app/globals.css`; never hardcode a colour that has a token. `DESIGN.md` has the full rules.
 
-- **Ice is the page.** `.ice-bg` paints the white-to-pale-blue gradient and sparse skate cuts via `::before` (z-index 0), so page content needs `relative z-[2]`. `RinkBg` draws a complete rink with blue lines, centre line, faceoff circles, goal lines and creases. See `DESIGN.md` for the approved rinkside refinement.
-- **Planes, not boxes.** UI sits _on_ the ice as flat white planes: `.on-ice` (ambient shadow) or `.on-ice-header`. Square corners everywhere - no radius, no outlines. Separation comes from hairlines (`rgba(13,27,42,0.10)`) and a 5–6px coloured left edge marker.
-- **Ink and one accent.** Navy `#0d1b2a` is the ink, `#55677d` the lightest permitted secondary on white. Red `#cf0a2c` is the only accent - leader, live, primary action. Amber `#f2b21c` is trim only: the `Kickplate` under header bars.
-- **The jumbotron is the one dark object** and the only place amber LED type appears. Use `Jumbotron` (5-cell stat line) or `JumbotronPanel` (free-form).
-- **Type.** `font-display` (Big Shoulders, 700/800, uppercase) for headings, names and numbers; `font-led` (Barlow Condensed) for LED digits; `font-body` (Archivo) for prose; `font-mono` (JetBrains Mono) for labels - never below 9px, use `MonoLabel`.
-- **Icons** are Lucide at 2–2.4 stroke width. No emoji.
-- **Never encode state in colour alone.** Eliminated answers also carry the `.penalty-hatch` fill and a `PENALTY BOX` label; the leader also carries rank 1; "answered" is a navy bar, not a hue; toggles read ON/OFF.
-- **Motion is flat.** 1px press, no bounce or scale. The one flourish is the jumbotron's left-to-right cell illumination (60ms stagger). Under 5s the clock goes red and the progress track pulses - no shake.
+- **The pond is the page.** `.ice-bg` paints pale ice (`--color-ice-1`) with two long white skate trails and a faint faceoff circle via `::before` (z-index 0), so page content needs `relative z-[2]`.
+- **Cards, not planes.** UI sits on the ice as white cards in a 3px ink frame with a rounded corner and a hard offset shadow: `.on-ice` (`--radius-card` 16px, `--shadow-card` 4px 4px). Buttons and tags are pills. No blur shadows, no left-edge accent bars.
+- **Ink and a small box of colours.** Navy `--color-ink` (#14213d) is text and every frame; `--color-ink-2` the lightest secondary on white. `--color-cobalt` is action, your pick and the leader (white text). `--color-lemon` marks the key stat (PTS), stamps and power plays; `--color-tangerine` the mystery nameplate; `--color-mint` a goal; `--color-pink` the penalty box. All four carry ink text. `--color-alarm` is only for the last 5 seconds and errors.
+- **Cards carry the game.** `MysteryCard` (tilted card, photo slot, hint chips, nameplate, GOAL!/SAVED stamp), `CardBack` (season line in Space Mono, PTS on lemon, stats light up left to right), `Binder` (standings as player cards), `TvHeader`, `ClockStamp` - all in `components/cards/`.
+- **Jerseys identify players.** Every `Player` has a `jersey` (pattern, body, trim, number 1-99, unique per room) validated by the room server; `components/game/Jersey.tsx` draws the back of a hockey sweater (name drops below 72px), `SweaterPicker` lets players choose one. Helpers in `lib/jersey.ts` (DOM-free, shared with the party server) and `lib/jersey-storage.ts` (browser). Show a player by their jersey, never a generic avatar.
+- **Type.** `font-display` (Anton, one weight, uppercase) for headings, names and big numbers; `font-body` (DM Sans) for prose; `font-mono` (Space Mono, bold) for labels, stat lines and room codes - use `MonoLabel`, never below 10px. Font synthesis is off, so don't ask Anton for bold.
+- **Icons** are Lucide at 2.4-3 stroke width. No emoji.
+- **Never encode state in colour alone.** Your pick carries a check and a LOCKED IN stamp; an eliminated answer is struck through with a PENALTY BOX stamp in a dashed frame; results read GOAL / WIDE / NO SHOT; the leader keeps rank 1.
+- **Motion.** Presses sink 2px into the offset. Stamps slap in, names wipe in, stats light up 60ms apart. Under 5s the clock goes alarm red and its ring pulses - no shake. Respect `prefers-reduced-motion`.
 
-Shared building blocks: `components/design-system.tsx` (Button, MonoLabel, TierBadge, Avatar, ProgressTrack, Clock, Kickplate, Ticker, Modal, GameHeading), `components/arcade/*` (PuckMark, CBrand, RinkBg, FaceoffCircle, Jumbotron), `components/game/*` (Scorebug, AnswerRow, SideRail, Scoreboard/FinalBoard, PowerupBar, HintPanel, PlayerNameInput).
+Shared building blocks: `components/design-system.tsx` (Button, MonoLabel, TierBadge, ProgressTrack, Clock, Modal, GameHeading), `components/cards/*`, `components/arcade/Brand.tsx` (PuckMark, CBrand), `components/game/*` (Jersey, SweaterPicker, AnswerRow, Scoreboard/FinalBoard, PlayerScorebug, SideRail, PowerupBar, HintPanel, PlayerNameInput).
 
-The full handoff spec is `~/Downloads/Hockey app design critique.zip` (`design_handoff_on_the_ice/`) - section **3a - ON THE ICE** is the approved direction.
+The approved direction is "Cards on Ice" on the Stats Master Redesign canvas (rows 4-6).
 
 ## Route Structure
 

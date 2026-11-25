@@ -1,6 +1,5 @@
 'use client'
 
-import { RinkBg } from '@/components/arcade/RinkBg'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -11,8 +10,8 @@ import { AnimatedPoolCount } from '@/components/game/AnimatedPoolCount'
 import { PowerPlayHelp } from '@/components/game/PowerPlayHelp'
 import { useSetupPool } from '@/hooks/useSetupPool'
 import { getOrCreateGuest } from '@/lib/guest'
-import { Button, Kickplate, MonoLabel } from '@/components/design-system'
-import { JumbotronPanel, PuckMark } from '@/components/arcade'
+import { Button, MonoLabel } from '@/components/design-system'
+import { PuckMark } from '@/components/arcade'
 import type {
   AnswerMode,
   DifficultyTier,
@@ -24,7 +23,7 @@ import type {
 import { DEFAULT_SETUP } from '@/types/game'
 
 const INK = 'var(--color-ink)'
-const RED = 'var(--color-red)'
+const RED = 'var(--color-cobalt)'
 const DEAD = 'var(--color-edge-dead)'
 
 // ─── Options ──────────────────────────────────────────────────────────────────
@@ -116,18 +115,16 @@ function SegBtn({
       aria-pressed={on}
       className="setup-segment btn-ice font-display"
       style={{
-        border: 'none',
-        borderRadius: 0,
-        padding: '12px 13px',
+        border: on ? `2.5px solid ${INK}` : `2px solid ${DEAD}`,
+        borderRadius: 999,
+        padding: '10px 14px',
         minHeight: 44,
-        fontWeight: 700,
-        fontSize: 14,
+        fontSize: 17,
         lineHeight: 1,
-        letterSpacing: '0.08em',
+        letterSpacing: '0.03em',
         textTransform: 'uppercase',
-        background: on ? INK : 'var(--color-ice-0)',
-        color: on ? 'var(--color-ice-1)' : 'var(--color-ink-2)',
-        boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(20, 33, 61,0.14)',
+        background: on ? 'var(--color-cobalt)' : 'var(--color-ice-0)',
+        color: on ? '#ffffff' : INK,
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
@@ -137,7 +134,7 @@ function SegBtn({
   )
 }
 
-/** Square toggle. Reads ON / OFF in words so the state is never colour-only. */
+/** A pill switch. Reads ON / OFF in words so the state is never colour-only. */
 function Toggle({
   label,
   on,
@@ -169,22 +166,23 @@ function Toggle({
     >
       <span
         className="font-mono"
-        style={{ fontSize: 9, letterSpacing: '0.16em', color: on ? RED : 'var(--color-ink-2)' }}
+        style={{ fontSize: 11, fontWeight: 700, color: INK }}
       >
         {on ? 'ON' : 'OFF'}
       </span>
       <span
         className="relative block"
         style={{
-          width: 40,
-          height: 20,
-          background: on ? RED : 'var(--color-ice-3)',
-          boxShadow: on ? 'none' : 'inset 0 0 0 1px rgba(20, 33, 61,0.14)',
+          width: 48,
+          height: 28,
+          borderRadius: 999,
+          border: `2.5px solid ${INK}`,
+          background: on ? 'var(--color-cobalt)' : 'var(--color-ice-0)',
         }}
       >
         <span
-          className="setup-toggle-thumb absolute top-[3px] left-[3px] block"
-          style={{ width: 14, height: 14, transform: `translateX(${on ? 20 : 0}px)`, background: on ? 'var(--color-ice-0)' : INK }}
+          className="setup-toggle-thumb absolute top-[2px] left-[2px] block"
+          style={{ width: 19, height: 19, borderRadius: '50%', transform: `translateX(${on ? 20 : 0}px)`, background: on ? '#ffffff' : INK, border: on ? `2px solid ${INK}` : undefined }}
         />
       </span>
     </button>
@@ -196,7 +194,7 @@ function FormatRow({ label, children }: { label: string; children: React.ReactNo
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-3 pb-3.5"
-      style={{ borderBottom: '1px solid rgba(20, 33, 61,0.07)' }}
+      style={{ borderBottom: '2px solid var(--color-ice-2)' }}
     >
       <span
         className="font-display"
@@ -237,11 +235,12 @@ function OptionPlane({
       aria-pressed={on}
       className="setup-option btn-ice flex min-w-0 flex-col gap-2 p-4 text-left"
       style={{
-        border: 'none',
-        borderLeft: `6px solid ${on ? edge : DEAD}`,
-        borderRadius: 0,
-        background: on ? 'color-mix(in srgb, var(--color-red) 5%, var(--color-ice-0))' : 'var(--color-ice-0)',
-        boxShadow: on ? '0 2px 10px rgba(20, 33, 61,0.10)' : '0 2px 10px rgba(20, 33, 61,0.05)',
+        border: on ? `3px solid ${INK}` : `2.5px solid ${DEAD}`,
+        borderRadius: 14,
+        background: 'var(--color-ice-0)',
+        outline: on ? `3px solid ${edge}` : undefined,
+        outlineOffset: 2,
+        boxShadow: on ? `4px 4px 0 ${INK}` : 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.55 : 1,
       }}
@@ -250,7 +249,6 @@ function OptionPlane({
         <span
           className="font-display flex-1"
           style={{
-            fontWeight: 800,
             fontSize: titleSize,
             lineHeight: 1,
             textTransform: 'uppercase',
@@ -259,14 +257,12 @@ function OptionPlane({
         >
           {title}
         </span>
-        {on && <Check size={15} strokeWidth={2.4} color={RED} />}
+        {on && <Check size={18} strokeWidth={3} color={RED} aria-hidden />}
       </div>
       {meta && (
-        <MonoLabel size={9} tracking="0.16em">
-          {meta}
-        </MonoLabel>
+        <MonoLabel>{meta}</MonoLabel>
       )}
-      {desc && <span style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--color-ink-2)' }}>{desc}</span>}
+      {desc && <span style={{ fontSize: 13.5, lineHeight: 1.55, color: 'var(--color-ink-2)' }}>{desc}</span>}
     </button>
   )
 }
@@ -339,30 +335,23 @@ export default function SetupPage({ params }: SetupPageProps) {
 
   return (
     <main className="setup-page ice-bg relative flex min-h-screen flex-col overflow-x-hidden">
-      <RinkBg intensity={0.65} />
       {/* ── Header ── */}
-      <header className="on-ice-header relative z-20">
-        <div className="flex h-[60px] items-center justify-between px-5 md:px-8">
-          <div className="flex items-center gap-[11px]">
-            <PuckMark size={26} />
-            <span
-              className="font-display"
-              style={{ fontWeight: 800, fontSize: 18, letterSpacing: '0.02em' }}
-            >
+      <header className="relative z-20">
+        <div className="flex h-[72px] items-center justify-between px-5 md:px-8">
+          <div className="flex items-center gap-2.5">
+            <PuckMark size={30} />
+            <span className="font-display" style={{ fontSize: 28, lineHeight: 1, letterSpacing: '0.02em' }}>
               STATS MASTER
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <MonoLabel size={9} tracking="0.22em">
-              Room {roomId}
-            </MonoLabel>
+            <MonoLabel color="var(--color-ink)">Room {roomId}</MonoLabel>
             <Button variant="ghost" size="sm" onClick={() => router.back()}>
               <ArrowLeft size={14} strokeWidth={2.2} />
               Back
             </Button>
           </div>
         </div>
-        <Kickplate />
       </header>
 
       <div className="setup-content relative z-[2] mx-auto w-full max-w-[1100px]">
@@ -444,7 +433,7 @@ export default function SetupPage({ params }: SetupPageProps) {
                 ))}
               </div>
               {config.difficultyTiers.length === 0 && (
-                <p className="m-0" style={{ fontSize: 12.5, color: RED }}>
+                <p className="m-0" style={{ fontSize: 13, color: 'var(--color-alarm)', fontWeight: 600 }}>
                   Select at least one difficulty tier.
                 </p>
               )}
@@ -465,7 +454,7 @@ export default function SetupPage({ params }: SetupPageProps) {
                 ))}
               </div>
               {config.eras.length === 0 && (
-                <p className="m-0" style={{ fontSize: 12.5, color: RED }}>
+                <p className="m-0" style={{ fontSize: 13, color: 'var(--color-alarm)', fontWeight: 600 }}>
                   Select at least one era.
                 </p>
               )}
@@ -620,16 +609,15 @@ export default function SetupPage({ params }: SetupPageProps) {
 
       {/* ── Start bar: the boards at the foot of the screen ── */}
       <div className="setup-boards fixed inset-x-0 bottom-0 z-40">
-        <Kickplate height={4} />
         <div className="setup-boards-inner">
-          <JumbotronPanel bezel={5} screenPad="10px 14px" className="setup-pool-board">
+          <div className="setup-pool-board">
             <div role="status" aria-live="polite" aria-atomic="true" aria-busy={poolLoading}>
               <div className="setup-pool-score">
                 <AnimatedPoolCount count={availableCount} />
                 <span className="font-mono setup-pool-label">{poolLoading ? 'Checking pool' : poolError ? 'Pool unavailable' : 'In pool'}<small>{isCareer ? 'Eligible careers' : 'Season stat lines'}</small></span>
               </div>
             </div>
-          </JumbotronPanel>
+          </div>
           <div className="setup-pool-context">
             <p role={poolError ? 'alert' : undefined}>{poolMessage}</p>
             {poolError && <button type="button" onClick={retryPool} className="setup-retry">Retry pool</button>}
@@ -640,7 +628,7 @@ export default function SetupPage({ params }: SetupPageProps) {
               <Button variant="primary" size="md" onClick={handleStart} disabled={!canStart || starting} className="w-full">
                 {startLabel}<ArrowRight size={16} strokeWidth={2.2} />
               </Button>
-            ) : <MonoLabel size={10} tracking="0.16em">Waiting for host</MonoLabel>}
+            ) : <MonoLabel>Waiting for host</MonoLabel>}
           </div>
         </div>
       </div>

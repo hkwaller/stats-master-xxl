@@ -179,7 +179,7 @@ test('legacy room careers are restored without restarting the round', () => {
   } finally { Date.now = originalNow }
 })
 
-test('career result shows Correct with earned points even when the live answer list is empty', () => {
+test('career result shows Goal! with earned points even when the live answer list is empty', () => {
   const { RevealResult } = load('components/game/RevealResult.tsx', {
     'framer-motion': { motion: {
       div: ({ initial, animate, transition, ...props }) => React.createElement('div', props),
@@ -189,10 +189,10 @@ test('career result shows Correct with earned points even when the live answer l
   const question = { firstName: 'Paul', lastName: 'Coffey', season: '1980-81' }
   const history = [{ question, playerAnswers: { me: { answer: 'Paul Coffey', correct: true, points: 100 } } }]
   const markup = renderToStaticMarkup(React.createElement(RevealResult, { question, history, myId: 'me', hasAnswered: false }))
-  assert.ok(markup.includes('Correct'))
+  assert.ok(markup.includes('Goal!'))
   assert.ok(markup.includes('+100'))
-  assert.ok(!markup.includes('No answer'))
-  for (const [answer, expected] of [['Wayne Gretzky', 'Missed'], ['', 'No answer']]) {
+  assert.ok(!markup.includes('No shot'))
+  for (const [answer, expected] of [['Wayne Gretzky', 'Wide'], ['', 'No shot']]) {
     const resultHistory = [{ question, playerAnswers: { me: { answer, correct: false, points: 0 } } }]
     const resultMarkup = renderToStaticMarkup(React.createElement(RevealResult, {
       question, history: resultHistory, myId: 'me',

@@ -9,7 +9,6 @@ import { PowerPlayHelp } from '@/components/game/PowerPlayHelp'
 import { POWERUP_DETAILS } from '@/lib/game/powerups'
 
 const INK = '#14213d'
-const RED = '#2357ff'
 
 interface PowerupBarProps {
   charges: Record<PowerupType, number>
@@ -88,20 +87,20 @@ export function PowerupBar({
 
   return (
     <>
-      <div className="on-ice-header" style={{ boxShadow: '0 -1px 0 rgba(20, 33, 61,0.10)' }}>
-        <div className="flex items-center justify-between px-[18px] pt-3 pb-2">
+      <div style={{ background: '#ffffff', borderTop: `3px solid ${INK}`, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <div className="flex items-center justify-between px-4 pt-1.5">
           <div className="flex items-center gap-1">
-            <MonoLabel size={9} tracking="0.22em">Power plays</MonoLabel>
+            <MonoLabel>Power plays</MonoLabel>
             <PowerPlayHelp />
           </div>
           {status && (
-            <MonoLabel size={9} tracking="0.14em" color={RED}>
+            <MonoLabel color={INK}>
               {status}
             </MonoLabel>
           )}
         </div>
 
-        <div className="grid grid-cols-4" style={{ gap: 1, background: 'rgba(20, 33, 61,0.12)' }}>
+        <div className="grid grid-cols-4 gap-2 px-3 pb-3">
           {POWERUPS.map((pu) => {
             const charge = charges[pu.type] ?? 0
             const available = pu.availableIn(answerMode, revealMode)
@@ -117,12 +116,15 @@ export function PowerupBar({
                 aria-label={`${pu.label}: ${pu.description} ${charge} ${charge === 1 ? 'use' : 'uses'} remaining.${available ? '' : ` ${POWERUP_DETAILS[pu.type].requirement}`}`}
                 disabled={!canUse}
                 onClick={() => canUse && setConfirming(pu.type)}
-                className="btn-ice flex flex-col items-center justify-center gap-1.5"
+                aria-pressed={isActive}
+                className="flex flex-col items-center justify-center gap-1"
                 style={{
-                  height: 72,
-                  border: 'none',
-                  background: isActive ? RED : exhausted ? '#f4f9fe' : '#ffffff',
-                  color: isActive ? '#ffffff' : exhausted ? '#7a88a3' : INK,
+                  height: 64,
+                  borderRadius: 14,
+                  border: exhausted ? '2.5px dashed var(--color-edge-dead)' : `2.5px solid ${INK}`,
+                  background: isActive ? 'var(--color-lemon)' : exhausted ? 'transparent' : '#ffffff',
+                  boxShadow: canUse ? `3px 3px 0 ${INK}` : 'none',
+                  color: exhausted ? 'var(--color-ink-3)' : INK,
                   cursor: canUse ? 'pointer' : 'default',
                 }}
               >
@@ -130,13 +132,13 @@ export function PowerupBar({
                 <span
                   className="font-mono"
                   style={{
-                    fontSize: 8,
-                    letterSpacing: '0.12em',
+                    fontSize: 11,
+                    fontWeight: 700,
                     textTransform: 'uppercase',
-                    color: isActive ? '#ffffff' : exhausted ? '#7a88a3' : '#4a5a78',
+                    color: exhausted ? 'var(--color-ink-3)' : INK,
                   }}
                 >
-                  {pu.short} ·{charge}
+                  {pu.short} · {isActive ? 'ON' : charge}
                 </span>
               </button>
             )
@@ -148,26 +150,22 @@ export function PowerupBar({
         {confirming && confirmPowerup && (
           <Modal open onClose={() => setConfirming(null)}>
             <div className="flex flex-col gap-4">
-              <MonoLabel size={9}>Power play</MonoLabel>
+              <MonoLabel>Power play</MonoLabel>
               <h3
-                className="font-display"
-                style={{ fontWeight: 800, fontSize: 38, lineHeight: 1, textTransform: 'uppercase' }}
+                className="font-display m-0"
+                style={{ fontSize: 40, lineHeight: 1, textTransform: 'uppercase' }}
               >
                 {confirmPowerup.label}
               </h3>
               <p style={{ fontSize: 14, lineHeight: 1.6, color: '#4a5a78', margin: 0 }}>
                 {confirmPowerup.description}
               </p>
-              <div
-                className="grid grid-cols-2 gap-px pt-2"
-                style={{ background: 'rgba(20, 33, 61,0.12)' }}
-              >
-                <Button variant="ghost" flush onClick={() => setConfirming(null)}>
+              <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <Button variant="ghost" onClick={() => setConfirming(null)}>
                   Cancel
                 </Button>
                 <Button
                   variant="primary"
-                  flush
                   onClick={() => {
                     onActivate(confirming)
                     setConfirming(null)

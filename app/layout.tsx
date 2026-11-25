@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import type { Metadata, Viewport } from 'next'
-import { Anton, DM_Sans, Barlow_Condensed, Space_Mono } from 'next/font/google'
+import { Anton, DM_Sans, Space_Mono } from 'next/font/google'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Providers } from './providers'
@@ -18,13 +18,6 @@ const dmSans = DM_Sans({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
   variable: '--font-dm-sans',
-  display: 'swap',
-})
-
-const barlowCondensed = Barlow_Condensed({
-  weight: ['500', '600', '700'],
-  subsets: ['latin'],
-  variable: '--font-barlow-condensed',
   display: 'swap',
 })
 
@@ -109,7 +102,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${dmSans.variable} ${barlowCondensed.variable} ${spaceMono.variable}`}
+      className={`${anton.variable} ${dmSans.variable} ${spaceMono.variable}`}
     >
       <body>
         <script
@@ -119,13 +112,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ClerkProvider
           appearance={{
             variables: {
-              colorPrimary: 'var(--color-red)',
+              colorPrimary: 'var(--color-cobalt)',
               colorForeground: 'var(--color-ink)',
               colorMutedForeground: 'var(--color-ink-2)',
               colorBackground: 'var(--color-ice-0)',
               colorInput: 'var(--color-ice-0)',
               colorInputForeground: 'var(--color-ink)',
-              colorDanger: 'var(--color-red)',
+              colorDanger: 'var(--color-alarm)',
               borderRadius: '14px',
               fontFamily: 'var(--font-body)',
             },

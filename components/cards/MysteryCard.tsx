@@ -1,6 +1,8 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import { getPlayerPhoto, type PlayerPhoto } from '@/lib/data/player-photos'
 
 const INK = 'var(--color-ink)'
 
@@ -10,10 +12,36 @@ export interface CardChip {
   value: string | null
 }
 
+function RevealPhoto({ photo }: { photo: PlayerPhoto }) {
+  const [loaded, setLoaded] = useState(false)
+
+  return (
+    <div className={`absolute inset-0 bg-ice-1 ${loaded ? '' : 'invisible'}`}>
+      <img
+        src={photo.src}
+        alt=""
+        referrerPolicy="no-referrer"
+        className="size-full object-contain"
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(false)}
+      />
+      {loaded && (
+        <div className="absolute right-1 bottom-1 left-1 mx-auto w-fit max-w-full rounded bg-white px-1.5 py-0.5 text-center font-mono text-[10px] text-ink">
+          {photo.caption && <div className="font-bold">{photo.caption}</div>}
+          <a href={photo.sourceUrl} target="_blank" rel="noreferrer" className="underline">{photo.creator}</a>
+          {' · '}
+          <a href={photo.licenseUrl} target="_blank" rel="noreferrer" className="underline">{photo.license}</a>
+          {photo.editNote && ` · ${photo.editNote}`}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /**
  * The tilted trading card on the TV. Face down it shows a silhouette, a "?" and
- * the hints flipped so far; revealed it carries the player's name on a lemon
- * nameplate. An optional stamp (GOAL!, NO GOAL) slaps across the corner.
+ * the hints flipped so far; revealed it carries the player's name and a photo
+ * when available. An optional stamp slaps across the corner.
  */
 export function MysteryCard({
   season,
@@ -22,12 +50,14 @@ export function MysteryCard({
   revealed,
   stamp,
 }: {
-  season: string
+  season: string | null
   cardNumber: number
   chips: CardChip[]
-  revealed?: { name: string; detail: string } | null
+  revealed?: { playerId: number; name: string; detail: string } | null
   stamp?: { text: string; tone: 'mint' | 'pink' } | null
 }) {
+  const photo = revealed ? getPlayerPhoto(revealed.playerId) : undefined
+
   return (
     <div className="relative">
       <div
@@ -46,7 +76,7 @@ export function MysteryCard({
           style={{ background: 'var(--color-cobalt)', color: '#fff', borderRadius: 10, padding: '8px 14px' }}
         >
           <span className="font-display" style={{ fontSize: 30, lineHeight: 1 }}>
-            {season.replace('-', '–')}
+            {season ? season.replace('-', '–') : 'Mystery card'}
           </span>
           <span className="font-mono" style={{ fontSize: 13, fontWeight: 700 }}>
             NO. {String(cardNumber).padStart(3, '0')}
@@ -75,6 +105,7 @@ export function MysteryCard({
               fill="#14213d"
             />
           </svg>
+          {photo && <RevealPhoto key={photo.src} photo={photo} />}
           {!revealed && (
             <span
               aria-hidden="true"

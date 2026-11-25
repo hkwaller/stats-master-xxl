@@ -410,7 +410,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
         style={{
           border: 0,
           minWidth: 0,
-          paddingBottom: `calc(${(showPowerupBar && dockVisible ? 112 : 0) + (showCareerBuzzer ? BUZZER_HEIGHT : 0) + (controls.length && dockVisible ? 60 : 0) + 32}px + env(safe-area-inset-bottom, 0px))`,
+          paddingBottom: `calc(${(showPowerupBar && dockVisible ? 112 : 0) + (showCareerBuzzer ? BUZZER_HEIGHT : 0) + (controls.length && dockVisible ? 68 : 0) + 32}px + env(safe-area-inset-bottom, 0px))`,
         }}
       >
         {/* Idle */}
@@ -481,7 +481,9 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               question={currentQuestion}
               revealedColumns={isRevealing ? 5 : (game.revealedColumns ?? 0)}
               size="phone"
-              title={`Card ${(game.currentQuestionIndex ?? 0) + 1} · ${currentQuestion.season.replace('-', '–')}${
+              title={`Card ${(game.currentQuestionIndex ?? 0) + 1}${
+                isRevealing || sharedHints.includes('era') ? ` · ${currentQuestion.season.replace('-', '–')}` : ''
+              }${
                 isRevealing || sharedHints.includes('position') ? ` · Pos ${currentQuestion.positionCode}` : ''
               }`}
             />
@@ -557,6 +559,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
               usedHints={sharedHints}
               hintsEnabled={game.hintsEnabled}
               showEraHint={gameMode !== 'career' || game.careerShowYears === false}
+              showSeasonHint={gameMode === 'classic'}
               onRequestHint={handleHint}
             />
           </div>
@@ -671,7 +674,7 @@ export default function PlayerPage({ params: paramsPromise }: PlayerPageProps) {
 
       {/* Power plays own the bottom edge. */}
       {showPowerupBar && dockVisible && (
-        <fieldset disabled={isPaused} className="fixed inset-x-0 z-40 m-0 border-0 p-0" style={{ bottom: controls.length ? 60 : 0 }}>
+        <fieldset disabled={isPaused} className="fixed inset-x-0 z-40 m-0 border-0 p-0" style={{ bottom: controls.length ? 68 : 0 }}>
           <div className="mx-auto w-full max-w-[560px]">
             <PowerupBar
               charges={myPowerupCharges}

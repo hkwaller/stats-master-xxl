@@ -9,8 +9,8 @@ import { generateChoices } from '@/lib/data/choices'
 import { calcScore, isCorrectAnswer } from '@/lib/game/classic'
 import { useGameCompletion } from '@/hooks/useGameCompletion'
 import { nativeFeedback } from '@/lib/native'
-import { Button, Kickplate, MonoLabel, ProgressTrack, TierBadge } from '@/components/design-system'
-import { Jumbotron, JumbotronPanel } from '@/components/arcade/Jumbotron'
+import { Button, MonoLabel, ProgressTrack, TierBadge } from '@/components/design-system'
+import { CardBack } from '@/components/cards/CardBack'
 import { AnswerRow, type AnswerState } from '@/components/game/AnswerRow'
 
 const pool = poolData as Question[]
@@ -133,7 +133,7 @@ function SpeedBonus({ started, stopped }: { started: number; stopped: number | n
     <div className="practice-bonus">
       <div className="flex items-baseline justify-between">
         <MonoLabel size={9}>Speed bonus</MonoLabel>
-        <span className="font-display text-xl font-extrabold tabular-nums" style={{ color: bonus <= 6 ? 'var(--color-red)' : undefined }}>+{bonus}</span>
+        <span className="font-mono text-xl font-bold tabular-nums" style={{ color: bonus <= 6 ? 'var(--color-alarm)' : undefined }}>+{bonus}</span>
       </div>
       <ProgressTrack fraction={fraction} urgent={stopped === null && bonus > 0 && bonus <= 6} height={4} className="mt-2" />
     </div>
@@ -243,19 +243,19 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
       {(!round || finished) && <button className="app-text-action mb-6" onClick={onExit}>Back to home</button>}
       {!round ? (
         <>
-          <h1 className="font-display text-5xl leading-none font-extrabold uppercase">Classic practice</h1>
+          <h1 className="font-display text-5xl leading-none uppercase">Classic practice</h1>
           <p className="mt-3 mb-7 text-sm text-ink-2">Offline · 10 shots · Local scores only</p>
           <div className="on-ice practice-intro">
-            <p>The jumbotron lights up a real NHL season. Four names, one skater. Every correct pick is a goal, and the speed bonus drains while you think. Stuck? Era, team and position hints are free once each per game. After that, every reuse costs 10 more than the last.</p>
+            <p>Each card is a real NHL season. Four names, one skater. Every correct pick is a goal, and the speed bonus drains while you think. Stuck? Era, team and position hints are free once each per game. After that, every reuse costs 10 more than the last.</p>
             <ShotChart shots={[]} />
-            {best > 0 && <p className="practice-best-line"><MonoLabel size={9}>Personal best</MonoLabel><span className="font-display text-2xl font-extrabold tabular-nums">{best}</span></p>}
+            {best > 0 && <p className="practice-best-line"><MonoLabel size={9}>Personal best</MonoLabel><span className="font-mono text-2xl font-bold tabular-nums">{best}</span></p>}
             <Button onClick={start} className="w-full">Drop the puck</Button>
           </div>
         </>
       ) : finished ? (
         <div className="practice-final" aria-live="polite">
-          <h1 className="font-display text-5xl leading-none font-extrabold uppercase">Final horn</h1>
-          <JumbotronPanel className="mt-6" screenPad="20px 18px">
+          <h1 className="font-display text-5xl leading-none uppercase">Final horn</h1>
+          <div className="practice-final-card mt-6">
             <div className="flex items-center justify-between">
               <span className="practice-led-label">Practice · Final</span>
               <span className="practice-led-label">{goals} / {ROUND_COUNT} goals</span>
@@ -263,7 +263,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
             <p className="practice-final-score tabular-nums"><CountUp value={score} /><span>PTS</span></p>
             {score > previousBest && previousBest > 0 && <p className="practice-led-call reveal-name">New personal best</p>}
             {previousBest === 0 && score > 0 && <p className="practice-led-call reveal-name">First mark on the board</p>}
-          </JumbotronPanel>
+          </div>
           <div className="on-ice practice-final-sheet">
             <ShotChart shots={shots} />
             <dl className="practice-final-stats">
@@ -286,28 +286,19 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
             {answer !== null && last?.goal && <span key={`delta-${index}`} className="score-delta practice-delta" aria-hidden="true">+{last.points}</span>}
           </span>
         </div>
-        <Kickplate />
         <ShotChart shots={shots} current={index} />
 
         <div className="practice-stage" key={`stage-${q.id}`}>
           <div className="practice-lamp" data-lit={answer !== null && last?.goal} aria-hidden="true" />
-          <Jumbotron
+          <CardBack
+            question={q}
             size="phone"
-            struts={false}
-            topLeft={answer !== null ? q.season : 'SEASON HIDDEN'}
-            topRight={answer !== null ? `${q.teamAbbrevs} · ${q.positionCode}` : undefined}
-            cells={[
-              { abbr: 'GP', value: q.gamesPlayed },
-              { abbr: 'G', value: q.goals },
-              { abbr: 'A', value: q.assists },
-              { abbr: 'PTS', value: q.points, emphasis: true },
-              { abbr: 'PIM', value: q.penaltyMinutes },
-            ]}
+            title={answer !== null ? `${q.season.replace('-', '–')} · ${q.teamAbbrevs} · ${q.positionCode}` : 'Season hidden'}
           />
         </div>
 
         <div className="practice-prompt">
-          <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">Name the skater</h2>
+          <h2 className="font-display text-3xl uppercase sm:text-4xl">Name the player</h2>
           <TierBadge tier={q.difficulty} />
         </div>
         <SpeedBonus key={`bonus-${q.id}`} started={round.started} stopped={answeredAt} />
