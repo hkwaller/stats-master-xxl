@@ -1,7 +1,6 @@
 import { v4 as uuid } from 'uuid'
-import { GUEST_STORAGE_KEY, persistNativeGuest } from './native'
 
-const GUEST_KEY = GUEST_STORAGE_KEY
+const GUEST_KEY = 'nhl-stats-master:guest'
 
 export type Guest = {
   id: string
@@ -47,7 +46,6 @@ export function updateGuestName(name: string): void {
 function saveGuest(guest: Guest) {
   const value = JSON.stringify(guest)
   try { localStorage.setItem(GUEST_KEY, value) } catch { /* Storage may be disabled. */ }
-  void persistNativeGuest(value)
 }
 
 function readGuest() {

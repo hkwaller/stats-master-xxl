@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { isCorrectAnswer, calcScore } from './classic'
-import { generateChoices } from '../data/choices'
-import snapshot from '../../native/offline/questions.json'
 import type { Question } from '../../types/game'
 
-const questions = snapshot as Question[]
-describe('shared Classic rules and offline content', () => {
-  const question = { ...questions[0], firstName: 'Wayne', lastName: 'Gretzky' }
+describe('shared Classic rules', () => {
+  const question: Question = { id: '1', playerId: 1, firstName: 'Wayne', lastName: 'Gretzky', seasonId: 19851986, season: '1985-86', era: '1980s', positionCode: 'C', teamAbbrevs: 'EDM', teamNames: 'Edmonton Oilers', points: 215, gamesPlayed: 80, goals: 52, assists: 163, penaltyMinutes: 52, difficulty: 'easy' }
   it('accepts normalized full names or last names, without accepting partial guesses', () => {
     expect(isCorrectAnswer('  WAYNE   Gretzky ', question)).toBe(true)
     expect(isCorrectAnswer('gretzky', question)).toBe(true)
@@ -20,16 +17,5 @@ describe('shared Classic rules and offline content', () => {
     expect(calcScore(0, 'hard', true, true)).toBe(360)
     expect(calcScore(0, 'easy', false, false)).toBe(0)
     expect(calcScore(0, 'easy', true, false)).toBe(-50)
-  })
-  it('every bundled season has four distinct choices including exactly one correct answer', () => {
-    expect(questions.length).toBeGreaterThan(2000)
-    expect(new Set(questions.map(q => q.id)).size).toBe(questions.length)
-    for (const q of questions) {
-      expect(q.points).toBe(q.goals + q.assists)
-      expect(q.gamesPlayed).toBeGreaterThan(0)
-      const choices = generateChoices(q, questions, Number(q.id))
-      expect(new Set(choices).size).toBe(4)
-      expect(choices.filter(choice => isCorrectAnswer(choice, q))).toHaveLength(1)
-    }
   })
 })

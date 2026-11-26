@@ -1,10 +1,8 @@
-import { headers } from 'next/headers'
 import type { Metadata, Viewport } from 'next'
 import { Anton, DM_Sans, Space_Mono } from 'next/font/google'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Providers } from './providers'
-import { NativeBoot } from '@/components/native/NativeBoot'
 
 /** Cards on Ice: Anton for names and headings, DM Sans for prose, Space Mono for stat lines. */
 const anton = Anton({
@@ -97,8 +95,7 @@ const jsonLd = {
   ],
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nativeRequest = (await headers()).get('user-agent')?.includes('StatsMasterNative/') ?? false
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
@@ -146,7 +143,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             },
           }}
         >
-          <Providers><NativeBoot nativeRequest={nativeRequest}>{children}</NativeBoot></Providers>
+          <Providers>{children}</Providers>
         </ClerkProvider>
       </body>
     </html>

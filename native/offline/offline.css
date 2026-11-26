@@ -1,6 +1,0 @@
-@import '../../app/globals.css';
-@source '../../components/native';
-@source '../../components/design-system.tsx';
-@source '../../components/cards/CardBack.tsx';
-@source '../../components/game/AnswerRow.tsx';
-@source './OfflineApp.tsx';

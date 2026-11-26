@@ -1,6 +1,5 @@
 'use client'
 
-import { nativeFeedback } from '@/lib/native'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SignInButton, useUser } from '@clerk/nextjs'
@@ -136,7 +135,6 @@ export function DailyChallenge() {
       }).catch(console.error)
     }
 
-    void nativeFeedback(isCorrect ? 'correct' : 'wrong')
     setPhase({ name: 'answered', result, question })
   }
 
