@@ -3,30 +3,38 @@
 import { motion, HTMLMotionProps } from 'framer-motion'
 import type { DifficultyTier } from '@/types/game'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+// Cards on Ice. Mirrors the @theme tokens in app/globals.css for inline styles.
+const INK = 'var(--color-ink)'
+const INK_2 = 'var(--color-ink-2)'
+const COBALT = 'var(--color-cobalt)'
+const ALARM = 'var(--color-alarm)'
 
 // ─── Button ───────────────────────────────────────────────────────────────────
+// Anton caps on a pill in a 3px ink frame. Primary and ghost carry the hard
+// offset; pressing sinks the button into it.
 
 interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children: React.ReactNode
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
-  /** Flush against its container - no shadow, fills the cell. Used in 2-up bars. */
+  /** Flush against its container - no frame or offset, fills the cell. Used in 2-up bars. */
   flush?: boolean
 }
 
-const variantStyles: Record<string, { bg: string; fg: string; hover: string }> = {
-  primary: { bg: RED, fg: '#ffffff', hover: '#b80927' },
-  secondary: { bg: INK, fg: '#eef3f9', hover: '#16283c' },
-  danger: { bg: RED, fg: '#ffffff', hover: '#b80927' },
-  ghost: { bg: '#ffffff', fg: INK, hover: '#f4f7fa' },
+const variantStyles: Record<
+  NonNullable<ButtonProps['variant']>,
+  { bg: string; fg: string; hover: string; offset: boolean }
+> = {
+  primary: { bg: COBALT, fg: '#ffffff', hover: 'var(--color-cobalt-hover)', offset: true },
+  secondary: { bg: INK, fg: '#ffffff', hover: '#22325a', offset: false },
+  danger: { bg: ALARM, fg: '#ffffff', hover: '#b8241a', offset: true },
+  ghost: { bg: '#ffffff', fg: INK, hover: 'var(--color-ice-1)', offset: true },
 }
 
 const sizeStyles = {
-  sm: { padding: '11px 18px', fontSize: 15, tracking: '0.12em' },
-  md: { padding: '15px 26px', fontSize: 18, tracking: '0.13em' },
-  lg: { padding: '17px 30px', fontSize: 21, tracking: '0.14em' },
+  sm: { padding: '10px 18px', fontSize: 16, minHeight: 44 },
+  md: { padding: '12px 24px', fontSize: 19, minHeight: 50 },
+  lg: { padding: '14px 30px', fontSize: 23, minHeight: 58 },
 }
 
 export function Button({
@@ -41,21 +49,14 @@ export function Button({
 }: ButtonProps) {
   const v = variantStyles[variant]
   const s = sizeStyles[size]
-  // Hard offsets survive only on the primary action, and only when not flush.
-  const offset = variant === 'primary' && !flush
-  const ghostRule = variant === 'ghost' ? 'inset 0 0 0 1px rgba(13,27,42,0.14)' : ''
-  const rest = [offset ? `0 3px 0 ${INK}` : '', ghostRule].filter(Boolean).join(', ') || 'none'
+  const offset = v.offset && !flush && !disabled
 
   return (
     <motion.button
       whileHover={!disabled ? { backgroundColor: v.hover } : undefined}
       whileTap={
-        !disabled
-          ? {
-              y: 1,
-              boxShadow:
-                [offset ? `0 2px 0 ${INK}` : '', ghostRule].filter(Boolean).join(', ') || 'none',
-            }
+        !disabled && !flush
+          ? { x: 2, y: 2, boxShadow: offset ? `2px 2px 0 ${INK}` : 'none' }
           : undefined
       }
       transition={{ duration: 0.1 }}
@@ -68,19 +69,20 @@ export function Button({
           gap: 10,
           backgroundColor: v.bg,
           color: v.fg,
-          border: 'none',
-          borderRadius: 0,
+          border: flush ? 'none' : `3px solid ${INK}`,
+          borderRadius: flush ? 0 : 999,
           padding: flush ? '18px 0' : s.padding,
+          minHeight: s.minHeight,
           width: flush ? '100%' : undefined,
           cursor: disabled ? 'not-allowed' : 'pointer',
           fontFamily: 'var(--font-display)',
-          fontWeight: 700,
+          fontWeight: 400,
           fontSize: s.fontSize,
           lineHeight: 1,
-          letterSpacing: s.tracking,
+          letterSpacing: '0.03em',
           textTransform: 'uppercase',
-          boxShadow: rest,
-          opacity: disabled ? 0.4 : 1,
+          boxShadow: offset ? `4px 4px 0 ${INK}` : 'none',
+          opacity: disabled ? 0.45 : 1,
           ...style,
         } as React.CSSProperties
       }
@@ -93,13 +95,13 @@ export function Button({
 }
 
 // ─── MonoLabel ────────────────────────────────────────────────────────────────
-// The system's small-caps voice. Never below 9px, never lighter than #55677d.
+// The card-back voice: Space Mono bold caps. Never below 10px or lighter than ink-2.
 
 export function MonoLabel({
   children,
-  size = 10,
-  tracking = '0.24em',
-  color = '#55677d',
+  size = 11,
+  tracking = '0.06em',
+  color = INK_2,
   className = '',
 }: {
   children: React.ReactNode
@@ -112,11 +114,12 @@ export function MonoLabel({
     <span
       className={`font-mono ${className}`}
       style={{
-        fontSize: Math.max(9, size),
+        fontSize: Math.max(10, size),
+        fontWeight: 700,
         letterSpacing: tracking,
         color,
         textTransform: 'uppercase',
-        lineHeight: 1,
+        lineHeight: 1.1,
       }}
     >
       {children}
@@ -125,7 +128,7 @@ export function MonoLabel({
 }
 
 // ─── TierBadge ────────────────────────────────────────────────────────────────
-// A square mono chip. Tier is carried by the label, not only by the colour.
+// A pill in an ink frame. The range is always in the label, never only the colour.
 
 interface BadgeProps {
   tier: DifficultyTier
@@ -133,10 +136,10 @@ interface BadgeProps {
 }
 
 const tierConfig: Record<DifficultyTier, { label: string; bg: string; fg: string }> = {
-  easy: { label: 'Easy · 140+', bg: INK, fg: '#eef3f9' },
-  medium: { label: 'Medium · 120–139', bg: 'rgba(11,83,201,0.12)', fg: '#0b53c9' },
-  hard: { label: 'Hard · 100–119', bg: RED, fg: '#ffffff' },
-  expert: { label: 'Expert · 70–99', bg: 'var(--color-amber)', fg: INK },
+  easy: { label: 'Easy · 140+', bg: '#ffffff', fg: INK },
+  medium: { label: 'Medium · 120–139', bg: COBALT, fg: '#ffffff' },
+  hard: { label: 'Hard · 100–119', bg: 'var(--color-tangerine)', fg: INK },
+  expert: { label: 'Expert · 70–99', bg: 'var(--color-lemon)', fg: INK },
 }
 
 export function TierBadge({ tier, className = '' }: BadgeProps) {
@@ -147,12 +150,14 @@ export function TierBadge({ tier, className = '' }: BadgeProps) {
       style={{
         background: cfg.bg,
         color: cfg.fg,
-        borderRadius: 0,
-        padding: '4px 9px',
-        fontSize: 9,
-        letterSpacing: '0.16em',
+        border: `2px solid ${INK}`,
+        borderRadius: 999,
+        padding: '4px 10px',
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: '0.04em',
         textTransform: 'uppercase',
-        lineHeight: 1,
+        lineHeight: 1.1,
         whiteSpace: 'nowrap',
       }}
     >
@@ -161,36 +166,13 @@ export function TierBadge({ tier, className = '' }: BadgeProps) {
   )
 }
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
-
-interface AvatarProps {
-  url: string
-  name: string
-  size?: number
-  className?: string
-}
-
-export function Avatar({ url, name, size = 34, className = '' }: AvatarProps) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={url}
-      alt={name}
-      width={size}
-      height={size}
-      className={`shrink-0 object-cover ${className}`}
-      style={{ width: size, height: size, borderRadius: 3, background: '#e4ecf5' }}
-    />
-  )
-}
-
 // ─── ProgressTrack ────────────────────────────────────────────────────────────
-// The 6px time track. Under 5s the fill pulses; it never shakes or scales.
+// A rounded time track. Under 5s the fill turns alarm red and pulses; it never shakes.
 
 export function ProgressTrack({
   fraction,
   urgent = false,
-  height = 6,
+  height = 8,
   className = '',
 }: {
   fraction: number
@@ -202,7 +184,7 @@ export function ProgressTrack({
   return (
     <div
       className={`w-full ${className}`}
-      style={{ height, background: 'rgba(13,27,42,0.10)' }}
+      style={{ height, background: 'var(--color-ice-2)', borderRadius: 999, overflow: 'hidden' }}
       role="progressbar"
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
@@ -213,7 +195,8 @@ export function ProgressTrack({
         style={{
           height,
           width: `${pct}%`,
-          background: RED,
+          background: urgent ? ALARM : COBALT,
+          borderRadius: 999,
           transition: 'width 0.4s linear',
         }}
       />
@@ -240,74 +223,18 @@ export function Clock({
 
   return (
     <div className={`flex flex-col gap-1 ${align === 'end' ? 'items-end' : 'items-start'}`}>
-      {label && <MonoLabel size={9}>{label}</MonoLabel>}
+      {label && <MonoLabel size={10}>{label}</MonoLabel>}
       <span
         className="font-display tabular-nums"
         style={{
-          fontWeight: 800,
+          fontWeight: 400,
           fontSize: size,
-          lineHeight: 0.8,
-          color: urgent ? RED : INK,
+          lineHeight: 0.85,
+          color: urgent ? ALARM : INK,
         }}
       >
         {text}
       </span>
-    </div>
-  )
-}
-
-// ─── Kickplate ────────────────────────────────────────────────────────────────
-// The amber padding at the base of the boards. Trim only - never a fill.
-
-export function Kickplate({ height = 5 }: { height?: number }) {
-  return <div aria-hidden="true" style={{ height, background: 'var(--color-amber)' }} />
-}
-
-// ─── Ticker ───────────────────────────────────────────────────────────────────
-
-export function Ticker({ items }: { items: string[] }) {
-  if (items.length === 0) return null
-
-  return (
-    <div
-      className="relative flex h-9 items-center gap-[26px] overflow-hidden px-5"
-      style={{ background: INK }}
-    >
-      <span
-        className="font-mono shrink-0"
-        style={{
-          fontSize: 9,
-          letterSpacing: '0.24em',
-          color: '#fff',
-          background: RED,
-          padding: '4px 8px',
-        }}
-      >
-        LIVE
-      </span>
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="ticker-track">
-          {/* Two copies so the marquee loops seamlessly at -50%; the second is
-              decorative, so only the first is announced. */}
-          {[false, true].map((isClone) => (
-            <div
-              key={String(isClone)}
-              className="flex shrink-0 items-center gap-[26px] pr-[26px]"
-              aria-hidden={isClone || undefined}
-            >
-              {items.map((item, i) => (
-                <span
-                  key={i}
-                  className="font-mono"
-                  style={{ fontSize: 10, letterSpacing: '0.12em', color: '#55677d' }}
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }
@@ -329,7 +256,7 @@ export function Modal({ open, onClose, children, className = '' }: ModalProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(13,27,42,0.55)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(20,33,61,0.55)' }}
       onClick={onClose}
     >
       <motion.div
@@ -337,7 +264,8 @@ export function Modal({ open, onClose, children, className = '' }: ModalProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.16, ease: 'easeOut' }}
-        className={`on-ice w-full max-w-md p-7 ${className}`}
+        className={`on-ice w-full max-w-md overflow-hidden p-7 ${className}`}
+        style={{ boxShadow: `8px 8px 0 ${INK}` }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -360,10 +288,10 @@ export function GameHeading({ children, size = 50, className = '', style }: Game
     <h1
       className={`font-display ${className}`}
       style={{
-        fontWeight: 800,
+        fontWeight: 400,
         fontSize: size,
-        lineHeight: 0.9,
-        letterSpacing: '0.005em',
+        lineHeight: 0.95,
+        letterSpacing: '0.01em',
         color: INK,
         textTransform: 'uppercase',
         margin: 0,

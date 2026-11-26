@@ -2,10 +2,11 @@
 
 import { Flame } from 'lucide-react'
 import type { Player, Question, HintType } from '@/types/game'
-import { Avatar, MonoLabel } from '@/components/design-system'
+import { MonoLabel } from '@/components/design-system'
+import { Jersey } from '@/components/game/Jersey'
+import { jerseyFor } from '@/lib/jersey'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
 
 interface SideRailProps {
   answeredCount: number
@@ -15,15 +16,6 @@ interface SideRailProps {
   hintsEnabled: boolean
   showEraHint?: boolean
   streak: { player: Player; streak: number } | null
-  /** Host controls pin to the bottom, filling the width with no gap between them. */
-  controls?: RailControl[]
-}
-
-export interface RailControl {
-  label: string
-  icon?: React.ReactNode
-  onClick: () => void
-  tone: 'red' | 'navy'
 }
 
 const HINT_ROWS: { type: HintType; key: string; value: (q: Question) => string }[] = [
@@ -44,8 +36,8 @@ function positionLabel(code: string): string {
 }
 
 /**
- * The 300px rail on the game TV. Its left border is a blue line standing in for
- * a rink line, and the ice reads through the translucent white behind it.
+ * The 300px rail beside the career, head-to-head and higher/lower boards on the
+ * TV: answers in, hints flipped, streak leader - each a card on the pond.
  */
 export function SideRail({
   answeredCount,
@@ -55,34 +47,26 @@ export function SideRail({
   hintsEnabled,
   showEraHint = true,
   streak,
-  controls,
 }: SideRailProps) {
   const segments = Math.max(1, totalPlayers)
 
   return (
-    <aside
-      className="flex flex-col"
-      style={{
-        borderLeft: '7px solid rgba(11,83,201,0.55)',
-        background: 'rgba(255,255,255,0.72)',
-      }}
-    >
+    <aside className="flex flex-col gap-3.5 py-4 pr-10">
       {/* Answers in */}
       <div
-        className="flex flex-col gap-[11px] px-5 py-[18px]"
-        style={{ borderBottom: '1px solid rgba(13,27,42,0.10)' }}
+        className="on-ice flex flex-col gap-[11px] px-5 py-4"
       >
-        <MonoLabel size={9}>Answers in</MonoLabel>
+        <MonoLabel>Answers in</MonoLabel>
         <div className="flex items-baseline gap-2">
           <span
             className="font-display tabular-nums"
-            style={{ fontWeight: 800, fontSize: 48, lineHeight: 0.8, color: INK }}
+            style={{ fontSize: 52, lineHeight: 0.9, color: INK }}
           >
             {answeredCount}
           </span>
           <span
             className="font-display"
-            style={{ fontWeight: 700, fontSize: 22, color: '#55677d' }}
+            style={{ fontSize: 24, color: '#4a5a78' }}
           >
             / {totalPlayers}
           </span>
@@ -93,8 +77,9 @@ export function SideRail({
               key={i}
               className="flex-1"
               style={{
-                height: 5,
-                background: i < answeredCount ? INK : 'rgba(13,27,42,0.14)',
+                height: 10,
+                borderRadius: 999,
+                background: i < answeredCount ? 'var(--color-cobalt)' : 'var(--color-ice-2)',
               }}
             />
           ))}
@@ -104,28 +89,23 @@ export function SideRail({
       {/* Hints revealed */}
       {hintsEnabled && question && (
         <div
-          className="flex flex-col gap-[13px] px-5 py-[18px]"
-          style={{ borderBottom: '1px solid rgba(13,27,42,0.10)' }}
+          className="on-ice flex flex-col gap-3 px-5 py-4"
         >
-          <MonoLabel size={9}>Hints revealed</MonoLabel>
+          <MonoLabel>Hints flipped</MonoLabel>
           {HINT_ROWS.filter((row) => row.type !== 'era' || showEraHint).map((row) => {
             const revealed = usedHints.includes(row.type)
             return (
               <div
                 key={row.type}
                 className="flex items-baseline justify-between gap-2.5 pb-2.5"
-                style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+                style={{ borderBottom: '2px solid var(--color-ice-2)' }}
               >
-                <MonoLabel size={9} tracking="0.2em">{row.key}</MonoLabel>
+                <MonoLabel>{row.key}</MonoLabel>
                 <span
                   className="font-display truncate"
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 21,
-                    color: revealed ? INK : '#6b7a8c',
-                  }}
+                  style={{ fontSize: 22, color: revealed ? INK : '#5e6d88', textTransform: 'uppercase' }}
                 >
-                  {revealed ? row.value(question) : 'LOCKED'}
+                  {revealed ? row.value(question) : 'Face down'}
                 </span>
               </div>
             )
@@ -135,20 +115,20 @@ export function SideRail({
 
       {/* Streak leader */}
       {streak && (
-        <div className="flex flex-col gap-3 px-5 py-[18px]">
-          <MonoLabel size={9}>Streak leader</MonoLabel>
+        <div className="on-ice flex flex-col gap-3 px-5 py-4">
+          <MonoLabel>Streak leader</MonoLabel>
           <div className="flex items-center gap-[11px]">
-            <Avatar url={streak.player.avatarUrl} name={streak.player.name} size={36} />
+            <Jersey jersey={jerseyFor(streak.player)} size={44} decorative />
             <div className="flex flex-col gap-1">
               <span
                 className="font-display"
-                style={{ fontWeight: 700, fontSize: 19, textTransform: 'uppercase', color: INK }}
+                style={{ fontSize: 22, textTransform: 'uppercase', color: INK }}
               >
                 {streak.player.name}
               </span>
               <span
                 className="font-mono flex items-center gap-[5px]"
-                style={{ fontSize: 9, letterSpacing: '0.14em', color: RED }}
+                style={{ fontSize: 12, fontWeight: 700, color: INK }}
               >
                 <Flame size={10} strokeWidth={2.4} />
                 {streak.streak} IN A ROW
@@ -158,34 +138,6 @@ export function SideRail({
         </div>
       )}
 
-      {controls && controls.length > 0 && (
-        <div
-          className="mt-auto grid"
-          style={{ gridTemplateColumns: `repeat(${controls.length}, 1fr)` }}
-        >
-          {controls.map((c) => (
-            <button
-              key={c.label}
-              onClick={c.onClick}
-              className="btn-ice font-display flex items-center justify-center gap-2"
-              style={{
-                padding: '18px 0',
-                background: c.tone === 'red' ? RED : INK,
-                border: 'none',
-                color: c.tone === 'red' ? '#fff' : '#eef3f9',
-                fontWeight: 700,
-                fontSize: 16,
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-              }}
-            >
-              {c.icon}
-              {c.label}
-            </button>
-          ))}
-        </div>
-      )}
     </aside>
   )
 }

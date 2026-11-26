@@ -54,6 +54,9 @@ export function applyRoomAction(
   )
     return state
   if (action.type === 'claimBoss' && !participant) return state
+  // Sweaters change in the lobby, between games and on the final board - never mid-game.
+  if (action.type === 'setJersey' && !['idle', 'rematch', 'finished'].includes(state.command))
+    return state
   if (action.type === 'tickCountdown' && state.command !== 'starting') return state
   if (action.type === 'advanceToNext' && state.command !== 'revealing') return state
   const modes: Partial<Record<RoomAction['type'], GameState['gameMode']>> = {
@@ -76,6 +79,9 @@ export function applyRoomAction(
     switch (action.type) {
       case 'joinGame':
         mutations.joinGame(game, action.args)
+        break
+      case 'setJersey':
+        mutations.setJersey(game, action.args)
         break
       case 'claimBoss':
         mutations.claimBoss(game, action.args)

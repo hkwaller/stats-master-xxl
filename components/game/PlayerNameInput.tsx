@@ -4,8 +4,8 @@ import { useRef, useLayoutEffect, useId, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePlayerSearch } from '@/hooks/usePlayerSearch'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = '#14213d'
+const RED = '#2357ff'
 
 function HighlightMatch({ text, query }: { text: string; query: string }) {
   if (!query || query.length < 2) return <>{text}</>
@@ -127,7 +127,7 @@ export function PlayerNameInput({
           className="min-w-0 flex-1 focus:outline-none disabled:opacity-50"
           style={{
             background: '#ffffff',
-            boxShadow: 'inset 0 0 0 2px rgba(13,27,42,0.14)',
+            boxShadow: 'inset 0 0 0 2px rgba(20, 33, 61,0.14)',
             borderRadius: 0,
             border: 'none',
             padding: '15px 16px',
@@ -194,9 +194,8 @@ export function PlayerNameInput({
                   fontWeight: 700,
                   fontSize: 19,
                   color: INK,
-                  background: i === activeIndex ? 'rgba(207,10,44,0.07)' : 'transparent',
-                  borderBottom: '1px solid rgba(13,27,42,0.07)',
-                  borderLeft: `4px solid ${i === activeIndex ? RED : 'transparent'}`,
+                  background: i === activeIndex ? 'var(--color-ice-1)' : 'transparent',
+                  borderBottom: '1px solid rgba(20, 33, 61,0.07)',
                 }}
               >
                 <HighlightMatch text={name} query={value} />

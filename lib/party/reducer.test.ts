@@ -289,3 +289,62 @@ it('supports Change Settings directly from the final board and resets the comple
   expect(configured.players.every((p) => p.score === 0)).toBe(true)
   expect(configured.session).not.toBe(finished.session)
 })
+
+describe('jerseys', () => {
+  const mint = { pattern: 'yoke', body: '#2BC48A', trim: '#FFFFFF', number: 19 } as const
+
+  it('gives every joiner a valid sweater with a unique number', () => {
+    const s = room()
+    const numbers = s.players.map((p) => p.jersey?.number)
+    expect(numbers.every((n) => typeof n === 'number' && n >= 1 && n <= 99)).toBe(true)
+    expect(new Set(numbers).size).toBe(s.players.length)
+    expect(s.players.every((p) => p.jersey && p.jersey.body !== p.jersey.trim)).toBe(true)
+  })
+
+  it('keeps a saved sweater on join and moves a clashing number to the next free one', () => {
+    let s = createInitialGameState('ABC123', 'host', 'boss-token')
+    s = apply(s, 'alice', { type: 'joinGame', args: { id: 'alice', name: 'A', jersey: mint } })
+    s = apply(s, 'bob', { type: 'joinGame', args: { id: 'bob', name: 'B', jersey: mint } })
+    expect(s.players.find((p) => p.id === 'alice')?.jersey).toEqual(mint)
+    const bob = s.players.find((p) => p.id === 'bob')?.jersey
+    expect(bob).toMatchObject({ pattern: 'yoke', body: '#2BC48A', number: 20 })
+  })
+
+  it('changes a sweater in the lobby but refuses a number someone else wears', () => {
+    const s = room()
+    const taken = s.players.find((p) => p.id === 'bob')!.jersey!.number
+    const changed = apply(s, 'alice', {
+      type: 'setJersey',
+      args: { playerId: 'alice', jersey: { ...mint, number: taken === 19 ? 18 : 19 } },
+    })
+    expect(changed.players.find((p) => p.id === 'alice')?.jersey?.pattern).toBe('yoke')
+    const clash = apply(changed, 'alice', {
+      type: 'setJersey',
+      args: { playerId: 'alice', jersey: { ...mint, number: taken } },
+    })
+    expect(clash.players.find((p) => p.id === 'alice')?.jersey?.number).not.toBe(taken)
+  })
+
+  it('only lets players change their own sweater, and not mid-game', () => {
+    const s = room()
+    const args = { playerId: 'alice', jersey: mint }
+    expect(apply(s, 'bob', { type: 'setJersey', args })).toBe(s)
+    const playing = start('classic')
+    expect(apply(playing, 'alice', { type: 'setJersey', args })).toBe(playing)
+  })
+
+  it('rejects malformed sweaters from the socket', () => {
+    const bad = [
+      { ...mint, number: 0 },
+      { ...mint, number: 100 },
+      { ...mint, trim: mint.body },
+      { ...mint, body: '#000000' },
+      { ...mint, pattern: 'stripes' },
+    ]
+    for (const jersey of bad)
+      expect(parseRoomAction({ type: 'setJersey', args: { playerId: 'alice', jersey } })).toBeNull()
+    expect(
+      parseRoomAction({ type: 'setJersey', args: { playerId: 'alice', jersey: mint } }),
+    ).not.toBeNull()
+  })
+})

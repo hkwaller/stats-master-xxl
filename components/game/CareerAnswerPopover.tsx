@@ -76,14 +76,14 @@ export function CareerAnswerPopover({
             type="button"
             onClick={() => setDismissed(true)}
             aria-label={isCareer ? 'Close career answer' : 'Close answer'}
-            className="career-answer-close flex h-11 w-11 shrink-0 items-center justify-center text-ink-2 hover:bg-ice-1 focus-visible:outline-2 focus-visible:outline-blue-line"
+            className="career-answer-close flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-ice-1"
           >
             <X size={24} strokeWidth={2.4} aria-hidden="true" />
           </button>
         </div>
 
         <div className="career-answer-identity">
-          <h2 id={titleId} className="career-answer-name font-display m-0 font-extrabold uppercase">
+          <h2 id={titleId} className="career-answer-name font-display m-0 uppercase">
             <span className="career-answer-firstname">{question.firstName}</span>{' '}
             <span className="career-answer-lastname">{question.lastName}</span>
           </h2>
@@ -102,14 +102,13 @@ export function CareerAnswerPopover({
         </div>
 
         <section className="career-answer-board" aria-label={boardLabel}>
-          <div className="jumbo-body">
-            <div className="jumbo-screen relative overflow-hidden">
-              <div className="jumbo-dots pointer-events-none absolute inset-0" aria-hidden="true" />
-              <div className="career-answer-board-label relative">
+          <div className="career-answer-cardback">
+            <div>
+              <div className="career-answer-board-label">
                 <span>{boardLabel}</span>
                 <span>Regular season</span>
               </div>
-              <dl className="career-answer-stats relative m-0">
+              <dl className="career-answer-stats m-0">
                 {stats.map(([abbr, label, value], index) => (
                   <div
                     key={abbr}
@@ -125,7 +124,7 @@ export function CareerAnswerPopover({
                       <span aria-hidden="true">{abbr}</span>
                       <span className="sr-only">{label}</span>
                     </dt>
-                    <dd className="career-answer-stat font-led m-0 font-bold tabular-nums">
+                    <dd className="career-answer-stat font-mono m-0 font-bold tabular-nums">
                       {value.toLocaleString('en-US')}
                     </dd>
                   </div>
@@ -133,7 +132,6 @@ export function CareerAnswerPopover({
               </dl>
             </div>
           </div>
-          <div className="kickplate" aria-hidden="true" />
         </section>
 
         <div className="career-answer-footer">
@@ -152,7 +150,7 @@ export function CareerAnswerPopover({
                 ) : null}
                 {resultLabel}
               </div>
-              <div className="career-answer-outcome font-display font-extrabold uppercase">
+              <div className="career-answer-outcome font-display uppercase">
                 {outcome}
                 {result?.points ? (
                   <span className="career-answer-earned tabular-nums">

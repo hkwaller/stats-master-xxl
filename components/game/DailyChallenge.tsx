@@ -4,9 +4,9 @@ import { nativeFeedback } from '@/lib/native'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SignInButton, useUser } from '@clerk/nextjs'
-import { StatsCard } from './StatsCard'
+import { CardBack } from '@/components/cards/CardBack'
 import { AnswerRow } from './AnswerRow'
-import { Button, Kickplate, MonoLabel, TierBadge } from '@/components/design-system'
+import { Button, MonoLabel, TierBadge } from '@/components/design-system'
 import { getDailyChallenge } from '@/app/actions/game-actions'
 import {
   getMyDailyChallengeScore,
@@ -17,10 +17,7 @@ import {
 } from '@/app/actions/daily-challenge-actions'
 import type { Question } from '@/types/game'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
-const DEAD = '#b3c0cf'
-const AMBER = '#f2b21c'
+const INK = '#14213d'
 
 const ANSWER_LETTERS = ['A', 'B', 'C', 'D']
 
@@ -172,7 +169,7 @@ export function DailyChallenge() {
         <ChallengeHeader question={question} />
 
         <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5">
-          <StatsCard question={question} revealedColumns={5} size="hero" />
+          <CardBack question={question} size="phone" title={`${question.season.replace('-', '–')} · Regular season`} />
 
           <div className="grid gap-2.5 sm:grid-cols-2">
             {choices.map((choice, i) => (
@@ -200,7 +197,7 @@ export function DailyChallenge() {
     <div className="on-ice overflow-hidden">
       <ChallengeHeader question={question} />
       <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5">
-        <StatsCard question={question} revealedColumns={5} size="hero" />
+        <CardBack question={question} size="phone" title={`${question.season.replace('-', '–')} · Regular season`} />
         <ResultPlane
           result={result}
           question={question}
@@ -220,37 +217,23 @@ function shortDateLabel(): string {
   return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
 }
 
-/** A navy strip closed by the amber kickplate - the boards, in miniature. */
+/** A cobalt card band: the daily challenge, its tier and date. */
 function ChallengeHeader({ question }: { question: Question }) {
   return (
-    <>
-      <div
-        className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-        style={{ background: INK }}
-      >
-        <span
-          className="font-mono"
-          style={{
-            fontSize: 9,
-            letterSpacing: '0.24em',
-            textTransform: 'uppercase',
-            color: AMBER,
-          }}
-        >
-          Daily challenge
+    <div
+      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+      style={{ background: 'var(--color-cobalt)', color: '#ffffff', borderBottom: `3px solid ${INK}` }}
+    >
+      <span className="font-display" style={{ fontSize: 26, lineHeight: 1, textTransform: 'uppercase' }}>
+        Daily challenge
+      </span>
+      <div className="flex items-center gap-2.5">
+        <TierBadge tier={question.difficulty} />
+        <span className="font-mono" style={{ fontSize: 12, fontWeight: 700 }}>
+          {shortDateLabel()}
         </span>
-        <div className="flex items-center gap-3">
-          <TierBadge tier={question.difficulty} />
-          <span
-            className="font-mono"
-            style={{ fontSize: 9, letterSpacing: '0.16em', color: '#8d9cb0' }}
-          >
-            {shortDateLabel()}
-          </span>
-        </div>
       </div>
-      <Kickplate height={4} />
-    </>
+    </div>
   )
 }
 
@@ -280,36 +263,28 @@ function ResultPlane({
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className="flex flex-col gap-4 p-5"
       style={{
-        background: correct ? 'rgba(207,10,44,0.06)' : '#ffffff',
-        borderLeft: `5px solid ${correct ? RED : DEAD}`,
-        boxShadow: '0 2px 10px rgba(13,27,42,0.07)',
+        background: correct ? 'var(--color-mint)' : '#ffffff',
+        border: `3px solid ${INK}`,
+        borderRadius: 16,
+        boxShadow: `4px 4px 0 ${INK}`,
       }}
     >
       <span
         className="font-display"
-        style={{
-          fontWeight: 800,
-          fontSize: 36,
-          lineHeight: 1,
-          textTransform: 'uppercase',
-          color: correct ? RED : INK,
-        }}
+        style={{ fontSize: 40, lineHeight: 1, textTransform: 'uppercase', color: INK }}
       >
-        {correct ? 'Nailed it' : 'Missed it'}
+        {correct ? 'Goal!' : 'Wide'}
       </span>
 
       <div
-        className="flex flex-col gap-1.5 pt-3"
-        style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
+        className="flex flex-col gap-1.5 rounded-[10px] p-3"
+        style={{ background: 'var(--color-lemon)', border: `2px solid ${INK}` }}
       >
-        <MonoLabel size={9}>The answer was</MonoLabel>
-        <span
-          className="font-display"
-          style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
-        >
+        <MonoLabel color={INK}>The card was</MonoLabel>
+        <span className="font-display" style={{ fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}>
           {question.firstName} {question.lastName}
         </span>
-        <MonoLabel size={9} tracking="0.14em">
+        <MonoLabel color={INK}>
           {question.season} · {question.teamAbbrevs} · {question.points} PTS
         </MonoLabel>
       </div>
@@ -321,13 +296,13 @@ function ResultPlane({
               Sign in to save your score
             </Button>
           </SignInButton>
-          <MonoLabel size={9} tracking="0.14em">
+          <MonoLabel color={INK}>
             And appear on the leaderboard
           </MonoLabel>
         </div>
       )}
 
-      <MonoLabel size={9} tracking="0.14em">
+      <MonoLabel color={INK}>
         {note}
       </MonoLabel>
     </motion.div>
@@ -345,7 +320,7 @@ function AlreadyAnswered({
     <div className="on-ice overflow-hidden">
       <ChallengeHeader question={question} />
       <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5">
-        <StatsCard question={question} revealedColumns={5} size="hero" />
+        <CardBack question={question} size="phone" title={`${question.season.replace('-', '–')} · Regular season`} />
         <ResultPlane
           result={result}
           question={question}
@@ -384,13 +359,11 @@ function LeaderboardPanel() {
   return (
     <div
       className="flex flex-col gap-3 pt-4"
-      style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
+      style={{ borderTop: '2px solid var(--color-ice-2)' }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <MonoLabel size={10} tracking="0.22em">
-          Leaderboard
-        </MonoLabel>
-        <div className="flex flex-wrap gap-px" style={{ background: 'rgba(13,27,42,0.12)' }}>
+        <MonoLabel>Leaderboard</MonoLabel>
+        <div className="flex flex-wrap gap-1.5">
           {PERIODS.map((p) => {
             const selected = period === p.id
             return (
@@ -399,16 +372,15 @@ function LeaderboardPanel() {
                 type="button"
                 onClick={() => setPeriod(p.id)}
                 aria-pressed={selected}
-                className="btn-ice font-mono"
+                className="btn-ice font-mono min-h-[36px]"
                 style={{
-                  border: 'none',
-                  borderRadius: 0,
-                  padding: '5px 9px',
-                  fontSize: 9,
-                  letterSpacing: '0.12em',
+                  border: `2px solid ${INK}`,
+                  padding: '4px 12px',
+                  fontSize: 11,
+                  fontWeight: 700,
                   textTransform: 'uppercase',
                   background: selected ? INK : '#ffffff',
-                  color: selected ? '#eef3f9' : '#55677d',
+                  color: selected ? '#ffffff' : INK,
                   cursor: 'pointer',
                 }}
               >
@@ -421,11 +393,11 @@ function LeaderboardPanel() {
 
       {loading ? (
         <span className="animate-pulse py-2">
-          <MonoLabel size={9}>Loading</MonoLabel>
+          <MonoLabel>Loading</MonoLabel>
         </span>
       ) : entries.length === 0 ? (
         <span className="py-2">
-          <MonoLabel size={9}>No entries yet</MonoLabel>
+          <MonoLabel>No entries yet</MonoLabel>
         </span>
       ) : (
         <ol className="flex list-none flex-col p-0">
@@ -434,24 +406,25 @@ function LeaderboardPanel() {
               key={entry.userId}
               className="flex items-center gap-3 px-2 py-2"
               style={{
-                borderBottom: '1px solid rgba(13,27,42,0.07)',
-                background: i === 0 ? 'rgba(207,10,44,0.07)' : 'transparent',
+                borderBottom: '1px solid rgba(20, 33, 61,0.07)',
+                background: i === 0 ? 'var(--color-lemon)' : 'transparent',
+                borderRadius: i === 0 ? 10 : undefined,
               }}
             >
               <span
                 className="font-mono shrink-0"
-                style={{ fontSize: 10, width: 18, color: i === 0 ? RED : '#55677d' }}
+                style={{ fontSize: 12, fontWeight: 700, width: 22, color: i === 0 ? INK : '#4a5a78' }}
               >
                 {String(i + 1).padStart(2, '0')}
               </span>
               <span
                 className="font-display min-w-0 flex-1 truncate"
-                style={{ fontWeight: 700, fontSize: 19, textTransform: 'uppercase', color: INK }}
+                style={{ fontSize: 21, textTransform: 'uppercase', color: INK }}
               >
                 {entry.displayName}
               </span>
               <span className="ml-auto shrink-0">
-                <MonoLabel size={9} tracking="0.14em">
+                <MonoLabel color={INK}>
                   {period === 'today' && entry.answeredAt
                     ? new Date(entry.answeredAt).toLocaleTimeString([], {
                         hour: '2-digit',

@@ -6,12 +6,12 @@ import { motion } from 'framer-motion'
 import { nanoid } from 'nanoid'
 import { Play } from 'lucide-react'
 import { SignInButton, useAuth, UserButton } from '@clerk/nextjs'
-import { Button, Kickplate, MonoLabel } from '@/components/design-system'
-import { PuckMark, RinkBg } from '@/components/arcade'
+import { Button, MonoLabel } from '@/components/design-system'
+import { PuckMark } from '@/components/arcade'
+import { Jersey } from '@/components/game/Jersey'
 import { DailyChallenge } from '@/components/game/DailyChallenge'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = 'var(--color-ink)'
 
 const HERO_STATS = [
   { value: '46,704', label: 'Real seasons' },
@@ -28,17 +28,17 @@ const STEPS = [
   {
     num: '02',
     title: 'Put it on the TV',
-    desc: 'Share the board on a big screen. Friends scan the QR code or enter the room code to play on their phones.',
+    desc: 'Share the board on a big screen. Friends scan the QR code and pick a sweater on their phones.',
   },
   {
     num: '03',
-    title: 'Make your call',
-    desc: 'Identify a skater, follow a career, match a stat line or call higher or lower. Every mode brings a different challenge.',
+    title: 'Name the card',
+    desc: 'Identify a skater, follow a career, match a stat line or call higher or lower. Every mode plays differently.',
   },
   {
     num: '04',
     title: 'Chase the lead',
-    desc: 'Score points, climb the leaderboard and see who comes out on top when the final round ends.',
+    desc: 'Score points, climb the binder and see who stands on top of the podium at the final whistle.',
   },
 ]
 
@@ -46,28 +46,38 @@ const MODES = [
   {
     label: 'Classic',
     tag: 'Most played',
-    edge: RED,
-    desc: 'One season stat line. Choose from four names or type your answer.',
+    band: 'var(--color-cobalt)',
+    bandText: '#ffffff',
+    desc: 'One season on the back of a card. Choose from four names or type your answer.',
   },
   {
     label: 'Career',
     tag: 'Buzz in',
-    edge: '#0b53c9',
-    desc: 'Seasons reveal one by one. First to buzz gets the shot - and the lockout if they miss.',
+    band: 'var(--color-tangerine)',
+    bandText: INK,
+    desc: 'Seasons deal out one by one. First to buzz gets the shot - and the penalty box if they miss.',
   },
   {
     label: 'Head-to-Head',
     tag: 'Two lines',
-    edge: INK,
-    desc: 'Two stat lines, one name. Which column belongs to the skater on the board?',
+    band: 'var(--color-mint)',
+    bandText: INK,
+    desc: 'Two card backs, one name. Which stat line belongs to the skater on the board?',
   },
   {
     label: 'Higher / Lower',
     tag: 'Fast',
-    edge: '#f2b21c',
-    desc: 'Did they finish above or below the reference line? Pick a stat and go.',
+    band: 'var(--color-lemon)',
+    bandText: INK,
+    desc: 'Did they finish above or below the reference card? Pick a stat and go.',
   },
 ]
+
+const HERO_JERSEYS = [
+  { jersey: { pattern: 'hoops', body: '#FF7A1A', trim: '#FFFFFF', number: 9 }, name: 'Mia', tilt: -10, y: 18 },
+  { jersey: { pattern: 'yoke', body: '#2BC48A', trim: '#FFFFFF', number: 19 }, name: 'Jonas', tilt: 4, y: 0 },
+  { jersey: { pattern: 'sleeves', body: '#FFD84D', trim: '#14213D', number: 87 }, name: 'Erik', tilt: 12, y: 22 },
+] as const
 
 export default function LandingPage() {
   const router = useRouter()
@@ -90,100 +100,88 @@ export default function LandingPage() {
   }
 
   return (
-    <main
-      className="flex min-h-screen flex-col overflow-x-hidden"
-      style={{ background: '#eef3f9' }}
-    >
+    <main className="flex min-h-screen flex-col overflow-x-hidden" style={{ background: 'var(--color-ice-1)' }}>
       {/* ── Nav ── */}
-      <nav
-        className="flex h-[66px] items-center justify-between px-5 md:px-[34px]"
-        style={{ background: '#fff', boxShadow: '0 1px 0 rgba(13,27,42,0.10)' }}
-      >
-        <div className="flex items-center gap-[11px]">
-          <PuckMark size={28} />
-          <span
-            className="font-display"
-            style={{ fontWeight: 800, fontSize: 20, letterSpacing: '0.02em' }}
-          >
+      <nav className="relative z-20 flex h-[72px] items-center justify-between px-5 md:px-10">
+        <div className="flex items-center gap-2.5">
+          <PuckMark size={30} />
+          <span className="font-display" style={{ fontSize: 28, lineHeight: 1, letterSpacing: '0.02em' }}>
             STATS MASTER
           </span>
         </div>
 
-        <div className="flex items-center gap-4 md:gap-[26px]">
+        <div className="flex items-center gap-4 md:gap-6">
           <a href="#modes" className="hidden md:inline">
-            <MonoLabel size={10} tracking="0.18em">
-              Modes
-            </MonoLabel>
+            <MonoLabel color={INK}>Modes</MonoLabel>
           </a>
           <a href="#how" className="hidden md:inline">
-            <MonoLabel size={10} tracking="0.18em">
-              How it works
-            </MonoLabel>
+            <MonoLabel color={INK}>How it works</MonoLabel>
           </a>
-          <span className="hidden items-center gap-[7px] sm:flex">
-            <span className="size-[7px] rounded-full" style={{ background: RED }} />
-            <MonoLabel size={10} tracking="0.16em">
-              Multiplayer · free
-            </MonoLabel>
-          </span>
           {isLoaded &&
             (isSignedIn ? (
               <UserButton />
             ) : (
               <SignInButton mode="modal">
-                <Button variant="secondary" size="sm">
+                <Button variant="ghost" size="sm">
                   Sign in
                 </Button>
               </SignInButton>
             ))}
         </div>
       </nav>
-      <Kickplate />
 
       {/* ── Hero ── */}
-      <section
-        className="ice-bg rinkside-hero relative px-5 pt-12 pb-14 md:px-[34px] md:pt-16 md:pb-[58px]"
-        style={{ overflow: 'hidden' }}
-      >
-        <RinkBg intensity={1.15} />
-
-        <div className="relative z-[2] mx-auto grid max-w-[1180px] items-center gap-10 min-[1100px]:grid-cols-[1fr_1fr] min-[1100px]:gap-12">
-          {/* Left - the pitch */}
+      <section className="ice-bg relative px-5 pt-6 pb-16 md:px-10 md:pt-10" style={{ overflow: 'hidden' }}>
+        <div className="relative z-[2] mx-auto grid max-w-[1180px] items-center gap-12 min-[1100px]:grid-cols-[1fr_1fr]">
           <motion.div
             initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="hero-pitch flex min-w-0 flex-col gap-6"
+            className="flex min-w-0 flex-col gap-6"
           >
-            <h1
-              className="font-display m-0 text-[clamp(44px,6.1vw,78px)]"
-              style={{ fontWeight: 800, lineHeight: 0.86, letterSpacing: '-0.005em' }}
-            >
+            <div aria-hidden="true" className="flex items-end gap-1 pl-2">
+              {HERO_JERSEYS.map((j) => (
+                <div key={j.name} style={{ transform: `rotate(${j.tilt}deg) translateY(${j.y}px)` }}>
+                  <Jersey jersey={j.jersey} name={j.name} size={96} decorative />
+                </div>
+              ))}
+            </div>
+
+            <h1 className="font-display m-0 text-[clamp(48px,6.6vw,86px)]" style={{ lineHeight: 0.92 }}>
               KNOW HOCKEY.
               <br />
-              PICK YOUR MODE.
+              PICK YOUR SWEATER.
               <br />
-              <span style={{ color: RED }}>PROVE IT.</span>
+              <span
+                className="inline-block"
+                style={{
+                  background: 'var(--color-lemon)',
+                  border: `4px solid ${INK}`,
+                  borderRadius: 14,
+                  padding: '0 14px',
+                  marginTop: 8,
+                  transform: 'rotate(-2deg)',
+                }}
+              >
+                NAME THE CARD.
+              </span>
             </h1>
 
-            <p
-              className="m-0 max-w-[480px]"
-              style={{ fontSize: 16, lineHeight: 1.6, color: '#55677d' }}
-            >
-              Identify skaters, uncover careers, match stat lines or call higher or lower. Four ways
-              to test your NHL knowledge with friends, using real stats from 1917 to 2025. Share the
-              board on a big screen and play on your phones, or try the daily challenge solo.
+            <p className="m-0 max-w-[500px]" style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--color-ink-2)' }}>
+              A trivia game played with real NHL stat lines from 1917 to 2025. Put the board on a
+              big screen, everyone plays on their phones in their own sweater, or try the daily
+              challenge solo.
             </p>
 
-            <div className="flex flex-wrap items-stretch gap-3">
+            <div className="hero-actions flex flex-wrap items-stretch gap-3">
               <Button variant="primary" size="lg" onClick={handleCreate}>
-                <Play size={16} strokeWidth={2.2} />
+                <Play size={18} strokeWidth={2.4} />
                 Create a game
               </Button>
 
               <div
-                className="flex min-w-0"
-                style={{ background: '#fff', boxShadow: 'inset 0 0 0 2px rgba(13,27,42,0.14)' }}
+                className="flex min-w-0 overflow-hidden"
+                style={{ background: '#fff', border: `3px solid ${INK}`, borderRadius: 999 }}
               >
                 <input
                   value={joinCode}
@@ -201,24 +199,23 @@ export default function LandingPage() {
                     border: 'none',
                     background: 'transparent',
                     padding: '0 20px',
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-mono)',
                     fontWeight: 700,
-                    fontSize: 20,
-                    letterSpacing: '0.18em',
+                    fontSize: 18,
+                    letterSpacing: '0.12em',
                     color: INK,
                   }}
                 />
                 <button
                   onClick={handleJoin}
-                  className="btn-ice font-display shrink-0"
+                  className="font-display shrink-0"
                   style={{
                     background: INK,
                     border: 'none',
                     color: '#fff',
                     padding: '0 26px',
-                    fontWeight: 700,
-                    fontSize: 17,
-                    letterSpacing: '0.14em',
+                    fontSize: 20,
+                    letterSpacing: '0.03em',
                     cursor: 'pointer',
                   }}
                 >
@@ -228,163 +225,138 @@ export default function LandingPage() {
             </div>
 
             {error && (
-              <p className="m-0" style={{ color: RED, fontSize: 13, fontWeight: 600 }}>
+              <p className="m-0" role="alert" style={{ color: 'var(--color-alarm)', fontSize: 14, fontWeight: 600 }}>
                 {error}
               </p>
             )}
 
-            <div className="rink-facts flex flex-wrap gap-6">
+            <dl className="m-0 grid max-w-[520px] grid-cols-3 gap-3">
               {HERO_STATS.map((s) => (
                 <div
                   key={s.label}
-                  className="flex flex-col gap-1.5 pl-3"
-                  style={{ borderLeft: '1px solid var(--color-hairline)' }}
+                  className="flex flex-col gap-1 px-3 py-2.5"
+                  style={{ background: '#fff', border: `2.5px solid ${INK}`, borderRadius: 14 }}
                 >
-                  <span
-                    className="font-display tabular-nums"
-                    style={{ fontWeight: 800, fontSize: 34, lineHeight: 1 }}
-                  >
+                  <dd className="font-mono m-0 tabular-nums" style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.1 }}>
                     {s.value}
-                  </span>
-                  <MonoLabel size={9} tracking="0.2em">
+                  </dd>
+                  <dt className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-2)', textTransform: 'uppercase' }}>
                     {s.label}
-                  </MonoLabel>
+                  </dt>
                 </div>
               ))}
-            </div>
+            </dl>
           </motion.div>
 
-          {/* Right - today's live challenge */}
+          {/* Right - today's challenge */}
           <motion.div
             id="daily-challenge"
             initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.4, ease: 'easeOut' }}
-            className="centre-ice-challenge flex min-w-0 flex-col gap-3.5"
+            className="flex min-w-0 flex-col gap-3.5"
           >
-
             <DailyChallenge />
-            <p className="m-0" style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>
-              Same skater for everyone. New challenge at midnight UTC. No room needed.
+            <p className="m-0" style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--color-ink-2)' }}>
+              Same card for everyone. New challenge at midnight UTC. No room needed.
             </p>
           </motion.div>
         </div>
       </section>
 
       {/* ── How a game runs ── */}
-      <section
-        id="how"
-        className="px-5 py-[54px] md:px-[34px]"
-        style={{ background: '#fff', borderTop: `5px solid ${INK}` }}
-      >
+      <section id="how" className="px-5 py-16 md:px-10" style={{ background: '#fff', borderTop: `3px solid ${INK}` }}>
         <div className="mx-auto flex max-w-[1180px] flex-col gap-8">
           <div className="flex flex-wrap items-baseline justify-between gap-5">
-            <h2
-              className="font-display m-0"
-              style={{ fontWeight: 800, fontSize: 'clamp(34px,6vw,50px)', lineHeight: 1 }}
-            >
+            <h2 className="font-display m-0" style={{ fontSize: 'clamp(38px,6vw,56px)', lineHeight: 1 }}>
               HOW A GAME RUNS
             </h2>
-            <MonoLabel size={10} tracking="0.2em">
-              Choose your mode, era and pace
-            </MonoLabel>
+            <MonoLabel>Choose your mode, era and pace</MonoLabel>
           </div>
 
-          <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((s) => (
-              <div
+          <ol className="m-0 grid list-none gap-5 p-0 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((s, i) => (
+              <li
                 key={s.num}
-                className="flex flex-col gap-3 pt-4"
-                style={{ borderTop: `5px solid ${RED}` }}
+                className="flex flex-col gap-3 p-5"
+                style={{
+                  background: 'var(--color-ice-1)',
+                  border: `3px solid ${INK}`,
+                  borderRadius: 16,
+                  boxShadow: `4px 4px 0 ${INK}`,
+                  transform: `rotate(${i % 2 ? 1 : -1}deg)`,
+                }}
               >
                 <span
-                  className="font-display tabular-nums"
-                  style={{ fontWeight: 800, fontSize: 34, lineHeight: 1, color: RED }}
+                  className="font-mono self-start"
+                  style={{
+                    background: 'var(--color-lemon)',
+                    border: `2px solid ${INK}`,
+                    borderRadius: 6,
+                    padding: '2px 8px',
+                    fontSize: 14,
+                    fontWeight: 700,
+                  }}
                 >
                   {s.num}
                 </span>
-                <span
-                  className="font-display"
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 28,
-                    lineHeight: 1.02,
-                    textTransform: 'uppercase',
-                  }}
-                >
+                <span className="font-display" style={{ fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}>
                   {s.title}
                 </span>
-                <span style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>{s.desc}</span>
-              </div>
+                <span style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--color-ink-2)' }}>{s.desc}</span>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
       {/* ── Four ways to play ── */}
-      <section id="modes" className="px-5 py-[54px] md:px-[34px]" style={{ background: '#eef3f9' }}>
-        <div className="mx-auto flex max-w-[1180px] flex-col gap-[30px]">
-          <h2
-            className="font-display m-0"
-            style={{ fontWeight: 800, fontSize: 'clamp(34px,6vw,50px)', lineHeight: 1 }}
-          >
+      <section id="modes" className="ice-bg relative px-5 py-16 md:px-10">
+        <div className="relative z-[2] mx-auto flex max-w-[1180px] flex-col gap-8">
+          <h2 className="font-display m-0" style={{ fontSize: 'clamp(38px,6vw,56px)', lineHeight: 1 }}>
             FOUR WAYS TO PLAY
           </h2>
 
-          <div className="grid gap-3.5 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
             {MODES.map((m) => (
               <div
                 key={m.label}
-                className="mode-nameplate on-ice flex flex-col gap-2 p-6"
-                style={{ borderTopColor: m.edge }}
+                className="flex flex-col gap-3 p-3"
+                style={{ background: '#fff', border: `3px solid ${INK}`, borderRadius: 18, boxShadow: `6px 6px 0 ${INK}` }}
               >
-                <div className="flex flex-wrap items-baseline gap-2.5">
-                  <span
-                    className="font-display"
-                    style={{
-                      fontWeight: 800,
-                      fontSize: 30,
-                      lineHeight: 1,
-                      textTransform: 'uppercase',
-                    }}
-                  >
+                <div
+                  className="flex flex-wrap items-center justify-between gap-2.5 px-4 py-2.5"
+                  style={{ background: m.band, color: m.bandText, borderRadius: 10 }}
+                >
+                  <span className="font-display" style={{ fontSize: 32, lineHeight: 1, textTransform: 'uppercase' }}>
                     {m.label}
                   </span>
-                  <MonoLabel size={9} tracking="0.16em">
+                  <span className="font-mono" style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>
                     {m.tag}
-                  </MonoLabel>
+                  </span>
                 </div>
-                <span style={{ fontSize: 13, lineHeight: 1.6, color: '#55677d' }}>{m.desc}</span>
+                <span className="px-2 pb-1" style={{ fontSize: 15, lineHeight: 1.6 }}>
+                  {m.desc}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Drop the puck ── */}
-      <section
-        className="relative overflow-hidden px-5 py-[72px] text-center md:px-[34px]"
-        style={{ background: INK, color: '#fff' }}
-      >
+      {/* ── Deal the first card ── */}
+      <section className="px-5 py-16 md:px-10" style={{ background: '#fff', borderTop: `3px solid ${INK}` }}>
         <div
-          aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-1/2 size-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{ border: '6px solid rgba(255,255,255,0.06)' }}
-        />
-        <h2
-          className="font-display relative m-0 mb-4"
-          style={{ fontWeight: 800, fontSize: 'clamp(42px,9vw,72px)', lineHeight: 0.95 }}
+          className="mx-auto flex max-w-[760px] flex-col items-center gap-5 px-6 py-12 text-center"
+          style={{ background: 'var(--color-ice-1)', border: `3px solid ${INK}`, borderRadius: 24, boxShadow: `8px 8px 0 ${INK}` }}
         >
-          DROP THE PUCK
-        </h2>
-        <p
-          className="relative mx-auto mb-7 max-w-[440px]"
-          style={{ fontSize: 15, lineHeight: 1.6, color: '#a9b7c7' }}
-        >
-          No account, no install. Open a room, throw the code on the TV, and let the group chat sort
-          itself out.
-        </p>
-        <div className="relative inline-flex">
+          <h2 className="font-display m-0" style={{ fontSize: 'clamp(44px,8vw,76px)', lineHeight: 0.95 }}>
+            DEAL THE FIRST CARD
+          </h2>
+          <p className="m-0 max-w-[460px]" style={{ fontSize: 16, lineHeight: 1.6, color: 'var(--color-ink-2)' }}>
+            No account, no install. Open a room, throw the code on the TV, and let everyone pick a
+            sweater.
+          </p>
           <Button variant="primary" size="lg" onClick={handleCreate}>
             Create a game
           </Button>
@@ -393,25 +365,21 @@ export default function LandingPage() {
 
       {/* ── Footer ── */}
       <footer
-        className="flex flex-wrap items-center justify-between gap-5 px-5 py-6 md:px-[34px]"
-        style={{ background: INK }}
+        className="flex flex-wrap items-center justify-between gap-5 px-5 py-6 md:px-10"
+        style={{ background: '#fff', borderTop: `3px solid ${INK}` }}
       >
-        <MonoLabel size={9} tracking="0.16em" color="var(--color-ice-2)">
-          Stats Master · Amalies Utviklingsfabrikk
-        </MonoLabel>
-        <MonoLabel size={9} tracking="0.16em" color="var(--color-ice-2)">
-          Season data 1917–2025 · Not affiliated with any league
-        </MonoLabel>
-        <nav aria-label="Legal and Playam" className="text-white">
-          <a href="/privacy" style={{ textDecoration: 'underline' }}>
+        <MonoLabel>Stats Master · Amalies Utviklingsfabrikk</MonoLabel>
+        <MonoLabel>Season data 1917–2025 · Not affiliated with any league</MonoLabel>
+        <nav aria-label="Legal and Playam" style={{ fontSize: 14 }}>
+          <a href="/privacy" style={{ color: INK, textDecoration: 'underline' }}>
             Privacy
           </a>{' '}
           ·{' '}
-          <a href="/terms" style={{ textDecoration: 'underline' }}>
+          <a href="/terms" style={{ color: INK, textDecoration: 'underline' }}>
             Terms
           </a>{' '}
           ·{' '}
-          <a href="https://playam.app" style={{ textDecoration: 'underline' }}>
+          <a href="https://playam.app" style={{ color: INK, textDecoration: 'underline' }}>
             A game from Playam
           </a>
         </nav>

@@ -5,6 +5,7 @@ import type {
   GameSetupConfig,
   GameState,
   H2HPair,
+  Jersey,
   HLPair,
   Player,
   PowerupType,
@@ -24,6 +25,7 @@ import {
   SCORE_SPEED_WINDOW_MS,
 } from '../../types/game'
 import { getAvatarUrl } from '../avatar'
+import { defaultJersey, nextFreeNumber, takenNumbers } from '../jersey'
 import { questionPausedAt, resumedTiming } from '../game/room-clock'
 function resumeCareerClock(game: GameState) {
   const pausedAt = game.careerPausedAt as string | undefined
@@ -38,9 +40,11 @@ function joinGame(
   {
     id,
     name,
+    jersey,
   }: {
     id: string
     name: string
+    jersey?: Jersey
   },
 ) {
   if (!game) return
@@ -55,15 +59,30 @@ function joinGame(
   if (hostId === '') {
     game.hostId = id
   }
+  // A saved sweater keeps its colours; a clashing number moves to the next free one.
+  const taken = takenNumbers(players)
+  const wearing = jersey
+    ? { ...jersey, number: nextFreeNumber(jersey.number, taken) }
+    : defaultJersey(id, taken)
   players.push({
     id,
     name,
     avatarUrl: getAvatarUrl(id),
+    jersey: wearing,
     score: 0,
     isHost,
     isBoss: false,
     isConnected: true,
   })
+}
+
+/** Change a sweater. A number someone else already wears is refused. */
+function setJersey(game: GameState, { playerId, jersey }: { playerId: string; jersey: Jersey }) {
+  if (!game) return
+  const player = game.players.find((p) => p.id === playerId)
+  if (!player) return
+  if (takenNumbers(game.players, playerId).has(jersey.number)) return
+  player.jersey = { ...jersey }
 }
 
 function claimBoss(
@@ -904,6 +923,7 @@ function revealHLAnswers(game: GameState, requesterId: string) {
 
 export const mutations = {
   joinGame,
+  setJersey,
   claimBoss,
   assignBoss,
   saveSettings,

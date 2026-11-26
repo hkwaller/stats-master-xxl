@@ -5,8 +5,11 @@ import { MonoLabel } from '@/components/design-system'
 import type { Question, QuestionResult } from '@/types/game'
 
 const INK = 'var(--color-ink)'
-const RED = 'var(--color-red)'
 
+/**
+ * Your result for the card that was just revealed. The outcome is spelled out
+ * (GOAL / WIDE / NO SHOT) and the answer is always stated, right or wrong.
+ */
 export function RevealResult({
   question,
   history,
@@ -22,67 +25,45 @@ export function RevealResult({
   const points = myResult?.points ?? 0
   const hasAnswered = isCorrect || Boolean(myResult?.answer?.trim())
 
-  const headline = !hasAnswered ? 'No answer' : isCorrect ? 'Correct' : 'Missed'
+  const verdict = !hasAnswered ? 'No shot' : isCorrect ? 'Goal!' : 'Wide'
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="on-ice flex flex-col gap-4 p-5"
-      style={{ borderTop: `4px solid ${isCorrect ? RED : '#b3c0cf'}` }}
+      className="relative flex flex-col gap-3 p-4"
+      style={{
+        background: isCorrect ? 'var(--color-mint)' : '#ffffff',
+        border: `3px solid ${INK}`,
+        borderRadius: 16,
+        boxShadow: `4px 4px 0 ${INK}`,
+      }}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <span
-          className="font-display"
-          style={{
-            fontWeight: 800,
-            fontSize: 34,
-            lineHeight: 1,
-            textTransform: 'uppercase',
-            color: isCorrect ? RED : INK,
-          }}
-        >
-          {headline}
+        <span className="font-display" style={{ fontSize: 40, lineHeight: 1, textTransform: 'uppercase' }}>
+          {verdict}
         </span>
-        {points !== 0 && (
-          <span
-            className="font-display tabular-nums"
-            style={{
-              fontWeight: 800,
-              fontSize: 30,
-              lineHeight: 1,
-              color: points > 0 ? RED : INK,
-            }}
-          >
-            {points > 0 ? `+${points}` : points}
-          </span>
-        )}
+        <span className="font-mono tabular-nums" style={{ fontSize: 26, fontWeight: 700 }}>
+          {points > 0 ? `+${points}` : points}
+        </span>
       </div>
 
       <div
-        className="flex flex-col gap-1.5 pt-3"
-        style={{ borderTop: '1px solid rgba(13,27,42,0.10)' }}
+        className="flex flex-col gap-1.5 rounded-[10px] p-3"
+        style={{ background: 'var(--color-lemon)', border: `2px solid ${INK}` }}
       >
-        <MonoLabel size={9}>The answer was</MonoLabel>
-        <span
-          className="reveal-name font-display"
-          style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}
-        >
+        <MonoLabel color={INK}>The card was</MonoLabel>
+        <span className="reveal-name font-display" style={{ fontSize: 30, lineHeight: 1, textTransform: 'uppercase' }}>
           {question.firstName} {question.lastName}
         </span>
-        <MonoLabel size={9} tracking="0.14em">
+        <MonoLabel color={INK}>
           {question.season} · {question.teamAbbrevs} · {question.positionCode}
         </MonoLabel>
-        {hasAnswered && !isCorrect && myResult?.answer && (
-          <span className="pt-1">
-            <MonoLabel size={9} tracking="0.14em">
-              You said {myResult.answer}
-            </MonoLabel>
-          </span>
-        )}
       </div>
+      {hasAnswered && !isCorrect && myResult?.answer && (
+        <MonoLabel color={INK}>You said {myResult.answer}</MonoLabel>
+      )}
     </motion.div>
   )
 }
-

@@ -7,7 +7,6 @@ import { nanoid } from 'nanoid'
 import { ArrowRight, ChevronRight, Info, Plus, Trophy, Users, WifiOff } from 'lucide-react'
 import { SignInButton, UserButton, useAuth } from '@clerk/nextjs'
 import { PuckMark } from '@/components/arcade/Brand'
-import { RinkBg } from '@/components/arcade/RinkBg'
 import { AdPrivacyChoices } from './AdPrivacyChoices'
 import { nativeFeedback } from '@/lib/native'
 
@@ -55,7 +54,6 @@ export function AppHome() {
 
   return (
     <main className="app-home ice-bg relative isolate overflow-x-hidden">
-      <RinkBg intensity={0.28} />
       <header className="app-play-header relative z-[2]">
         <Link href="/app" className="app-play-brand" aria-label="Stats Master home">
           <PuckMark size={25} /><span>STATS MASTER</span>

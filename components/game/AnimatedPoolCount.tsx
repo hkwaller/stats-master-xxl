@@ -46,7 +46,7 @@ export function AnimatedPoolCount({ count }: { count: number | null }) {
 
   return (
     <>
-      <span ref={element} aria-hidden="true" className="setup-pool-number font-led tabular-nums">
+      <span ref={element} aria-hidden="true" className="setup-pool-number font-mono tabular-nums">
         {initialText.current}
       </span>
       <span className="sr-only">{count === null ? 'Count pending' : numberFormat.format(count)}</span>
