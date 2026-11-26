@@ -59,6 +59,8 @@ function device(game, id, shared = false) {
     if (dep === '@/lib/streaks') return { currentStreak: () => 0, streakLeader: () => null }
     if (dep === '@/lib/game/room-clock') return load('lib/game/room-clock.ts', require)
     if (dep === '@/types/game') return types
+    if (dep === '@/lib/jersey') return load('lib/jersey.ts', require)
+    if (dep === '@/lib/jersey-storage') return { saveJersey: () => {}, loadSavedJersey: () => null }
     if (dep === 'framer-motion') return { motion: new Proxy({}, { get: () => components.Div }), AnimatePresence: components.Div }
     if (dep === 'lucide-react' || dep.startsWith('@/components/')) return components
     return require(dep)
@@ -85,7 +87,7 @@ test('boss rematch keeps player devices on their player view and sends the share
   for (const id of ['boss', 'player']) {
     const waiting = device(game, id)
     assert.deepEqual(waiting.routes, [], `${id} must keep the player route`)
-    assert.match(waiting.markup, /Waiting to start/)
+    assert.match(waiting.markup, /on the hook/)
     game.set('command', 'starting')
     assert.match(device(game, id).markup, /Get ready/)
     game.set('command', 'rematch')

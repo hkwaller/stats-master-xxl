@@ -7,7 +7,6 @@ import { Button, MonoLabel } from '@/components/design-system'
 import { PlayerNameInput } from './PlayerNameInput'
 
 const INK = 'var(--color-ink)'
-const RED = 'var(--color-red)'
 export const BUZZER_HEIGHT = 84
 
 interface BuzzInButtonProps {
@@ -83,17 +82,17 @@ function StatusPlane({
   return (
     <div
       className="on-ice relative isolate overflow-hidden px-5 py-6 text-center"
-      style={{
-        borderLeft: `5px solid ${tone === 'dead' ? 'var(--color-edge-dead)' : INK}`,
-        boxShadow: tone === 'dead' ? 'none' : undefined,
-      }}
+      style={
+        tone === 'dead'
+          ? { border: '2.5px dashed var(--color-edge-dead)', boxShadow: 'none' }
+          : undefined
+      }
     >
       {fill}
       <p
         className="font-display relative m-0"
         style={{
-          fontWeight: 800,
-          fontSize: 28,
+          fontSize: 30,
           lineHeight: 1,
           textTransform: 'uppercase',
           color: tone === 'dead' ? 'var(--color-ink-2)' : INK,
@@ -102,7 +101,7 @@ function StatusPlane({
         {label}
       </p>
       <p className="relative mt-2 mb-0">
-        <MonoLabel size={9}>{detail}</MonoLabel>
+        <MonoLabel>{detail}</MonoLabel>
       </p>
     </div>
   )
@@ -155,9 +154,9 @@ export function BuzzInButton({
       <div className="on-ice flex flex-col gap-4 p-4" aria-label="Your answer">
         <div
           className="career-possession flex flex-col gap-2 px-4 py-4"
-          style={{ background: RED, color: 'var(--color-ice-0)' }}
+          style={{ background: 'var(--color-cobalt)', color: '#fff', border: `3px solid ${INK}`, borderRadius: 14 }}
         >
-          <span className="font-display text-[26px] leading-none font-extrabold uppercase">
+          <span className="font-display text-[28px] leading-none uppercase">
             You have the puck
           </span>
           <span className="flex items-center gap-2 text-sm">
@@ -180,7 +179,6 @@ export function BuzzInButton({
             variant="ghost"
             size="sm"
             onClick={onCancel}
-            className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-line"
             style={{ minHeight: 44, minWidth: 96 }}
           >
             Cancel
@@ -193,28 +191,27 @@ export function BuzzInButton({
   // Default: the buzzer, pinned to the bottom of the phone.
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-40"
+      className="fixed inset-x-0 bottom-0 z-40 px-4 pt-2.5"
       style={{
-        background: RED,
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        boxShadow: '0 -1px 0 rgba(13,27,42,0.10)',
+        background: '#ffffff',
+        borderTop: `3px solid ${INK}`,
+        paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
       }}
     >
       <motion.button
         onClick={onBuzzIn}
-        whileTap={{ y: 1 }}
+        whileTap={{ x: 3, y: 3, boxShadow: `1px 1px 0 ${INK}` }}
         transition={{ duration: 0.1 }}
-        className="btn-ice font-display w-full disabled:opacity-50"
+        className="btn-ice font-display mx-auto block w-full max-w-[528px] disabled:opacity-50"
         style={{
-          background: RED,
-          border: 'none',
+          background: 'var(--color-cobalt)',
+          border: `3px solid ${INK}`,
+          boxShadow: `4px 4px 0 ${INK}`,
           color: '#fff',
-          minHeight: BUZZER_HEIGHT,
-          padding: '20px 0',
+          minHeight: BUZZER_HEIGHT - 28,
           lineHeight: '1',
-          fontWeight: 700,
-          fontSize: 26,
-          letterSpacing: '0.16em',
+          fontSize: 32,
+          letterSpacing: '0.04em',
           textTransform: 'uppercase',
           cursor: 'pointer',
         }}

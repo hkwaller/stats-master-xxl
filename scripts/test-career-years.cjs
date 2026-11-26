@@ -14,7 +14,10 @@ function load(file, mocks = {}) {
   const module = { exports: {} }
   new Function('require', 'module', 'exports', source)(id => {
     if (id in mocks) return mocks[id]
-    if (id.startsWith('@/')) return load(`${id.slice(2)}.ts`, mocks)
+    if (id.startsWith('@/') || id.startsWith('.')) {
+      const base = id.startsWith('@/') ? id.slice(2) : path.join(path.dirname(file), id)
+      return load(`${base}${fs.existsSync(path.join(__dirname, '..', `${base}.ts`)) ? '.ts' : '.tsx'}`, mocks)
+    }
     return require(id)
   }, module, module.exports)
   return module.exports

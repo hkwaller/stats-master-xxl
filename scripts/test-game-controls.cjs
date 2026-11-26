@@ -14,9 +14,10 @@ function load(file, mocks = {}) {
   const module = { exports: {} }
   const resolve = id => {
     if (id in mocks) return mocks[id]
-    if (id.startsWith('@/')) {
-      const file = id.slice(2)
-      return load(`${file}${fs.existsSync(path.join(__dirname, '..', `${file}.ts`)) ? '.ts' : '.tsx'}`, mocks)
+    if (id.startsWith('@/') || id.startsWith('.')) {
+      const base = id.startsWith('@/') ? id.slice(2) : path.join(path.dirname(file), id)
+      if (id.startsWith('.') && !fs.existsSync(path.join(__dirname, '..', `${base}.ts`)) && !fs.existsSync(path.join(__dirname, '..', `${base}.tsx`))) return require(id)
+      return load(`${base}${fs.existsSync(path.join(__dirname, '..', `${base}.ts`)) ? '.ts' : '.tsx'}`, mocks)
     }
     return require(id)
   }
@@ -185,10 +186,10 @@ test('both screens expose Pause/Resume to host and boss and disable player input
     game.set('pausedAt', paused ? iso(102_000) : '')
     let stateIndex = 0
     const components = new Proxy({}, { get: (_, name) => {
-      if (name === 'Clock' || name === 'ProgressTrack') return () => React.createElement('span', { 'data-component': name })
+      if (name === 'ClockStamp' || name === 'ProgressTrack') return () => React.createElement('span', { 'data-component': name })
       if (name === 'HintPanel') return () => React.createElement('span', { 'data-component': name })
       if (name === 'GamePausedBanner') return () => React.createElement('div', { role: 'status' }, 'Game paused')
-      if (name === 'SideRail') return props => React.createElement('div', null,
+      if (name === 'TvHeader') return props => React.createElement('div', null,
         props.controls.map(c => React.createElement('button', { key: c.label }, c.label)))
       return Div
     } })
@@ -217,9 +218,9 @@ test('both screens expose Pause/Resume to host and boss and disable player input
       assert.equal(/<fieldset disabled=""/.test(markup), paused)
       assert.ok(markup.includes('data-component="HintPanel"'), `${gameMode}: players must be able to request enabled hints`)
     }
-    for (const name of ['Clock', 'ProgressTrack']) {
-      assert.equal(markup.includes(`data-component="${name}"`), gameMode !== 'career', `${file}: career length must not leak through ${name}`)
-    }
+    // Career's length must never leak through a countdown: no clock stamp, no progress track.
+    assert.equal(markup.includes('data-component="ClockStamp"'), gameMode !== 'career', `${file}: ClockStamp`)
+    assert.equal(markup.includes('data-component="ProgressTrack"'), gameMode !== 'career' && !shared, `${file}: ProgressTrack`)
   }
 })
 

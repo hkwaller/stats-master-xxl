@@ -1,38 +1,28 @@
 import type { Metadata, Viewport } from 'next'
-import { Big_Shoulders, Archivo, Barlow_Condensed, JetBrains_Mono } from 'next/font/google'
+import { Anton, DM_Sans, Space_Mono } from 'next/font/google'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Providers } from './providers'
 
-/**
- * "Big Shoulders Display" was folded into the "Big Shoulders" superfamily upstream;
- * this is the same condensed jersey-numeral face the design references.
- */
-const bigShoulders = Big_Shoulders({
-  weight: ['600', '700', '800'],
+/** Cards on Ice: Anton for names and headings, DM Sans for prose, Space Mono for stat lines. */
+const anton = Anton({
+  weight: ['400'],
   subsets: ['latin'],
-  variable: '--font-big-shoulders',
+  variable: '--font-anton',
   display: 'swap',
 })
 
-const archivo = Archivo({
+const dmSans = DM_Sans({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
-  variable: '--font-archivo',
+  variable: '--font-dm-sans',
   display: 'swap',
 })
 
-const barlowCondensed = Barlow_Condensed({
-  weight: ['500', '600', '700'],
+const spaceMono = Space_Mono({
+  weight: ['400', '700'],
   subsets: ['latin'],
-  variable: '--font-barlow-condensed',
-  display: 'swap',
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  weight: ['400', '500', '700'],
-  subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
+  variable: '--font-space-mono',
   display: 'swap',
 })
 
@@ -109,7 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${bigShoulders.variable} ${archivo.variable} ${barlowCondensed.variable} ${jetbrainsMono.variable}`}
+      className={`${anton.variable} ${dmSans.variable} ${spaceMono.variable}`}
     >
       <body>
         <script
@@ -119,32 +109,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ClerkProvider
           appearance={{
             variables: {
-              colorPrimary: 'var(--color-red)',
+              colorPrimary: 'var(--color-cobalt)',
               colorForeground: 'var(--color-ink)',
               colorMutedForeground: 'var(--color-ink-2)',
               colorBackground: 'var(--color-ice-0)',
               colorInput: 'var(--color-ice-0)',
               colorInputForeground: 'var(--color-ink)',
-              colorDanger: 'var(--color-red)',
-              borderRadius: '0px',
+              colorDanger: 'var(--color-alarm)',
+              borderRadius: '14px',
               fontFamily: 'var(--font-body)',
             },
             elements: {
-              cardBox: { borderRadius: 0 },
-              card: {
-                borderTop: '4px solid var(--color-red)',
-                boxShadow: '0 8px 24px var(--color-hairline)',
-              },
+              cardBox: { borderRadius: 18, border: '3px solid var(--color-ink)', boxShadow: '6px 6px 0 var(--color-ink)' },
+              card: { boxShadow: 'none' },
               headerTitle: {
                 fontFamily: 'var(--font-display)',
                 fontSize: '2rem',
-                fontWeight: 800,
+                fontWeight: 400,
                 textTransform: 'uppercase',
               },
               formFieldInput: { minHeight: '44px' },
               formButtonPrimary: {
                 minHeight: '44px',
-                fontWeight: 700,
+                borderRadius: 999,
+                fontFamily: 'var(--font-display)',
+                fontWeight: 400,
+                fontSize: '1.05rem',
+                letterSpacing: '0.03em',
                 textTransform: 'uppercase',
               },
               footer: { background: 'var(--color-ice-1)' },

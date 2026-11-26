@@ -1,6 +1,13 @@
 import { z } from 'zod'
 import type { mutations } from './rules'
 import type { GameState } from '../../types/game'
+import {
+  JERSEY_BODY_HEXES,
+  JERSEY_NUMBER_MAX,
+  JERSEY_NUMBER_MIN,
+  JERSEY_PATTERN_IDS,
+  JERSEY_TRIM_HEXES,
+} from '../jersey'
 
 export type ActionType = keyof typeof mutations
 export type ActionArgs<K extends ActionType> = Parameters<(typeof mutations)[K]>[1]
@@ -75,11 +82,20 @@ const config = z.object({
   hlComparisonField: field,
   hostPlays: z.boolean(),
 })
+const jersey = z
+  .object({
+    pattern: z.enum(JERSEY_PATTERN_IDS),
+    body: z.enum(JERSEY_BODY_HEXES),
+    trim: z.enum(JERSEY_TRIM_HEXES),
+    number: z.number().int().min(JERSEY_NUMBER_MIN).max(JERSEY_NUMBER_MAX),
+  })
+  .refine((j) => j.body !== j.trim)
 const requester = z.object({ requesterId: id })
 const player = z.object({ playerId: id })
 const answer = player.extend({ answer: text })
 const schemas = {
-  joinGame: z.object({ id, name: z.string().trim().min(1).max(40) }),
+  joinGame: z.object({ id, name: z.string().trim().min(1).max(40), jersey: jersey.optional() }),
+  setJersey: player.extend({ jersey }),
   claimBoss: player.extend({ token: z.string().min(1).max(128) }),
   assignBoss: requester.extend({ playerId: id.nullable() }),
   saveSettings: requester.extend({ config }),

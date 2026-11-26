@@ -3,7 +3,7 @@
 import type { Question, HintType } from '@/types/game'
 import { MonoLabel } from '@/components/design-system'
 
-const INK = '#0d1b2a'
+const INK = '#14213d'
 
 interface HintPanelProps {
   question: Question
@@ -11,6 +11,7 @@ interface HintPanelProps {
   hintsEnabled: boolean
   onRequestHint: (type: HintType) => void
   showEraHint?: boolean
+  showSeasonHint?: boolean
 }
 
 const HINTS: { type: HintType; label: string; getValue: (q: Question) => string }[] = [
@@ -35,7 +36,7 @@ function positionLabel(code: string): string {
  * once revealed it becomes plain text. Hints are shared, so a
  * reveal lands for the whole room.
  */
-export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint, showEraHint = true }: HintPanelProps) {
+export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint, showEraHint = true, showSeasonHint = false }: HintPanelProps) {
   if (!hintsEnabled) return null
   const availableHints = HINTS.filter((hint) => hint.type !== 'era' || showEraHint)
   const revealedCount = availableHints.filter((hint) => usedHints.includes(hint.type)).length
@@ -43,49 +44,49 @@ export function HintPanel({ question, usedHints, hintsEnabled, onRequestHint, sh
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between">
-        <MonoLabel size={9}>Hints</MonoLabel>
-        <MonoLabel size={9} tracking="0.14em">
+        <MonoLabel>Hints · −10 each</MonoLabel>
+        <MonoLabel>
           {revealedCount} of {availableHints.length} revealed · shared
         </MonoLabel>
       </div>
 
       {availableHints.map((hint) => {
         const revealed = usedHints.includes(hint.type)
+        const seasonHint = hint.type === 'era' && showSeasonHint
+        const label = seasonHint ? 'Season' : hint.label
 
         return (
           <div
             key={hint.type}
-            className="flex items-baseline justify-between gap-3 pb-2.5"
-            style={{ borderBottom: '1px solid rgba(13,27,42,0.07)' }}
+            className="flex items-center justify-between gap-3 pb-2"
+            style={{ borderBottom: '2px solid var(--color-ice-2)' }}
           >
-            <MonoLabel size={9} tracking="0.2em">{hint.label}</MonoLabel>
+            <MonoLabel>{label}</MonoLabel>
             {revealed ? (
               <span
                 className="font-display truncate"
-                style={{ fontWeight: 700, fontSize: 21, color: INK }}
+                style={{ fontSize: 22, color: INK, textTransform: 'uppercase' }}
               >
-                {hint.getValue(question)}
+                {seasonHint ? question.season.replace('-', '–') : hint.getValue(question)}
               </span>
             ) : (
               <button
                 type="button"
                 onClick={() => onRequestHint(hint.type)}
-                aria-label={`Reveal ${hint.label.toLowerCase()} hint for everyone`}
-                className="btn-ice font-display"
+                aria-label={`Reveal ${label.toLowerCase()} hint for everyone`}
+                className="btn-ice font-display min-h-[40px]"
                 style={{
-                  border: 'none',
-                  background: 'transparent',
-                  padding: 0,
-                  fontWeight: 700,
-                  fontSize: 21,
-                  color: '#6b7a8c',
+                  border: `2.5px solid ${INK}`,
+                  background: '#ffffff',
+                  padding: '0 14px',
+                  fontSize: 17,
+                  color: INK,
                   cursor: 'pointer',
-                  textDecoration: 'underline',
-                  textUnderlineOffset: 4,
-                  textDecorationColor: 'rgba(13,27,42,0.2)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.03em',
                 }}
               >
-                Reveal
+                Flip it
               </button>
             )}
           </div>

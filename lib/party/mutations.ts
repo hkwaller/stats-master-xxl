@@ -5,6 +5,9 @@ import { useAction } from './client'
 export function useJoinGame() {
   return useAction('joinGame')
 }
+export function useSetJersey() {
+  return useAction('setJersey')
+}
 export function useClaimBoss() {
   return useAction('claimBoss')
 }

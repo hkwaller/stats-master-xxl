@@ -1,31 +1,45 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Check } from 'lucide-react'
 
-const INK = '#0d1b2a'
-const RED = '#cf0a2c'
+const INK = 'var(--color-ink)'
+const CHOICE_BADGES: Record<string, string> = {
+  B: 'var(--color-lemon)',
+  C: 'var(--color-tangerine)',
+  D: 'var(--color-pink)',
+}
 
 export type AnswerState = 'default' | 'selected' | 'eliminated' | 'correct' | 'faded'
 
 interface AnswerRowProps {
   letter: string
   name: string
-  /** Team + position, or "PENALTY BOX" when eliminated. */
+  /** A stamp on the card: "LOCKED IN", "PENALTY BOX", or a count like "3 PICKS". */
   meta?: string
   state?: AnswerState
-  /** TV rows are padded; phone rows are a fixed 66px; compact rows are 54px for screens that also carry a board and hints. */
-  variant?: 'tv' | 'phone' | 'compact'
+  /**
+   * tv: padded row. phone: 68px row. compact: 54px row for screens that also
+   * carry a board and hints. card: the TV's classic answer grid.
+   */
+  variant?: 'tv' | 'phone' | 'compact' | 'card'
+  colorByLetter?: boolean
   onClick?: () => void
   disabled?: boolean
 }
 
+const LOOK: Record<AnswerState, { bg: string; fg: string; border: string; offset: boolean }> = {
+  default: { bg: '#ffffff', fg: INK, border: `3px solid ${INK}`, offset: true },
+  selected: { bg: 'var(--color-cobalt)', fg: '#ffffff', border: `3px solid ${INK}`, offset: true },
+  correct: { bg: 'var(--color-mint)', fg: INK, border: `3px solid ${INK}`, offset: true },
+  eliminated: { bg: 'transparent', fg: 'var(--color-ink-4)', border: '2.5px dashed var(--color-edge-dead)', offset: false },
+  faded: { bg: '#ffffff', fg: INK, border: '3px solid var(--color-edge-dead)', offset: false },
+}
+
 /**
- * A white plane with a 5px left edge. Never outlined.
- *
- *  default    - white, navy edge
- *  eliminated - hatched "penalty box" fill, dead edge, no shadow
- *  correct    - red edge over a red wash
- *  faded      - someone else's row after you have answered
+ * An answer as a white card in an ink frame. State never rides on colour
+ * alone: your pick carries a check and LOCKED IN, the right answer a check,
+ * an eliminated answer is struck through with a PENALTY BOX stamp.
  */
 export function AnswerRow({
   letter,
@@ -33,86 +47,101 @@ export function AnswerRow({
   meta,
   state = 'default',
   variant = 'tv',
+  colorByLetter = false,
   onClick,
   disabled,
 }: AnswerRowProps) {
+  const look = LOOK[state]
   const eliminated = state === 'eliminated'
-  const correct = state === 'correct'
-  const selected = state === 'selected'
-
-  const edge = eliminated ? '#b3c0cf' : correct || selected ? RED : INK
-  const background = correct ? 'rgba(207,10,44,0.07)' : eliminated ? 'transparent' : '#ffffff'
-  const shadow = eliminated ? 'none' : '0 2px 10px rgba(13,27,42,0.09)'
-  const nameColor = eliminated ? '#6b7a8c' : INK
-  const letterColor = eliminated ? '#7d8b9c' : '#55677d'
+  const checked = state === 'selected' || state === 'correct'
   const interactive = Boolean(onClick) && !disabled
-
+  const card = variant === 'card'
   const Tag = onClick ? motion.button : motion.div
+
+  const choiceBadge = colorByLetter ? CHOICE_BADGES[letter] : undefined
+  const nameSize = variant === 'tv' || card ? 28 : variant === 'compact' ? 22 : 25
+  const stampMeta = meta && (state === 'selected' || eliminated)
 
   return (
     <Tag
       onClick={interactive ? onClick : undefined}
       disabled={onClick ? disabled : undefined}
-      // Flatter than the old system: 1px press, no bounce.
-      whileTap={interactive ? { y: 1 } : undefined}
+      whileTap={interactive ? { x: 2, y: 2, boxShadow: `2px 2px 0 ${INK}` } : undefined}
       animate={{ opacity: state === 'faded' ? 0.5 : 1 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
-      className={`flex w-full items-center text-left ${eliminated ? 'penalty-hatch' : ''}`}
+      aria-pressed={onClick ? state === 'selected' : undefined}
+      className={`relative flex min-w-0 w-full items-center text-left ${eliminated ? 'penalty-hatch' : ''}`}
       style={{
-        // Longhands only: mixing `border` with `borderLeft` makes React warn when
-        // the edge colour changes between renders.
-        borderWidth: '0 0 0 5px',
-        borderStyle: 'solid',
-        borderColor: edge,
-        borderRadius: 0,
-        gap: 14,
-        padding: variant === 'tv' ? '15px 18px' : '0 16px',
-        height: variant === 'phone' ? 66 : variant === 'compact' ? 54 : undefined,
-        background,
-        boxShadow: shadow,
+        background: look.bg,
+        color: look.fg,
+        border: look.border,
+        borderRadius: 14,
+        boxShadow: look.offset ? `4px 4px 0 ${INK}` : 'none',
+        transform: state === 'selected' ? 'rotate(-1deg)' : undefined,
+        gap: 12,
+        padding: card ? '10px 12px' : variant === 'tv' ? '14px 16px' : '0 14px',
+        minHeight: card || variant === 'phone' ? 68 : variant === 'compact' ? 54 : undefined,
         cursor: interactive ? 'pointer' : 'default',
-        transition: 'background-color 200ms ease-out, border-color 200ms ease-out',
+        transition: 'background-color 200ms ease-out',
       }}
     >
       <span
-        className="font-display shrink-0"
+        aria-hidden={checked || undefined}
+        className="font-display flex shrink-0 items-center justify-center"
         style={{
-          fontWeight: 700,
-          fontSize: variant === 'tv' ? 17 : 16,
-          letterSpacing: '0.08em',
-          color: letterColor,
-          width: variant === 'tv' ? 14 : 12,
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          background: checked || eliminated ? '#ffffff' : choiceBadge ?? 'var(--color-cobalt)',
+          color: state === 'selected' ? 'var(--color-cobalt)' : eliminated ? 'var(--color-ink-2)' : checked || choiceBadge ? INK : '#ffffff',
+          fontSize: 17,
         }}
       >
-        {letter}
+        {checked ? <Check size={18} strokeWidth={3.4} /> : letter}
       </span>
+      {checked && <span className="sr-only">{letter}</span>}
 
       <span
-        className="min-w-0 flex-1 truncate"
+        className={`font-display min-w-0 flex-1 ${card ? '[overflow-wrap:anywhere]' : 'truncate'}`}
         style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: 700,
-          fontSize: variant === 'tv' ? 28 : variant === 'compact' ? 24 : 26,
-          lineHeight: 1,
-          color: nameColor,
+          fontSize: nameSize,
+          lineHeight: 1.02,
+          letterSpacing: '0.01em',
+          textTransform: 'uppercase',
+          textDecoration: eliminated ? 'line-through' : undefined,
         }}
       >
         {name}
       </span>
 
-      {meta && (
-        <span
-          className="font-mono shrink-0"
-          style={{
-            fontSize: variant === 'tv' ? 9 : 8,
-            letterSpacing: variant === 'tv' ? '0.16em' : '0.14em',
-            color: '#55677d',
-            textTransform: 'uppercase',
-          }}
-        >
-          {meta}
-        </span>
-      )}
+      {meta &&
+        (stampMeta ? (
+          <span
+            className="font-mono absolute"
+            style={{
+              top: -12,
+              right: 10,
+              background: eliminated ? 'var(--color-pink)' : 'var(--color-lemon)',
+              color: INK,
+              border: `2px solid ${INK}`,
+              borderRadius: 6,
+              padding: '2px 8px',
+              fontSize: 12,
+              fontWeight: 700,
+              transform: eliminated ? 'rotate(-4deg)' : 'rotate(5deg)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {meta}
+          </span>
+        ) : (
+          <span
+            className="font-mono shrink-0"
+            style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', opacity: 0.85 }}
+          >
+            {meta}
+          </span>
+        ))}
     </Tag>
   )
 }

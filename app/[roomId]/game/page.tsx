@@ -5,9 +5,9 @@
  * Open this on a projector/laptop while players use /player/[id] on their phones.
  * When host is not playing (hostPlays=false), this page also drives the state machine.
  *
- * Layout follows the "On the Ice" broadcast system: a scorebug strip over a
- * 1fr/300px body, closed by a live ticker. Rink geometry and skate scuffs sit
- * behind everything at z-index 0; all chrome sits at z-index 2.
+ * Cards on Ice: a header strip, the body, and the binder of player cards along
+ * the bottom. Classic is played as a mystery trading card with its card back;
+ * the other modes keep their own boards (phase 3) beside the side rail.
  */
 
 import React, { useEffect, useState } from 'react'
@@ -38,20 +38,31 @@ import { useQuestionTimeLeft } from '@/hooks/useQuestionTimeLeft'
 import { useCareerPenalties } from '@/hooks/useCareerPenalties'
 import { questionPausedAt } from '@/lib/game/room-clock'
 import { GamePausedBanner } from '@/components/game/GamePausedBanner'
-import { StatsCard } from '@/components/game/StatsCard'
-import { Scorebug } from '@/components/game/Scorebug'
-import { SideRail, type RailControl } from '@/components/game/SideRail'
+import { SideRail } from '@/components/game/SideRail'
 import { AnswerRow, type AnswerState } from '@/components/game/AnswerRow'
 import { FinalBoard } from '@/components/game/Scoreboard'
 import { CareerAnswerPopover } from '@/components/game/CareerAnswerPopover'
 import { CareerRevealCard } from '@/components/game/CareerRevealCard'
 import { H2HComparisonCard } from '@/components/game/H2HComparisonCard'
 import { HigherLowerCard } from '@/components/game/HigherLowerCard'
-import { Clock, MonoLabel, ProgressTrack, Ticker } from '@/components/design-system'
-import { RinkBg } from '@/components/arcade'
+import { MonoLabel } from '@/components/design-system'
+import { MysteryCard, type CardChip } from '@/components/cards/MysteryCard'
+import { CardBack } from '@/components/cards/CardBack'
+import { Binder, type RoundResult } from '@/components/cards/Binder'
+import { TvHeader, type HeaderControl } from '@/components/cards/TvHeader'
+import { ClockStamp } from '@/components/cards/ClockStamp'
 import { streakLeader } from '@/lib/streaks'
 import { CAREER_REVEAL_INTERVAL_MS } from '@/types/game'
-import type { H2HPair, HintType, HLPair, Player, Question, QuestionResult } from '@/types/game'
+import type {
+  DifficultyTier,
+  GameState,
+  H2HPair,
+  HintType,
+  HLPair,
+  Player,
+  Question,
+  QuestionResult,
+} from '@/types/game'
 
 interface GamePageProps {
   params: Promise<{ roomId: string }>
@@ -68,43 +79,35 @@ const MODE_LABELS: Record<string, string> = {
 }
 
 const MODE_TITLES: Record<string, string> = {
-  classic: 'Name the skater',
+  classic: 'Name the player',
   career: 'Who is this?',
   h2h: 'Which line is his?',
   'higher-lower': 'Higher or lower?',
+}
+
+const POSITIONS: Record<string, string> = {
+  C: 'Centre',
+  L: 'Left wing',
+  LW: 'Left wing',
+  R: 'Right wing',
+  RW: 'Right wing',
+  D: 'Defence',
+  G: 'Goalie',
 }
 
 function fullName(q: Question): string {
   return `${q.firstName} ${q.lastName}`.trim()
 }
 
-/** Live ticker copy, assembled from state that already exists. */
-function buildTicker(history: QuestionResult[], players: Player[], poolLabel: string): string[] {
-  const items: string[] = []
-  const last = history[history.length - 1]
-
-  if (last) {
-    for (const p of players) {
-      const a = last.playerAnswers?.[p.id]
-      if (a?.correct && a.points > 0) {
-        items.push(`${p.name.toUpperCase()} +${a.points} - CORRECT`)
-      }
-    }
-  }
-
-  const leader = streakLeader(history, players)
-  if (leader && leader.streak > 1) {
-    items.push(`${leader.player.name.toUpperCase()} STREAK ×${leader.streak}`)
-  }
-
-  const top = [...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0]
-  if (top && (top.score ?? 0) > 0) {
-    items.push(`LEADER ${top.name.toUpperCase()} · ${top.score} PTS`)
-  }
-
-  items.push(poolLabel)
-  items.push('SEASON DATA 1917–2025')
-  return items
+function hintLine(q: Question, used: HintType[], hintsEnabled: boolean): string {
+  if (!hintsEnabled) return 'No hints this game. Read the card back.'
+  const known: string[] = []
+  if (used.includes('position')) known.push(`plays ${(POSITIONS[q.positionCode] ?? q.positionCode).toLowerCase()}`)
+  if (used.includes('team')) known.push(`played for ${q.teamNames}`)
+  if (used.includes('era')) known.push(`played in ${q.season.replace('-', '–')}`)
+  if (known.length === 0) return 'Every hint is still face down.'
+  const s = known.join(', ')
+  return `${s.charAt(0).toUpperCase()}${s.slice(1)}.`
 }
 
 export default function GamePage({ params: paramsPromise }: GamePageProps) {
@@ -142,7 +145,7 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const penalties = useCareerPenalties(game?.careerPenaltyEndsAt, game?.pausedAt, game?.command === 'answering')
   const lockedOutPlayers = Object.keys(penalties)
 
-  useHostStateMachine(isHost, myId, game as unknown as import('@/types/game').GameState | null, {
+  useHostStateMachine(isHost, myId, game as unknown as GameState | null, {
     tickCountdown,
     nextQuestion,
     nextCareerRound,
@@ -157,9 +160,10 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   })
 
   useEffect(() => {
-    if (!game || game.command !== 'rematch') return
+    // Wait for the room id: before it resolves this would push "//lobby", a protocol-relative URL.
+    if (!game || !roomId || game.command !== 'rematch') return
     router.push(`/${roomId}/lobby`)
-  }, [game?.command])
+  }, [game?.command, roomId])
 
   const questionDurationMs = game?.gameMode === 'career'
     ? (game.careerSeasons?.length ?? 0) * CAREER_REVEAL_INTERVAL_MS
@@ -181,8 +185,10 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const currentQuestion = game.currentQuestion as unknown as Question | null
   const gameMode = game.gameMode ?? 'classic'
   const isActive = game.command === 'answering' || game.command === 'revealing'
+  const isAnswering = game.command === 'answering'
   const isRevealing = game.command === 'revealing'
   const history = (game.questionHistory as unknown as QuestionResult[]) ?? []
+  const usedHints = (game.hintsUsed as unknown as HintType[]) ?? []
 
   const careerSeasons = (game.careerSeasons as unknown as Question[]) ?? []
   const revealedSeasonCount = game.revealedSeasonCount ?? 0
@@ -192,32 +198,45 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   const h2hCurrentPair = game.h2hCurrentPair as unknown as H2HPair | null
   const hlCurrentPair = game.hlCurrentPair as unknown as HLPair | null
 
-  const difficulty =
-    currentQuestion?.difficulty ?? (game.difficultyTiers?.[0] as string | undefined)
-  const scorebugMeta = [MODE_LABELS[gameMode] ?? gameMode, difficulty]
-    .filter(Boolean)
-    .join(' · ')
-    .toUpperCase()
+  const tier = (currentQuestion?.difficulty ?? game.difficultyTiers?.[0]) as DifficultyTier | undefined
+  const cardNumber = (game.currentQuestionIndex ?? 0) + 1
 
   const activePowerup = game.activePowerup as unknown as { type: string; playerId: string } | null
   const powerupOwner = activePowerup && players.find((p) => p.id === activePowerup.playerId)
 
-  // Host controls live at the foot of the rail, not in a floating dock.
-  const controls: RailControl[] = []
+  // This card's scores, once revealed: the newest history entry.
+  const lastResult = isRevealing ? history[history.length - 1] : undefined
+  const round: Record<string, RoundResult> | undefined = lastResult
+    ? Object.fromEntries(
+        players.map((p) => {
+          const a = lastResult.playerAnswers?.[p.id]
+          return [p.id, { points: a?.points ?? 0, correct: Boolean(a?.correct), answered: Boolean(a?.answer) }]
+        }),
+      )
+    : undefined
+  const anyGoal = round ? Object.values(round).some((r) => r.correct) : false
+
+  // Host controls sit in the header strip.
+  const controls: HeaderControl[] = []
   if (isController) {
     if (game.command === 'answering' || game.command === 'starting') {
       controls.push({
         label: isPaused ? 'Resume' : 'Pause',
-        icon: isPaused ? <Play size={14} strokeWidth={2.2} /> : <Pause size={14} strokeWidth={2.2} />,
-        tone: isPaused ? 'red' : 'navy',
+        icon: isPaused ? <Play size={16} strokeWidth={2.4} /> : <Pause size={16} strokeWidth={2.4} />,
+        primary: isPaused,
         onClick: () => setGamePaused({ requesterId: myId, paused: !isPaused }),
       })
     }
     if (game.command === 'answering' && !isPaused) {
       controls.push({
+        label: 'Skip',
+        icon: <SkipForward size={16} strokeWidth={2.4} />,
+        onClick: () => skipQuestion(myId),
+      })
+      controls.push({
         label: 'Reveal',
-        icon: <Eye size={14} strokeWidth={2.2} />,
-        tone: 'red',
+        icon: <Eye size={16} strokeWidth={2.4} />,
+        primary: true,
         onClick: () => {
           if (gameMode === 'career') revealCareerAnswer(myId)
           else if (gameMode === 'h2h') revealH2HAnswers(myId)
@@ -225,18 +244,12 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
           else revealAnswers(myId)
         },
       })
-      controls.push({
-        label: 'Skip',
-        icon: <SkipForward size={14} strokeWidth={2.2} />,
-        tone: 'navy',
-        onClick: () => skipQuestion(myId),
-      })
     }
     if (isRevealing) {
       controls.push({
-        label: gameMode === 'classic' ? 'Next question' : 'Next round',
-        icon: <ChevronRight size={14} strokeWidth={2.2} />,
-        tone: 'red',
+        label: gameMode === 'classic' ? 'Next card' : 'Next round',
+        icon: <ChevronRight size={16} strokeWidth={2.4} />,
+        primary: true,
         onClick: () => advanceToNext(myId),
       })
     }
@@ -246,22 +259,13 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
   if (game.command === 'finished') {
     return (
       <main className="ice-bg relative flex min-h-screen flex-col overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-full"
-          style={{
-            bottom: -300,
-            width: 640,
-            height: 640,
-            border: '6px solid rgba(11,83,201,0.10)',
-          }}
-        />
-        <div className="relative z-[2] mx-auto flex w-full max-w-[860px] flex-1 flex-col">
+        <div className="relative z-[2] mx-auto flex w-full max-w-[1280px] flex-1 flex-col">
           <FinalBoard
             players={players}
             history={history}
             myId={myId}
-            eyebrow={`Final · ${game.questionCount} questions · ${MODE_LABELS[gameMode] ?? gameMode}`}
+            eyebrow={`${MODE_LABELS[gameMode] ?? gameMode} · ${game.questionCount} cards`}
+            tier={tier}
             onRematch={isController ? () => rematch(myId) : undefined}
             onSettings={isController ? () => router.push(`/${roomId}/setup`) : undefined}
           />
@@ -270,229 +274,245 @@ export default function GamePage({ params: paramsPromise }: GamePageProps) {
     )
   }
 
-  return (
-    <main className="ice-bg relative flex h-screen min-h-[700px] flex-col overflow-hidden">
-      <RinkBg />
+  const classic = gameMode === 'classic'
+  const multipleChoice = game.answerMode === 'multiplechoice' && choices.length > 0
+  const pickCounts = Object.values(answers).reduce<Record<string, number>>((acc, a) => {
+    acc[a] = (acc[a] ?? 0) + 1
+    return acc
+  }, {})
 
-      <Scorebug
-        players={players}
-        answeredIds={game.command === 'answering' ? answeredIds : []}
+  const chips: CardChip[] = currentQuestion
+    ? [
+        { label: 'TEAM', value: isRevealing || usedHints.includes('team') ? currentQuestion.teamAbbrevs : null },
+        { label: 'POS', value: isRevealing || usedHints.includes('position') ? currentQuestion.positionCode : null },
+      ]
+    : []
+
+  const countdown = (
+    <AnimatePresence>
+      {game.command === 'starting' && (
+        <motion.div
+          key="countdown"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex flex-1 flex-col items-center justify-center gap-4"
+        >
+          <MonoLabel size={16}>Puck drop</MonoLabel>
+          <span
+            className="font-display tabular-nums"
+            style={{ fontSize: 240, lineHeight: 0.8, color: 'var(--color-cobalt)' }}
+          >
+            {game.countdownTime || '·'}
+          </span>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+
+  return (
+    <main className="ice-bg relative flex h-screen min-h-[720px] flex-col overflow-hidden">
+      <TvHeader
         roomId={roomId}
-        meta={scorebugMeta}
-        powerup={
-          activePowerup && powerupOwner
-            ? { label: `${powerupOwner.name} · ${activePowerup.type}` }
-            : null
-        }
+        progress={`${classic ? 'Card' : 'Round'} ${cardNumber} / ${game.questionCount}`}
+        modeLabel={MODE_LABELS[gameMode] ?? gameMode}
+        tier={tier}
+        powerup={activePowerup && powerupOwner ? `${powerupOwner.name} · ${activePowerup.type}` : null}
+        controls={controls}
       />
 
-      <div
-        className="relative z-[2] grid min-h-0 flex-1"
-        style={{ gridTemplateColumns: '1fr 300px' }}
-      >
-        {/* ── Main column ── */}
-        <div className="flex min-w-0 flex-col px-[26px] pt-[26px] pb-[26px]">
-          {isPaused && <GamePausedBanner />}
+      {isPaused && (
+        <div className="relative z-[2] px-10 pt-2">
+          <GamePausedBanner />
+        </div>
+      )}
 
-          {/* Title row */}
-          <div className="mb-3.5 flex items-end justify-between gap-5">
-            <div className="flex flex-col gap-1.5">
-              <MonoLabel size={10} tracking="0.28em">
-                Question {String((game.currentQuestionIndex ?? 0) + 1).padStart(2, '0')} /{' '}
-                {String(game.questionCount).padStart(2, '0')}
-              </MonoLabel>
-              <h1
-                className="font-display m-0"
-                style={{
-                  fontWeight: 800,
-                  fontSize: 60,
-                  lineHeight: 0.9,
-                  letterSpacing: '0.005em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {game.command === 'starting'
-                  ? 'Puck drop'
-                  : (MODE_TITLES[gameMode] ?? MODE_TITLES.classic)}
-              </h1>
-            </div>
-            {game.command === 'answering' && gameMode !== 'career' && <Clock seconds={timeLeft} size={70} />}
-          </div>
-
-          {gameMode !== 'career' && <ProgressTrack
-            fraction={game.command === 'answering' ? timeLeft / (questionDurationMs / 1000) : 0}
-            urgent={game.command === 'answering' && timeLeft < 5}
-            className="mb-[22px]"
-          />}
-
-          {/* Puck-drop countdown */}
-          <AnimatePresence>
-            {game.command === 'starting' && (
-              <motion.div
-                key="countdown"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-1 items-center justify-center"
-              >
-                <span
-                  className="font-display tabular-nums"
-                  style={{
-                    fontWeight: 800,
-                    fontSize: 240,
-                    lineHeight: 0.8,
-                    color: '#cf0a2c',
-                  }}
-                >
-                  {game.countdownTime || '·'}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ── Classic ── */}
-          {isActive && gameMode === 'classic' && currentQuestion && (
-            <motion.div
-              key={currentQuestion.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="flex min-h-0 flex-col"
-            >
-              <div className="mb-6">
-                <StatsCard
-                  question={currentQuestion}
-                  revealedColumns={isRevealing ? 5 : (game.revealedColumns ?? 0)}
-                  caption={`${currentQuestion.season} SEASON`}
+      {/* ── Classic: the mystery card ── */}
+      {classic ? (
+        <div className="relative z-[2] flex min-h-0 flex-1 gap-11 px-10 pt-4 pb-4">
+          {game.command === 'starting' || !currentQuestion || !isActive ? (
+            countdown
+          ) : (
+            <>
+              <div className="w-[340px] shrink-0 pt-2">
+                <MysteryCard
+                  season={isRevealing || usedHints.includes('era') ? currentQuestion.season : null}
+                  cardNumber={cardNumber}
+                  chips={chips}
+                  revealed={
+                    isRevealing
+                      ? {
+                          playerId: currentQuestion.playerId,
+                          name: fullName(currentQuestion),
+                          detail: [currentQuestion.teamNames, POSITIONS[currentQuestion.positionCode] ?? currentQuestion.positionCode]
+                            .filter(Boolean)
+                            .join(' · '),
+                        }
+                      : null
+                  }
+                  stamp={isRevealing ? (anyGoal ? { text: 'GOAL!', tone: 'mint' } : { text: 'SAVED', tone: 'pink' }) : null}
                 />
               </div>
 
-              {game.answerMode === 'multiplechoice' && choices.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2.5">
-                  {choices.map((choice, i) => {
-                    const isCorrect =
-                      isRevealing &&
-                      choice.trim().toLowerCase() === fullName(currentQuestion).toLowerCase()
-                    // Wrong picks take the penalty-box treatment on reveal.
-                    const wasPicked = Object.values(answers).includes(choice)
-                    let state: AnswerState = 'default'
-                    if (isRevealing) {
-                      if (isCorrect) state = 'correct'
-                      else if (wasPicked) state = 'eliminated'
-                      else state = 'faded'
-                    }
-                    return (
-                      <AnswerRow
-                        key={`${choice}-${i}`}
-                        letter={ANSWER_LETTERS[i] ?? '?'}
-                        name={choice}
-                        meta={state === 'eliminated' ? 'PENALTY BOX' : undefined}
-                        state={state}
-                      />
-                    )
-                  })}
-                </div>
-              ) : (
-                isRevealing && (
-                  <AnswerRow
-                    letter="✓"
-                    name={fullName(currentQuestion)}
-                    meta={`${currentQuestion.teamAbbrevs} · ${currentQuestion.positionCode}`}
-                    state="correct"
-                  />
-                )
-              )}
-            </motion.div>
-          )}
-
-          {/* ── Career ── */}
-          {isActive && gameMode === 'career' && careerSeasons.length > 0 && (
-            <div className="on-ice min-h-0 overflow-auto p-6">
-              <CareerRevealCard
-                size="tv"
-                seasons={careerSeasons}
-                revealedCount={isRevealing ? careerSeasons.length : revealedSeasonCount}
-                showYears={isRevealing || game.careerShowYears !== false}
-                buzzedInPlayerName={buzzedInPlayer?.name}
-                lockedOutCount={lockedOutPlayers.length}
-              />
-            </div>
-          )}
-
-          {/* ── Head-to-Head ── */}
-          {isActive && gameMode === 'h2h' && h2hCurrentPair && (
-            <div className="min-h-0 overflow-auto">
-              <H2HComparisonCard pair={h2hCurrentPair} revealed={isRevealing} />
-            </div>
-          )}
-
-          {/* ── Higher / Lower ── */}
-          {isActive && gameMode === 'higher-lower' && hlCurrentPair && (
-            <div className="min-h-0 overflow-auto">
-              <HigherLowerCard pair={hlCurrentPair} revealed={isRevealing} />
-            </div>
-          )}
-
-          {/* Reveal band - the answer, stated plainly under the board. */}
-          <AnimatePresence>
-            {isRevealing && (gameMode === 'h2h' || gameMode === 'higher-lower') && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="mt-auto flex items-baseline gap-4 py-5"
+                key={currentQuestion.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                className="flex min-w-0 flex-1 flex-col gap-[18px]"
               >
-                <MonoLabel size={9}>The answer was</MonoLabel>
-                <span
-                  className="font-display"
-                  style={{
-                    fontWeight: 800,
-                    fontSize: 40,
-                    lineHeight: 1,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {gameMode === 'higher-lower' && hlCurrentPair
-                    ? hlCurrentPair.correctAnswer
-                    : gameMode === 'h2h' && h2hCurrentPair
-                      ? h2hCurrentPair.targetName
-                      : currentQuestion
-                        ? fullName(currentQuestion)
-                        : ''}
-                </span>
+                <div className="flex items-center gap-5">
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    {isRevealing && <MonoLabel size={14}>The card was</MonoLabel>}
+                    <h1 className="font-display m-0" style={{ fontSize: 58, lineHeight: 0.95, textTransform: 'uppercase' }}>
+                      {isRevealing ? fullName(currentQuestion) : MODE_TITLES.classic}
+                    </h1>
+                    {!isRevealing && (
+                      <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--color-ink-2)' }}>
+                        {hintLine(currentQuestion, usedHints, Boolean(game.hintsEnabled))}
+                      </span>
+                    )}
+                  </div>
+                  {isAnswering && <ClockStamp seconds={timeLeft} total={QUESTION_SECONDS} />}
+                </div>
+
+                <CardBack
+                  question={currentQuestion}
+                  revealedColumns={isRevealing ? 5 : (game.revealedColumns ?? 0)}
+                />
+
+                {multipleChoice ? (
+                  <div className="grid grid-cols-2 gap-3.5">
+                    {choices.map((choice, i) => {
+                      const isCorrect =
+                        isRevealing && choice.trim().toLowerCase() === fullName(currentQuestion).toLowerCase()
+                      const picks = pickCounts[choice] ?? 0
+                      const state: AnswerState = isRevealing ? (isCorrect ? 'correct' : 'faded') : 'default'
+                      return (
+                        <AnswerRow
+                          key={`${choice}-${i}`}
+                          letter={ANSWER_LETTERS[i] ?? '?'}
+                          name={choice}
+                          variant="card"
+                          colorByLetter
+                          state={state}
+                          meta={isRevealing ? `${picks} ${picks === 1 ? 'pick' : 'picks'}` : undefined}
+                        />
+                      )
+                    })}
+                  </div>
+                ) : (
+                  isAnswering && (
+                    <div
+                      className="flex items-center gap-3 px-5 py-4"
+                      style={{ background: '#fff', border: '2.5px dashed var(--color-edge-dead)', borderRadius: 14 }}
+                    >
+                      <span className="font-display" style={{ fontSize: 24, textTransform: 'uppercase' }}>
+                        Type your answer on your phone
+                      </span>
+                      <span className="ml-auto" style={{ fontSize: 15, color: 'var(--color-ink-2)' }}>
+                        Full name or last name
+                      </span>
+                    </div>
+                  )
+                )}
               </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <SideRail
-          answeredCount={answeredCount}
-          totalPlayers={Math.max(connectedCount, 1)}
-          question={currentQuestion}
-          usedHints={(game.hintsUsed as unknown as HintType[]) ?? []}
-          hintsEnabled={Boolean(game.hintsEnabled)}
-          showEraHint={gameMode !== 'career' || game.careerShowYears === false}
-          streak={streakLeader(history, players)}
-          controls={controls}
-        />
-      </div>
-
-      <div className="relative z-[2]">
-        <Ticker
-          items={buildTicker(
-            history,
-            players,
-            `${MODE_LABELS[gameMode] ?? gameMode} · Room ${roomId}`,
+            </>
           )}
+        </div>
+      ) : (
+        /* ── Other modes keep their boards until phase 3 ── */
+        <div className="relative z-[2] grid min-h-0 flex-1" style={{ gridTemplateColumns: '1fr 300px' }}>
+          <div className="flex min-w-0 flex-col px-10 pt-4 pb-4">
+            <div className="mb-3.5 flex items-end justify-between gap-5">
+              <h1 className="font-display m-0" style={{ fontSize: 58, lineHeight: 0.95, textTransform: 'uppercase' }}>
+                {game.command === 'starting' ? 'Puck drop' : (MODE_TITLES[gameMode] ?? MODE_TITLES.classic)}
+              </h1>
+              {isAnswering && gameMode !== 'career' && <ClockStamp seconds={timeLeft} total={QUESTION_SECONDS} />}
+            </div>
+
+            {game.command === 'starting' && countdown}
+
+            {isActive && gameMode === 'career' && careerSeasons.length > 0 && (
+              <div className="on-ice min-h-0 overflow-auto p-6">
+                <CareerRevealCard
+                  size="tv"
+                  seasons={careerSeasons}
+                  revealedCount={isRevealing ? careerSeasons.length : revealedSeasonCount}
+                  showYears={isRevealing || game.careerShowYears !== false}
+                  buzzedInPlayerName={buzzedInPlayer?.name}
+                  lockedOutCount={lockedOutPlayers.length}
+                />
+              </div>
+            )}
+
+            {isActive && gameMode === 'h2h' && h2hCurrentPair && (
+              <div className="min-h-0 overflow-auto">
+                <H2HComparisonCard pair={h2hCurrentPair} revealed={isRevealing} />
+              </div>
+            )}
+
+            {isActive && gameMode === 'higher-lower' && hlCurrentPair && (
+              <div className="min-h-0 overflow-auto">
+                <HigherLowerCard pair={hlCurrentPair} revealed={isRevealing} />
+              </div>
+            )}
+
+            <AnimatePresence>
+              {isRevealing && (gameMode === 'h2h' || gameMode === 'higher-lower') && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="mt-auto flex items-baseline gap-4 py-5"
+                >
+                  <MonoLabel size={12}>The answer was</MonoLabel>
+                  <span className="font-display" style={{ fontSize: 40, lineHeight: 1, textTransform: 'uppercase' }}>
+                    {gameMode === 'higher-lower' && hlCurrentPair
+                      ? hlCurrentPair.correctAnswer
+                      : gameMode === 'h2h' && h2hCurrentPair
+                        ? h2hCurrentPair.targetName
+                        : ''}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <SideRail
+            answeredCount={answeredCount}
+            totalPlayers={Math.max(connectedCount, 1)}
+            question={currentQuestion}
+            usedHints={usedHints}
+            hintsEnabled={Boolean(game.hintsEnabled)}
+            showEraHint={gameMode !== 'career' || game.careerShowYears === false}
+            streak={streakLeader(history, players)}
+          />
+        </div>
+      )}
+
+      <div className="relative z-[2] px-10 pt-2 pb-6">
+        <Binder
+          players={players}
+          answeredIds={isAnswering ? answeredIds : []}
+          round={round}
+          label={
+            isRevealing
+              ? 'THIS CARD'
+              : isAnswering
+                ? `THE BINDER · ${answeredCount} OF ${Math.max(connectedCount, players.length)} LOCKED IN`
+                : 'THE BINDER'
+          }
         />
       </div>
-      {isRevealing && (gameMode === 'career' || gameMode === 'classic') && currentQuestion && (
+
+      {isRevealing && gameMode === 'career' && currentQuestion && (
         <CareerAnswerPopover
           key={`${gameMode}-answer-${game.currentQuestionIndex}`}
           question={currentQuestion}
-          seasons={gameMode === 'career' ? careerSeasons : [currentQuestion]}
-          scope={gameMode === 'career' ? 'career' : 'season'}
+          seasons={careerSeasons}
+          scope="career"
           result={undefined}
           onNext={isController ? () => advanceToNext(myId) : undefined}
           tv
