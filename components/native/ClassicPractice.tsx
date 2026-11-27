@@ -311,7 +311,7 @@ export function ClassicPractice({ onExit }: { onExit: () => void }) {
             const meta = answer === null ? undefined : correct ? (answer === choice ? 'Your pick · Goal' : 'The skater') : answer === choice ? 'Your pick · Saved' : undefined
             return (
               <div key={choice} style={{ animationDelay: `${i * 45}ms` }}>
-                <AnswerRow letter={LETTERS[i]} name={choice} meta={meta} state={state} variant="compact" disabled={answer !== null} onClick={() => guess(choice)} />
+                <AnswerRow letter={LETTERS[i]} name={choice} meta={meta} state={state} variant="compact" colorByLetter disabled={answer !== null} onClick={() => guess(choice)} />
               </div>
             )
           })}

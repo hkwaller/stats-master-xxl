@@ -178,6 +178,7 @@ export function DailyChallenge() {
                 letter={ANSWER_LETTERS[i] ?? '?'}
                 name={choice}
                 variant="phone"
+                colorByLetter
                 onClick={() => handleGuess(choice)}
               />
             ))}
