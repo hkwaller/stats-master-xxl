@@ -58,7 +58,41 @@ const photos: Partial<Record<number, PlayerPhoto>> = {
   }),
 }
 
-export function getPlayerPhoto(playerId: number): PlayerPhoto | undefined {
-  return photos[playerId]
+/**
+ * A photo this many years away from the card's season is left off: most
+ * Wikidata portraits of retired players are taken decades after their prime
+ * (Guy Lafleur in 2013 on his 1977-78 card).
+ */
+export const MAX_PHOTO_SEASON_GAP_YEARS = 15
+
+/**
+ * The year a photo was taken, read from its Commons file name
+ * ("Guy_Lafleur_2013.jpg", "Philip_Esposito,_February_2012_(cropped).jpeg").
+ * The catalog stores no capture date, so undated file names return undefined.
+ */
+export function photoYear(photo: PlayerPhoto): number | undefined {
+  let file = photo.sourceUrl.split('/File:')[1] ?? ''
+  try { file = decodeURIComponent(file) } catch { /* keep the raw name */ }
+  const match = /(?:^|\D)(19\d{2}|20\d{2})(?!\d)/.exec(file)
+  return match ? Number(match[1]) : undefined
+}
+
+/** Years between the photo and a season like "1977-78"; 0 when taken during it. */
+function yearsFromSeason(year: number, season: string): number | undefined {
+  const start = Number(season.slice(0, 4))
+  if (!Number.isInteger(start)) return undefined
+  return year < start ? start - year : Math.max(0, year - (start + 1))
+}
+
+/**
+ * The player's photo, or undefined when there is none or, given the card's
+ * season, when the photo is dated far from it.
+ */
+export function getPlayerPhoto(playerId: number, season?: string | null): PlayerPhoto | undefined {
+  const photo = photos[playerId]
+  if (!photo || !season) return photo
+  const year = photoYear(photo)
+  const gap = year === undefined ? undefined : yearsFromSeason(year, season)
+  return gap !== undefined && gap > MAX_PHOTO_SEASON_GAP_YEARS ? undefined : photo
 }
 

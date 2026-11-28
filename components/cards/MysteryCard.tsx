@@ -56,7 +56,7 @@ export function MysteryCard({
   revealed?: { playerId: number; name: string; detail: string } | null
   stamp?: { text: string; tone: 'mint' | 'pink' } | null
 }) {
-  const photo = revealed ? getPlayerPhoto(revealed.playerId) : undefined
+  const photo = revealed ? getPlayerPhoto(revealed.playerId, season) : undefined
 
   return (
     <div className="relative">
